@@ -291,6 +291,17 @@ export class MasterjiVoice {
       if (fc.name === "write_note") {
         clientLog("voice.write_note", { clusterId: args.clusterId, text, duplicate });
         if (args.clusterId && text && !duplicate) bus.emit("writeNote", { clusterId: args.clusterId, text: text.slice(0, 28) });
+      } else if (fc.name === "draw_graph") {
+        const a = (fc.args ?? {}) as { lines?: unknown; markX?: unknown };
+        const lines = Array.isArray(a.lines) ? a.lines.filter((l): l is string => typeof l === "string" && l.length < 40).slice(0, 3) : [];
+        const markX = typeof a.markX === "number" && Number.isFinite(a.markX) ? a.markX : undefined;
+        const gkey = `graph|${lines.join("|")}|${markX}`;
+        const dup = this.written.has(gkey);
+        clientLog("voice.draw_graph", { lines, markX, duplicate: dup });
+        if (lines.length && !dup) {
+          this.written.add(gkey);
+          bus.emit("drawGraph", { lines: lines.map((expr) => ({ expr, label: `y = ${expr}` })), markX });
+        }
       } else if (fc.name === "set_question") {
         const question = ((fc.args ?? {}) as { question?: string }).question?.trim();
         clientLog("voice.set_question", { question });

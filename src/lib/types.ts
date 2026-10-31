@@ -70,7 +70,8 @@ export interface MasterGEvents {
   questionConfirmed: { text: string; kind: QuestionKind };
   verdict: Verdict;
   writeNote: { clusterId: string; text: string };
-  writeLine: { text: string }; // Masterji writes a full worked line on the board, below the kid's work (added 2026-10-31)
+  writeLine: { text: string };
+  drawGraph: { lines: { expr: string; label?: string }[]; xMin?: number; xMax?: number; markX?: number }; // Masterji draws a graph (added 2026-10-31) // Masterji writes a full worked line on the board, below the kid's work (added 2026-10-31)
   userUtterance: { text: string };
   modeChanged: { mode: Mode };
   languageChanged: { language: Language };

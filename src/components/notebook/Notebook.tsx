@@ -5,6 +5,7 @@ import { bus } from "@/lib/bus";
 import type { Point } from "@/lib/types";
 import { mark as penMark, text as penText } from "@/lib/redpen";
 import { drawPenItems, type PlacedItem } from "@/lib/redpen/draw";
+import { graph as penGraph } from "@/lib/redpen/graph";
 import { markPen } from "@/lib/notebook/penState";
 import { assignIds, clusterStrokes, type ClusterGroup } from "@/lib/notebook/cluster";
 import { cropCluster } from "@/lib/notebook/crop";
@@ -267,10 +268,33 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
       animUntilRef.current = Math.max(animUntilRef.current, item.start + item.item.total);
       drawOverlay([...clustersRef.current.values()]);
     });
+    // drawGraph from Voice → a hand-drawn graph under the current working.
+    const offGraph = bus.on("drawGraph", (spec) => {
+      const bottoms = [...clustersRef.current.values()].map((c) => c.bbox.y + c.bbox.h).concat(linesRef.current.map((l) => l.bottom));
+      const top = Math.max(questionTopRef.current + 120, ...bottoms) + 70;
+      const box = { x: 170, y: top, w: 640, h: 360 };
+      if (box.y + box.h + 90 > pageHRef.current) growTo(Math.ceil((box.y + box.h + 120) / SCREEN_H));
+      try {
+        const item = { item: penGraph(spec, box), start: performance.now() };
+        linesRef.current.push({ item, bottom: box.y + box.h + 70 });
+        animUntilRef.current = Math.max(animUntilRef.current, item.start + item.item.total);
+        drawOverlay([...clustersRef.current.values()]);
+        // bring it into view
+        const el = scrollRef.current,
+          canvas = inkRef.current;
+        if (el && canvas) {
+          const unit = canvas.clientWidth / PAGE_W;
+          el.scrollTo({ top: Math.max(0, (box.y - 80) * unit), behavior: "smooth" });
+        }
+      } catch (e) {
+        console.warn("[notebook] graph failed", e);
+      }
+    });
     return () => {
       offVerdict();
       offNote();
       offLine();
+      offGraph();
     };
   }, [drawOverlay]);
 

@@ -40,6 +40,20 @@ export const SET_QUESTION = {
   },
 };
 
+export const DRAW_GRAPH = {
+  name: "draw_graph",
+  description:
+    "Draw a graph on the board in red pen for an equation: each side as a line (in x), and circle where they cross. E.g. for 3x + 5 = 20: lines ['3x + 5', '20'], markX 5. Use only the FACTS graph.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      lines: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Expressions in x, e.g. ['3x + 5', '20']" },
+      markX: { type: Type.NUMBER, description: "x where the lines cross (the answer)" },
+    },
+    required: ["lines"],
+  },
+};
+
 // The one Live config. The token route locks it server-side (so voice + persona are
 // guaranteed applied) and the client connects with the same object.
 export function liveConfig(language: Language, voice = MASTERJI_VOICE): LiveConnectConfig {
@@ -52,6 +66,6 @@ export function liveConfig(language: Language, voice = MASTERJI_VOICE): LiveConn
     // Push-to-talk: the kid holds a key/button to speak (activityStart/End). No voice-activity
     // detection, so Masterji never hears himself through the speakers. PLAN.md §6 "stage mode".
     realtimeInputConfig: { automaticActivityDetection: { disabled: true } },
-    tools: [{ functionDeclarations: [WRITE_NOTE, WRITE_LINE, SET_QUESTION] }],
+    tools: [{ functionDeclarations: [WRITE_NOTE, WRITE_LINE, SET_QUESTION, DRAW_GRAPH] }],
   };
 }

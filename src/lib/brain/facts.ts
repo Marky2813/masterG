@@ -32,6 +32,16 @@ export function questionFacts(question: string): string[] {
     const moved = op === "+" ? Number(c) - Number(b) : Number(c) + Number(b);
     facts.push(`step: ${k || ""}${v} = ${c} ${op === "+" ? "-" : "+"} ${b} = ${moved}`);
   }
+  // Linear equation in one variable: the graph Masterji can draw (both sides as lines, the crossing).
+  const sides = q.split("=");
+  if (sides.length === 2 && ans?.kind === "equation") {
+    const v = ans.text.split("=")[0].trim();
+    const xv = Number(ans.text.split("=")[1]);
+    if (/^[a-z]$/.test(v) && Number.isFinite(xv)) {
+      const show = (e: string) => e.replace(/\*/g, "").replace(new RegExp(v, "g"), "x");
+      facts.push(`graph: draw y = ${show(sides[0])} and y = ${show(sides[1])}; they cross at x = ${xv} (that's the answer ${v} = ${xv})`);
+    }
+  }
   return facts;
 }
 
