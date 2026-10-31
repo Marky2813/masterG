@@ -2,14 +2,26 @@
 
 import { getStroke } from "perfect-freehand";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SEED_CATEGORIES } from "@/lib/categories";
+import PLAN from "../../../benchmark/sample-plan.json";
 
-// Benchmark sample capture: write one step with the stylus, label it, save.
-// Saved to benchmark/samples/ (PNG + labels.json). See PLAN.md §7.
+// Guided benchmark capture: shows the next step from benchmark/sample-plan.json,
+// you write it with the stylus, press Next (or Enter). Labels come from the plan,
+// so there's nothing to type. Saved to benchmark/samples/ (PNG + labels.json).
+// Resumes where you left off (counts what's already saved). PLAN.md §7.
+
+interface PlanRow {
+  topic: string;
+  question: string;
+  previous: string;
+  write: string;
+  correct: boolean;
+  category: string;
+  messy: string;
+}
+const ROWS = PLAN as PlanRow[];
 
 const WIDTH = 1000;
 const HEIGHT = 240;
-const TOPICS = ["fractions", "linear", "bodmas_decimals", "lcm_hcf", "word_problem", "other"];
 
 type Pt = [number, number, number];
 
@@ -23,19 +35,23 @@ function strokePath(points: Pt[]): Path2D {
   return path;
 }
 
+// What to physically write: × for *, ÷ is never used, mixed numbers shown as written by hand.
+const handwritten = (s: string) =>
+  s
+    .replace(/\s*\*\s*/g, " × ")
+    .replace(/\(1\+1\/2\)/g, "1½")
+    .replace(/\(2\+1\/3\)/g, "2⅓")
+    .replace(/\(3\+5\/6\)/g, "3⅚")
+    .replace(/\blcm\b/g, "LCM")
+    .replace(/\bhcf\b/g, "HCF");
+
 export default function CapturePage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const strokesRef = useRef<Pt[][]>([]);
   const currentRef = useRef<Pt[] | null>(null);
-
-  const [topic, setTopic] = useState(TOPICS[0]);
-  const [question, setQuestion] = useState("");
-  const [previous, setPrevious] = useState("");
-  const [expectedText, setExpectedText] = useState("");
-  const [isCorrect, setIsCorrect] = useState(true);
-  const [category, setCategory] = useState("");
-  const [count, setCount] = useState(0);
+  const [index, setIndex] = useState<number | null>(null); // = samples already saved
   const [status, setStatus] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const redraw = useCallback(() => {
     const ctx = canvasRef.current?.getContext("2d");
@@ -59,8 +75,8 @@ export default function CapturePage() {
     redraw();
     fetch("/api/samples")
       .then((r) => r.json())
-      .then((l: unknown[]) => setCount(l.length))
-      .catch(() => {});
+      .then((l: unknown[]) => setIndex(l.length))
+      .catch(() => setIndex(0));
   }, [redraw]);
 
   const toPoint = (e: React.PointerEvent<HTMLCanvasElement>): Pt => {
@@ -71,7 +87,6 @@ export default function CapturePage() {
       e.pointerType === "pen" ? e.pressure : 0.5,
     ];
   };
-
   const onDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId);
     currentRef.current = [toPoint(e)];
@@ -87,58 +102,92 @@ export default function CapturePage() {
     currentRef.current = null;
     redraw();
   };
-
-  const clear = () => {
+  const clear = useCallback(() => {
     strokesRef.current = [];
     redraw();
-  };
+  }, [redraw]);
   const undo = () => {
     strokesRef.current.pop();
     redraw();
   };
 
-  const save = async () => {
-    if (strokesRef.current.length === 0 || !expectedText.trim()) {
-      setStatus("Write something and fill in 'what's written' first.");
+  const row = index !== null && index < ROWS.length ? ROWS[index] : null;
+
+  const next = useCallback(async () => {
+    if (!row || index === null || saving) return;
+    if (strokesRef.current.length === 0) {
+      setStatus("Write it first.");
       return;
     }
+    setSaving(true);
     const png = canvasRef.current!.toDataURL("image/png");
     const label = {
-      topic,
-      question: question.trim() || undefined,
-      previous: previous.trim() || undefined,
-      expectedText: expectedText.trim(),
-      isCorrect,
-      category: isCorrect ? undefined : category || undefined,
+      topic: row.topic,
+      question: row.question || undefined,
+      previous: row.previous || undefined,
+      expectedText: row.write,
+      isCorrect: row.correct,
+      category: row.correct ? undefined : row.category || undefined,
     };
     const res = await fetch("/api/samples", { method: "POST", body: JSON.stringify({ png, label }) });
+    setSaving(false);
     if (!res.ok) {
       setStatus(`Save failed: ${await res.text()}`);
       return;
     }
-    const { id, count: n } = await res.json();
-    setCount(n);
+    const { id, count } = await res.json();
     setStatus(`Saved ${id}`);
-    // Ready for the next step of the same problem.
-    setPrevious(isCorrect ? expectedText.trim() : previous);
-    setExpectedText("");
-    setIsCorrect(true);
-    setCategory("");
+    setIndex(count);
     clear();
-  };
+  }, [row, index, saving, clear]);
 
-  const input = "rounded border border-slate-300 px-2 py-1 font-mono text-sm";
+  // Enter = Next, Backspace = undo, Escape = clear.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Enter") void next();
+      else if (e.key === "Backspace") undo();
+      else if (e.key === "Escape") clear();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
+  if (index === null) return <main className="p-6">Loading…</main>;
 
   return (
     <main className="mx-auto max-w-5xl space-y-4 p-6 text-slate-900">
       <header className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-semibold">Benchmark sample capture</h1>
-        <span className="text-sm text-slate-600">{count} samples saved</span>
+        <h1 className="text-2xl font-semibold">Benchmark capture</h1>
+        <span className="text-sm text-slate-600">
+          {Math.min(index, ROWS.length)} / {ROWS.length} saved
+        </span>
       </header>
-      <p className="text-sm text-slate-600">
-        Write <b>one step</b> with the stylus the way a kid would — about half with a typical mistake, some with messy
-        digits (1/7, 4/9). Then type exactly what you wrote in mathjs syntax and save.
-      </p>
+
+      {row ? (
+        <div className="rounded-lg border border-slate-300 bg-amber-50 p-4">
+          <div className="text-sm text-slate-500">
+            #{index + 1} · {row.topic} · question: <span className="font-mono">{row.question}</span>
+            {row.previous && (
+              <>
+                {" "}
+                · line before: <span className="font-mono">{handwritten(row.previous)}</span>
+              </>
+            )}
+          </div>
+          <div className="mt-2 text-sm text-slate-600">Write exactly this (mistakes included):</div>
+          <div className="font-mono text-4xl font-semibold tracking-wide">{handwritten(row.write)}</div>
+          <div className="mt-2 flex gap-3 text-sm">
+            <span className={row.correct ? "text-emerald-700" : "text-rose-700"}>
+              {row.correct ? "✅ correct step" : `❌ wrong step${row.category ? ` (${row.category})` : ""}`}
+            </span>
+            {row.messy && <span className="font-medium text-amber-700">✍️ messy: {row.messy}</span>}
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-lg">
+          All {ROWS.length} done. Tell Claude, or commit <code>benchmark/samples/</code> and open a PR.
+        </div>
+      )}
 
       <canvas
         ref={canvasRef}
@@ -151,66 +200,25 @@ export default function CapturePage() {
         onPointerUp={onUp}
         onPointerLeave={onUp}
       />
-      <div className="flex gap-2">
-        <button className="rounded bg-slate-200 px-3 py-1" onClick={undo}>
+
+      <div className="flex items-center gap-2">
+        <button className="rounded bg-slate-200 px-3 py-2" onClick={undo}>
           Undo
         </button>
-        <button className="rounded bg-slate-200 px-3 py-1" onClick={clear}>
+        <button className="rounded bg-slate-200 px-3 py-2" onClick={clear}>
           Clear
         </button>
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm">
-          Topic
-          <select className={input} value={topic} onChange={(e) => setTopic(e.target.value)}>
-            {TOPICS.map((t) => (
-              <option key={t}>{t}</option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          Question (mathjs syntax, or words for word problems)
-          <input className={input} value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="3/4 + 1/6" />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          Previous step (blank if this is the first step)
-          <input className={input} value={previous} onChange={(e) => setPrevious(e.target.value)} placeholder="= 9/12 + 2/12" />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          What&apos;s written in this step (exactly, mistakes included)
-          <input
-            className={input}
-            value={expectedText}
-            onChange={(e) => setExpectedText(e.target.value)}
-            placeholder="3/4 + 1/6 = 4/10"
-          />
-        </label>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={isCorrect} onChange={(e) => setIsCorrect(e.target.checked)} />
-          This step is correct
-        </label>
-        {!isCorrect && (
-          <label className="flex flex-col gap-1 text-sm">
-            Mistake category
-            <select className={input} value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="">(other / none fits)</option>
-              {SEED_CATEGORIES.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.id} — {c.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-      </div>
-
-      <div className="flex items-center gap-3">
-        <button className="rounded bg-emerald-600 px-4 py-2 font-medium text-white" onClick={save}>
-          Save sample
+        <button
+          className="ml-auto rounded bg-emerald-600 px-6 py-2 text-lg font-medium text-white disabled:opacity-50"
+          onClick={() => void next()}
+          disabled={!row || saving}
+        >
+          Next →
         </button>
-        <span className="text-sm text-slate-600">{status}</span>
       </div>
+      <p className="text-sm text-slate-500">
+        Keys: <b>Enter</b> = Next · <b>Backspace</b> = undo · <b>Esc</b> = clear. {status}
+      </p>
     </main>
   );
 }

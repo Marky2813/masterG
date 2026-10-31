@@ -30,6 +30,8 @@ Output mathjs syntax:
 - "lcm(4,6)", "hcf(12,18)"; exponents "2^3"; keep "=" signs where written
 - a line that starts with "=" continues the previous line — keep the leading "="
 - variables stay as letters ("3x", "4(m+6)")
+- a raised / middle dot between two factors means multiply ("2·3" → "2*3", "2·x" → "2*x"); a dot on the baseline inside a number is a decimal point ("2.5"). If you cannot tell which, put one reading in "text" and the other in "alternatives"
+- "x" between two numbers ("3 x 4") is multiplication → "3*4"; "x" next to a coefficient ("3x") is the variable
 If a character could be read two ways (1/7, 4/9, 5/S, 6/b, 0/6), put your best reading in "text" and every other plausible full-line reading in "alternatives". Otherwise "alternatives" is [].
 Set "legible" to false only if you cannot read the step at all.`;
 
