@@ -29,6 +29,20 @@ export const WRITE_LINE = {
   },
 };
 
+export const WRITE_WORKING = {
+  name: "write_working",
+  description:
+    "Teach a method on the board: write 2-6 short lines one under another, like a teacher working it out, e.g. ['multiples of 4: 4, 8, 12', 'multiples of 6: 6, 12', 'LCM = 12']. Each line max 40 characters. Use the METHOD lines from FACTS.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      title: { type: Type.STRING, description: "Optional heading, e.g. 'LCM kaise nikaalein'" },
+      lines: { type: Type.ARRAY, items: { type: Type.STRING }, description: "2-6 lines, top to bottom" },
+    },
+    required: ["lines"],
+  },
+};
+
 export const SET_QUESTION = {
   name: "set_question",
   description:
@@ -37,6 +51,20 @@ export const SET_QUESTION = {
     type: Type.OBJECT,
     properties: { question: { type: Type.STRING, description: "The new sum, e.g. 2/3 + 1/5" } },
     required: ["question"],
+  },
+};
+
+export const DRAW_GRAPH = {
+  name: "draw_graph",
+  description:
+    "Draw a graph on the board in red pen for an equation: each side as a line (in x), and circle where they cross. E.g. for 3x + 5 = 20: lines ['3x + 5', '20'], markX 5. Use only the FACTS graph.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      lines: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Expressions in x, e.g. ['3x + 5', '20']" },
+      markX: { type: Type.NUMBER, description: "x where the lines cross (the answer)" },
+    },
+    required: ["lines"],
   },
 };
 
@@ -52,6 +80,6 @@ export function liveConfig(language: Language, voice = MASTERJI_VOICE): LiveConn
     // Push-to-talk: the kid holds a key/button to speak (activityStart/End). No voice-activity
     // detection, so Masterji never hears himself through the speakers. PLAN.md §6 "stage mode".
     realtimeInputConfig: { automaticActivityDetection: { disabled: true } },
-    tools: [{ functionDeclarations: [WRITE_NOTE, WRITE_LINE, SET_QUESTION] }],
+    tools: [{ functionDeclarations: [WRITE_NOTE, WRITE_LINE, WRITE_WORKING, SET_QUESTION, DRAW_GRAPH] }],
   };
 }

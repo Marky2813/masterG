@@ -10,7 +10,7 @@
 import { GoogleGenAI, type LiveServerMessage, type Session } from "@google/genai";
 import { bus } from "../bus";
 import type { Language, Verdict } from "../types";
-import { isSimplified, questionFacts, reachesFinalAnswer, simplestAnswer } from "../brain/facts";
+import { isSimplified, methodFacts, questionFacts, reachesFinalAnswer, simplestAnswer } from "../brain/facts";
 import { sessionState } from "../sessionState";
 import { kindOf } from "../brain/kind";
 import { clientLog, getSessionId } from "../log/client";
@@ -41,7 +41,12 @@ export class MasterjiVoice {
   private discardStale = false; // kid interrupted: drop the old reply's leftover audio until the server ends it
   private waitingSince = 0;
   private written = new Set<string>();
-  private everWrong = false; // board writes already made (dedupe repeated tool calls) // when we last asked for a reply (note sent / button released), for latency logs
+  private everWrong = false;
+  private generation = 0; // which Live session is current (old ones are ignored)
+  private stopping = false;
+  private reconnecting = false;
+  private history: string[] = []; // recent turns, handed over on reconnect
+  private selfSet: string | null = null; // question Masterji put on the board himself (don't echo it back as "QUESTION SET") // board writes already made (dedupe repeated tool calls) // when we last asked for a reply (note sent / button released), for latency logs
   language: Language;
 
   constructor(
@@ -57,27 +62,7 @@ export class MasterjiVoice {
     this.player = new Player();
     await this.player.resume();
 
-    const res = await fetch("/api/live-token", {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-session-id": getSessionId() },
-      body: JSON.stringify({ language: this.language }),
-    });
-    const json = await res.json();
-    if (!res.ok) {
-      this.status("error", json.error ?? `token HTTP ${res.status}`);
-      throw new Error(json.error);
-    }
-    const ai = new GoogleGenAI({ apiKey: json.token, httpOptions: { apiVersion: "v1alpha" } });
-    this.session = await ai.live.connect({
-      model: json.model,
-      config: liveConfig(this.language),
-      callbacks: {
-        onopen: () => this.status("live"),
-        onmessage: (m: LiveServerMessage) => this.onMessage(m),
-        onerror: (e: ErrorEvent) => this.status("error", e.message),
-        onclose: (e: CloseEvent) => this.status("closed", `${e.code} ${e.reason}`),
-      },
-    });
+    await this.openSession();
 
     await this.mic.start((data) => {
       if (this.talking) this.session?.sendRealtimeInput({ audio: { data, mimeType: "audio/pcm;rate=16000" } });
@@ -96,7 +81,69 @@ export class MasterjiVoice {
     this.note(`[SESSION START] Greet the child and ask their name.${q ? `\n${this.questionNote(q.text)}` : ""}`);
   }
 
+  // A fresh Live session (token + connect). Used at start and on every reconnect.
+  private async openSession(): Promise<void> {
+    const res = await fetch("/api/live-token", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-session-id": getSessionId() },
+      body: JSON.stringify({ language: this.language }),
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      this.status("error", json.error ?? `token HTTP ${res.status}`);
+      throw new Error(json.error);
+    }
+    const ai = new GoogleGenAI({ apiKey: json.token, httpOptions: { apiVersion: "v1alpha" } });
+    const generation = ++this.generation;
+    this.session = await ai.live.connect({
+      model: json.model,
+      config: liveConfig(this.language),
+      callbacks: {
+        onopen: () => this.status("live"),
+        onmessage: (m: LiveServerMessage) => {
+          if (generation === this.generation) this.onMessage(m);
+        },
+        onerror: (e: ErrorEvent) => this.status("error", e.message),
+        onclose: (e: CloseEvent) => {
+          if (generation !== this.generation) return; // an old session we replaced
+          this.status("closed", `${e.code} ${e.reason}`);
+          if (!this.stopping) void this.reconnect(`closed ${e.code}`);
+        },
+      },
+    });
+  }
+
+  // Live sessions end after ~10 minutes (log 17-38-27: "1008 ... GoAway"). Reconnect quietly and
+  // hand Masterji the lesson so far, so he carries on without greeting again.
+  private async reconnect(why: string): Promise<void> {
+    if (this.reconnecting || this.stopping) return;
+    this.reconnecting = true;
+    clientLog("voice.reconnect", { why });
+    this.status("connecting", "reconnecting");
+    const old = this.session;
+    this.generation++; // ignore anything the old session still sends
+    try {
+      old?.close();
+    } catch {
+      /* already closed */
+    }
+    try {
+      await this.openSession();
+      const q = sessionState.question;
+      const recent = this.history.slice(-8).join(" | ");
+      this.sendNote(
+        `[RECONNECTED: the line dropped for a moment. Continue the SAME lesson; do NOT greet or ask the name again; say at most "Haan, main yahin hoon".${recent ? ` Recent conversation: ${recent}` : ""}]${q ? `\n${this.questionNote(q.text)}` : ""}`,
+      );
+      clientLog("voice.reconnected", {});
+    } catch (e) {
+      clientLog("voice.reconnect_failed", { error: (e as Error).message });
+    } finally {
+      this.reconnecting = false;
+    }
+  }
+
   stop(): void {
+    this.stopping = true;
     this.offs.forEach((off) => off());
     this.offs = [];
     clearInterval(this.speakingTimer);
@@ -165,7 +212,13 @@ export class MasterjiVoice {
   private subscribe(): void {
     this.offs.push(
       bus.on("verdict", (v) => this.onVerdict(v)),
-      bus.on("questionConfirmed", ({ text }) => this.noteQuestion(text)),
+      bus.on("questionConfirmed", ({ text }) => {
+        if (this.selfSet === text) {
+          this.selfSet = null;
+          const facts = questionFacts(text);
+          this.note(`[FACTS for the sum you just put on the board (copy these when writing): ${facts.join(" ; ")}] It is on the board now; don't set it again.`);
+        } else this.noteQuestion(text);
+      }),
       bus.on("clusterRemoved", ({ id }) => this.wrong.delete(id)),
       bus.on("languageChanged", ({ language }) => {
         this.language = language;
@@ -208,6 +261,7 @@ export class MasterjiVoice {
         `rung ${v.hintRung}`,
         `repeat ${v.repeatCount}`,
         v.hint ? `hint: ${v.hint}` : null,
+        ...methodFacts(v.text).slice(0, 6).map((m) => `METHOD ${m}`),
         v.hintRung >= 4 ? "ACTION (silent): write the correct step from FACTS with the line tool, then ask the child to do the next line" : null,
         v.hintRung === 3 ? "ACTION (silent): note the one fact they need (from FACTS) with the note tool" : null,
       ].filter(Boolean);
@@ -236,6 +290,11 @@ export class MasterjiVoice {
   }
 
   private onMessage(m: LiveServerMessage): void {
+    if (m.goAway) {
+      clientLog("voice.go_away", { timeLeft: m.goAway.timeLeft });
+      void this.reconnect("goAway");
+      return;
+    }
     const sc = m.serverContent;
     if (sc?.interrupted) {
       this.discardStale = false;
@@ -279,6 +338,9 @@ export class MasterjiVoice {
       clientLog("voice.turn", { masterji: this.masterjiLine.trim(), kid: this.kidLine.trim(), underruns: this.player?.takeUnderruns() ?? 0, staleDropped: wasStale });
       this.player?.endTurn();
       if (this.kidLine.trim()) bus.emit("userUtterance", { text: this.kidLine.trim() });
+      if (this.kidLine.trim()) this.history.push(`child: ${this.kidLine.trim()}`);
+      if (this.masterjiLine.trim()) this.history.push(`you: ${this.masterjiLine.trim().slice(0, 160)}`);
+      this.history = this.history.slice(-12);
       this.masterjiLine = "";
       this.kidLine = "";
     }
@@ -291,12 +353,37 @@ export class MasterjiVoice {
       if (fc.name === "write_note") {
         clientLog("voice.write_note", { clusterId: args.clusterId, text, duplicate });
         if (args.clusterId && text && !duplicate) bus.emit("writeNote", { clusterId: args.clusterId, text: text.slice(0, 28) });
+      } else if (fc.name === "draw_graph") {
+        const a = (fc.args ?? {}) as { lines?: unknown; markX?: unknown };
+        const lines = Array.isArray(a.lines) ? a.lines.filter((l): l is string => typeof l === "string" && l.length < 40).slice(0, 3) : [];
+        const markX = typeof a.markX === "number" && Number.isFinite(a.markX) ? a.markX : undefined;
+        const gkey = `graph|${lines.join("|")}|${markX}`;
+        const dup = this.written.has(gkey);
+        clientLog("voice.draw_graph", { lines, markX, duplicate: dup });
+        if (lines.length && !dup) {
+          this.written.add(gkey);
+          bus.emit("drawGraph", { lines: lines.map((expr) => ({ expr, label: `y = ${expr}` })), markX });
+        }
+      } else if (fc.name === "write_working") {
+        const a = (fc.args ?? {}) as { title?: unknown; lines?: unknown };
+        const lines = (Array.isArray(a.lines) ? a.lines : []).filter((l): l is string => typeof l === "string" && !!l.trim()).slice(0, 6);
+        const title = typeof a.title === "string" && a.title.trim() ? a.title.trim() : null;
+        const wkey = `working|${lines.join("|")}`;
+        const dupW = this.written.has(wkey);
+        clientLog("voice.write_working", { title, lines, duplicate: dupW });
+        if (lines.length && !dupW) {
+          this.written.add(wkey);
+          for (const l of title ? [title, ...lines] : lines) bus.emit("writeLine", { text: l.trim().slice(0, 44) });
+        }
       } else if (fc.name === "set_question") {
         const question = ((fc.args ?? {}) as { question?: string }).question?.trim();
-        clientLog("voice.set_question", { question });
-        if (question) {
+        // Loop guard: a QUESTION SET note made him call set_question again and again (log 17-38-27).
+        const same = !!question && question.replace(/\s+/g, "") === (sessionState.question?.text ?? "").replace(/\s+/g, "");
+        clientLog("voice.set_question", { question, ignoredSame: same });
+        if (question && !same) {
           this.wrong.clear();
           this.everWrong = false;
+          this.selfSet = question;
           bus.emit("questionConfirmed", { text: question, kind: kindOf(question) });
         }
       } else if (fc.name === "write_line") {

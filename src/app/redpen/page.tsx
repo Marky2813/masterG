@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { mark, text } from "@/lib/redpen";
 import { drawPenItems, type PlacedItem } from "@/lib/redpen/draw";
+import { graph } from "@/lib/redpen/graph";
 import type { MarkType } from "@/lib/types";
 
 // Preview of the red-pen engine: every mark and a few notes, redrawn with a new
@@ -25,6 +26,7 @@ export default function RedPenPreview() {
     NOTES.forEach((n, i) => {
       items.push({ item: text(n, 60 + (i % 4) * 290, 260 + Math.floor(i / 4) * 80, 28).item, start: now + 1200 + i * 300 });
     });
+    items.push({ item: graph({ lines: [{ expr: "3x + 5", label: "y = 3x + 5" }, { expr: "20", label: "y = 20" }], markX: 5 }, { x: 120, y: 470, w: 640, h: 360 }), start: now + 300 });
     const frame = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = "#94a3b8";
@@ -47,7 +49,7 @@ export default function RedPenPreview() {
       <button className="rounded bg-slate-800 px-3 py-1 text-white" onClick={play}>
         Redraw (new randomness)
       </button>
-      <canvas ref={ref} width={1250} height={460} className="rounded border border-slate-300 bg-white" />
+      <canvas ref={ref} width={1250} height={960} className="rounded border border-slate-300 bg-white" />
     </main>
   );
 }

@@ -1,35 +1,31 @@
-"use client";
+import type { Metadata } from "next";
+import Closing from "@/components/landing/Closing";
+import Features from "@/components/landing/Features";
+import Footer from "@/components/landing/Footer";
+import Header from "@/components/landing/Header";
+import Hero from "@/components/landing/Hero";
+import HowItWorks from "@/components/landing/HowItWorks";
+import Rules from "@/components/landing/Rules";
+import Tapes from "@/components/landing/Tapes";
 
-import { useEffect, useState } from "react";
-import Notebook from "@/components/notebook/Notebook";
-import RoughPad from "@/components/notebook/RoughPad";
-import QuestionBox from "@/components/question/QuestionBox";
-import EventLog from "@/components/debug/EventLog";
-import VoiceBar from "@/components/voice/VoiceBar";
-import { startStepService } from "@/lib/brain/stepService";
-import "@/lib/sessionState";
+export const metadata: Metadata = {
+  title: "Master G · Masterji, AI maths tuition",
+  description:
+    "Masterji checks each step of a Class 5–8 maths sum written on a digital notebook, ticks what is right, and circles the galti in red pen.",
+};
 
-// Full-screen whiteboard with Masterji floating on top.
-export default function Home() {
-  const [debug, setDebug] = useState(false);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- read once after mount; window isn't available during prerender
-    setDebug(new URLSearchParams(window.location.search).has("debug"));
-  }, []);
-  useEffect(() => startStepService(), []);
-
+// Landing page at /. Its one call to action opens the whiteboard app at /learn.
+export default function Landing() {
   return (
-    <main className="text-slate-900">
-      <Notebook debug={debug} />
-      <RoughPad />
-      <VoiceBar>
-        <QuestionBox />
-      </VoiceBar>
-      {debug && (
-        <div className="fixed bottom-20 right-4 z-10 w-80">
-          <EventLog />
-        </div>
-      )}
+    <main className="landing-ruled font-body text-kohl">
+      <Header />
+      <Hero />
+      <Tapes />
+      <HowItWorks />
+      <Features />
+      <Rules />
+      <Closing />
+      <Footer />
     </main>
   );
 }
