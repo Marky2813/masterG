@@ -13,6 +13,8 @@ Before a bulk run (full benchmark, rehearsal), check the quota or balance in Goo
 | Oct 31 18:30 | Claude | bench run 3 (key upgraded to paid by Akash) | flash-lite ×2 repeats; pro-latest ×1 | 288 + 48 calls | paid; pro: 20 API errors | `benchmark/results/2026-10-31T13-00-01-249Z.md`, `…12-57-15-307Z.md` |
 | Nov 1 01:25 | Claude | bench after adding the handwriting rating to the judge prompt | flash-lite ×1, A+guard only, run twice | 96 calls | paid | `benchmark/results/2026-10-31T19-55-28-900Z.md` (96% verdict, 0 false alarms, p95 1.81 s), `….md.md` (98%, 0 false alarms, p95 1.69 s; handwriting: 46 neat, 2 ok, 0 messy) |
 | Nov 1 01:20 | Claude | interrupt probe (`scripts/interrupt-probe.ts`): cut-off context note mid-reply | live 3.1 flash ×5 sessions | 5 sessions | paid | `logs/probe/interrupt-*.txt` (gitignored): no 1007; he resumed with "main keh raha tha…" but re-wrote the same working |
+| Nov 1 02:20–02:40 | Claude | worksheet reader (`benchmark/worksheets/run.ts` via real `/api/worksheet`): 4 test worksheets × 3 runs, + 2 UI-probe runs (image + pasted text, 1 step check each) | gemini-3.5-flash-lite | 18 calls | paid | v1 prompt 21/28; v2 (prompt rule + text cleanup) 28/28 twice: `benchmark/worksheets/results-*.json` |
+| Nov 1 02:30–02:40 | Claude | homework voice probe (`scripts/homework-probe.ts`): HOMEWORK NEXT / DONE notes + set_question guard | live 3.1 flash | 3 sessions | paid | `logs/probe/homework-*.txt` (gitignored) |
 | Oct 31 18:28 | Claude | burst test 25 parallel | gemini-3.5-flash-lite | 25 calls | paid: 25/25 ok, p50 1.2 s | `scripts/burst.ts` |
 | Nov 1 02:30 | Claude | teacher report e2e (`scripts/report-drive.mjs`): headless Chrome writes 3 sums with mouse strokes on /learn, opens 📋 Report | gemini-3.5-flash-lite | 2 full runs + 1 partial: 15 step calls + 2 report-summary calls | paid | `docs/screenshots/report/drive-result.json`: each full run: 6 steps, verdicts as intended (2 wrong, 4 correct; Flash labelled 3/8 `copied_wrong`, not `add_across`), AI summary written both runs, share link 795 chars |
 
@@ -22,6 +24,7 @@ Before a bulk run (full benchmark, rehearsal), check the quota or balance in Goo
 | Pipeline benchmark (PLAN §7) | #4 | Claude | **pass on accuracy / near-miss on latency** | A+guard + current rule: 97.9 % verdict, 0 false alarms, p95 2.5 s (target 2 s) |
 | Echo test + voice audition (PLAN §6) | | Akash | open | |
 | Clustering on real stylus input | | Harjeet | open | |
+| Worksheet reader (homework queue) | — | Claude | **tested offline** | 28/28 questions read correctly on 4 synthetic NCERT-style worksheets (Class 2 addition 6/6, Class 6 fractions 7/7, Class 7 equations 8/8, Class 5 mixed + word problems 7/7), 0 extra items, ~1.7–2.1 s each, 2 runs. Caveat: the same 4 sheets were used to tune the prompt, and they are clean renders, not phone photos. |
 
 ---
 

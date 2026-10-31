@@ -12,6 +12,7 @@ import { bus } from "../bus";
 import type { Language, Verdict } from "../types";
 import { isSimplified, methodFacts, questionFacts, reachesFinalAnswer, simplestAnswer } from "../brain/facts";
 import { sessionState } from "../sessionState";
+import { getHomework, homeworkRef, nextHomework } from "../sessionState"; // teacher's homework queue
 import { kindOf } from "../brain/kind";
 import { clientLog, getSessionId } from "../log/client";
 import { Mic, Player } from "./audio";
@@ -230,7 +231,7 @@ export class MasterjiVoice {
         if (this.selfSet === text) {
           this.selfSet = null;
           const facts = questionFacts(text);
-          this.note(`[FACTS for the sum you just put on the board (copy these when writing): ${facts.join(" ; ")}] It is on the board now; don't set it again.`);
+          this.note(`[FACTS for the sum you just put on the board${this.homeworkTag(text)} (copy these when writing): ${facts.join(" ; ")}] It is on the board now; don't set it again.`);
         } else this.noteQuestion(text);
       }),
       bus.on("clusterRemoved", ({ id }) => this.wrong.delete(id)),
@@ -277,11 +278,47 @@ export class MasterjiVoice {
 
   private questionNote(text: string): string {
     const facts = questionFacts(text);
-    return `[QUESTION SET: ${text}]${facts.length ? `\n[FACTS (computed, correct; copy these when writing): ${facts.join(" ; ")}]` : ""}`;
+    return `[QUESTION SET: ${text}${this.homeworkTag(text)}]${facts.length ? `\n[FACTS (computed, correct; copy these when writing): ${facts.join(" ; ")}]` : ""}`;
   }
 
   private noteQuestion(text: string): void {
     this.note(this.questionNote(text));
+  }
+
+  // ---- Teacher's homework (sessionState homework queue, loaded from a worksheet in QuestionBox) ----
+
+  // " (homework question 2 of 6)" when this question is the current homework item.
+  private homeworkTag(text: string): string {
+    const h = getHomework();
+    return h && h.current !== null && h.items[h.current]?.text === text ? ` (homework question ${h.current + 1} of ${h.items.length})` : "";
+  }
+
+  // What to say after a correct final answer while homework is loaded: the next homework sum, or "all done".
+  private homeworkAfterFinal(): string | null {
+    const h = getHomework();
+    if (!h) return null;
+    const next = nextHomework();
+    if (next) return `tell them the next sum is from their teacher's homework. [HOMEWORK NEXT (${next.index + 1} of ${next.total}): ${next.item.text}] When the child is ready, put exactly this on the board with the question tool.`;
+    if (h.current === null) return null; // homework finished earlier; this was an extra sum
+    return `tell them ALL the teacher's homework is done (all ${h.items.length} questions): celebrate it! [HOMEWORK DONE] Don't set a new sum unless the child asks for one.`;
+  }
+
+  // set_question guard: while homework questions remain, the next sum comes from the homework.
+  // A homework question he names goes up as asked. His own sum: if the homework question on the board
+  // isn't finished, nothing changes (keepBoard: the kid's work stays); otherwise the next homework question goes up.
+  private homeworkGuard(asked: string): { question?: string; ref?: ReturnType<typeof homeworkRef>; swappedFrom?: string; keepBoard?: string } {
+    const h = getHomework();
+    const next = nextHomework();
+    if (!h || !next) return { question: asked };
+    const norm = (s: string) => s.replace(/\s+/g, "").toLowerCase();
+    const named = h.items.findIndex((it) => norm(it.text) === norm(asked));
+    if (named >= 0) return { question: h.items[named].text, ref: homeworkRef(named) };
+    if (h.current !== null && !h.done.includes(h.current))
+      return {
+        swappedFrom: asked,
+        keepBoard: `Not changed: the board still has the teacher's homework question ${h.current + 1} of ${h.items.length} (${h.items[h.current].text}) and it isn't finished. Help the child finish it first. If they really have finished it, put the next homework question instead: ${next.item.text}. Don't set your own sums while homework is left.`,
+      };
+    return { question: next.item.text, ref: homeworkRef(next.index), swappedFrom: asked };
   }
 
   // Messy handwriting (Flash rates every crop): mention it at most once a minute, so he doesn't nag.
@@ -323,7 +360,7 @@ export class MasterjiVoice {
       const hadMistake = this.wrong.size > 0 || fixed || this.everWrong;
       if (final && isSimplified(v.text)) {
         this.wrong.clear();
-        this.note(withHw(`[FINAL ANSWER CORRECT | child wrote: ${v.text} | ${hadMistake ? "after fixing a mistake: praise the effort" : "first try"}] Praise warmly in one or two sentences, then ask if they want the next sum.`));
+        this.note(withHw(`[FINAL ANSWER CORRECT | child wrote: ${v.text} | ${hadMistake ? "after fixing a mistake: praise the effort" : "first try"}] Praise warmly in one or two sentences, then ${this.homeworkAfterFinal() ?? "ask if they want the next sum."}`));
       } else if (final) {
         this.wrong.clear();
         this.note(withHw(`[STEP ${v.clusterId} CORRECT, NOT SIMPLIFIED YET | child wrote: ${v.text} | simplest form: ${q ? simplestAnswer(q) : "?"}] Say it's right, then ask them to simplify it (don't give the simplest form unless they're stuck).`));
@@ -466,15 +503,29 @@ export class MasterjiVoice {
           for (const l of title ? [title, ...lines] : lines) bus.emit("writeLine", { text: l.trim().slice(0, 44) });
         }
       } else if (fc.name === "set_question") {
-        const question = ((fc.args ?? {}) as { question?: string }).question?.trim();
+        const asked = ((fc.args ?? {}) as { question?: string }).question?.trim();
         // Loop guard: a QUESTION SET note made him call set_question again and again (log 17-38-27).
-        const same = !!question && question.replace(/\s+/g, "") === (sessionState.question?.text ?? "").replace(/\s+/g, "");
-        clientLog("voice.set_question", { question, ignoredSame: same });
+        const same = !!asked && asked.replace(/\s+/g, "") === (sessionState.question?.text ?? "").replace(/\s+/g, "");
+        const hw = asked && !same ? this.homeworkGuard(asked) : null; // homework first
+        const question = hw ? hw.question : asked;
+        clientLog("voice.set_question", { question, ignoredSame: same, ...(hw?.swappedFrom || hw?.ref ? { homework: hw.ref, swappedFrom: hw.swappedFrom, keptBoard: !!hw.keepBoard } : {}) });
         if (question && !same) {
           this.wrong.clear();
           this.everWrong = false;
           this.selfSet = question;
-          bus.emit("questionConfirmed", { text: question, kind: kindOf(question) });
+          bus.emit("questionConfirmed", hw?.ref ? { text: question, kind: getHomework()!.items[hw.ref.index].kind, homework: hw.ref } : { text: question, kind: kindOf(question) });
+        }
+        if (hw?.swappedFrom) {
+          this.session?.sendToolResponse({
+            functionResponses: {
+              id: fc.id,
+              name: fc.name,
+              response: hw.keepBoard
+                ? { ok: false, note: hw.keepBoard }
+                : { ok: true, onBoard: question, note: `Homework comes first: the board now shows the teacher's homework question ${hw.ref!.index + 1} of ${hw.ref!.total} (${question}), not your sum. Read this one out; don't set your own sums while homework is left.` },
+            },
+          });
+          continue;
         }
       } else if (fc.name === "write_line") {
         clientLog("voice.write_line", { text, duplicate });

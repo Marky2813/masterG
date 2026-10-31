@@ -1,19 +1,21 @@
 "use client";
 
 import { getStroke } from "perfect-freehand";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { bus } from "@/lib/bus";
 import { kindOf } from "@/lib/brain/kind";
 import { getSessionId } from "@/lib/log/client";
-import type { QuestionKind } from "@/lib/types";
+import { clearHomework, getHomework, homeworkRef, loadHomework, nextHomework, subscribeHomework, type Homework, type HomeworkItem } from "@/lib/sessionState";
+import type { HomeworkRef, QuestionKind } from "@/lib/types";
 
 // The question chip: type it, snap/upload/paste a photo, or write it by hand. Photos and
 // handwriting are read by Gemini Flash (/api/question); Masterji then reads it back to confirm.
+// 📄 Homework: a whole worksheet (photo, screenshot or pasted text, /api/worksheet) becomes a queue.
 
-// Big photos are downscaled before upload (max 1400 px side, JPEG).
-async function toDataUrl(file: Blob): Promise<string> {
+// Big photos are downscaled before upload (max 1400 px side, JPEG; worksheets 2000 px to keep small print legible).
+async function toDataUrl(file: Blob, maxSide = 1400): Promise<string> {
   const bmp = await createImageBitmap(file);
-  const s = Math.min(1, 1400 / Math.max(bmp.width, bmp.height));
+  const s = Math.min(1, maxSide / Math.max(bmp.width, bmp.height));
   const c = document.createElement("canvas");
   c.width = Math.round(bmp.width * s);
   c.height = Math.round(bmp.height * s);
@@ -98,22 +100,154 @@ function WritePad({ onDone, onCancel }: { onDone: (png: string) => void; onCance
   );
 }
 
+// Load the teacher's homework: a worksheet photo/screenshot, or the text pasted (e.g. from WhatsApp).
+function HomeworkPanel({ onImage, onText, onCancel }: { onImage: (f: File) => void; onText: (t: string) => void; onCancel: () => void }) {
+  const [text, setText] = useState("");
+  const ref = useRef<HTMLInputElement>(null);
+  return (
+    <div className="absolute left-0 top-full z-30 mt-2 w-[min(28rem,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
+      <div className="text-sm font-medium text-slate-800">Teacher ka homework</div>
+      <div className="mb-2 text-xs text-slate-500">Worksheet ki photo ya screenshot do (Ctrl+V bhi chalega), ya homework ka text paste karo. Masterji ek-ek karke saare sawaal karwayenge.</div>
+      <button type="button" className="mb-2 w-full rounded-lg border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2 text-sm text-amber-900 hover:bg-amber-50" onClick={() => ref.current?.click()}>
+        📷 Worksheet ki photo / screenshot
+      </button>
+      <input
+        ref={ref}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        data-testid="homework-file"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          e.target.value = "";
+          if (f) onImage(f);
+        }}
+      />
+      <textarea
+        className="h-24 w-full resize-none rounded-lg border border-slate-200 p-2 font-mono text-xs outline-none placeholder:text-slate-400 focus:border-slate-400"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder={"Ya yahaan paste karo:\n1) 3/4 + 1/6\n2) 2x + 5 = 11"}
+      />
+      <div className="mt-2 flex justify-end gap-2 text-sm">
+        <button type="button" className="rounded-md px-3 py-1 text-slate-500" onClick={onCancel}>
+          Cancel
+        </button>
+        <button type="button" className="rounded-md bg-slate-900 px-3 py-1 text-white disabled:opacity-40" disabled={!text.trim()} onClick={() => onText(text.trim())}>
+          Padho
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// The loaded homework: "Homework 2/6", prev/next, and a list to jump to any question.
+function HomeworkQueue({ homework, open, setOpen, pick }: { homework: Homework; open: boolean; setOpen: (f: (o: boolean) => boolean) => void; pick: (i: number) => void }) {
+  const { items, current, done, title } = homework;
+  const n = items.length;
+  const nav = "rounded px-1.5 text-sm leading-5 text-amber-900 hover:bg-amber-100 disabled:opacity-30";
+  return (
+    <div className="relative mt-1">
+      <div className="flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50/95 px-2 py-1 text-xs text-amber-900 shadow-sm">
+        <button type="button" className="flex items-center gap-1 font-medium" title="All homework questions" onClick={() => setOpen((o) => !o)}>
+          <span>📄</span>
+          <span>
+            Homework {current === null ? "–" : current + 1}/{n}
+          </span>
+          <span className="text-amber-700/70">{open ? "▴" : "▾"}</span>
+        </button>
+        <span className="ml-1 text-amber-700/70">{done.length === n ? "sab ho gaya ✓" : `${done.length} done`}</span>
+        <span className="flex-1" />
+        <button type="button" className={nav} aria-label="Previous homework question" disabled={current === null || current === 0} onClick={() => pick((current ?? 1) - 1)}>
+          ‹
+        </button>
+        <button
+          type="button"
+          className={nav}
+          aria-label="Next homework question"
+          disabled={current === n - 1}
+          onClick={() => pick(current === null ? (nextHomework()?.index ?? 0) : current + 1)}
+        >
+          ›
+        </button>
+        <button type="button" className={nav} aria-label="Close homework" title="Close homework" onClick={clearHomework}>
+          ×
+        </button>
+      </div>
+      {open && (
+        <div className="absolute left-0 top-full z-30 mt-1 max-h-72 w-[min(24rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg">
+          {title && <div className="px-2 pb-1 pt-0.5 text-[11px] uppercase tracking-wide text-slate-400">{title}</div>}
+          {items.map((q, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => pick(i)}
+              title={q.text}
+              className={`flex w-full items-baseline gap-2 rounded-lg px-2 py-1 text-left text-sm ${i === current ? "bg-amber-50 text-slate-900" : "text-slate-700 hover:bg-slate-50"}`}
+            >
+              <span className="w-8 shrink-0 text-xs text-slate-400">{q.label ?? i + 1}</span>
+              <span className={`min-w-0 flex-1 truncate ${q.kind === "word_problem" ? "" : "font-mono"}`}>{q.text}</span>
+              {done.includes(i) && <span className="text-emerald-600">✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function QuestionBox() {
   const [draft, setDraft] = useState("");
   const [confirmed, setConfirmed] = useState<string | null>(null);
   const [reading, setReading] = useState(false);
   const [error, setError] = useState("");
   const [pad, setPad] = useState(false);
+  const [hwPanel, setHwPanel] = useState(false);
+  const [hwList, setHwList] = useState(false);
+  const homework = useSyncExternalStore(subscribeHomework, getHomework, () => null);
+  const hwSource = useRef<"photo" | "typed">("photo");
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Masterji can set the next question himself (set_question tool).
   useEffect(() => bus.on("questionConfirmed", ({ text }) => setConfirmed(text)), []);
 
-  const confirm = (text: string, kind: QuestionKind, source: "typed" | "photo" | "handwritten") => {
+  const confirm = (text: string, kind: QuestionKind, source: "typed" | "photo" | "handwritten", homework?: HomeworkRef) => {
     bus.emit("questionSubmitted", { source, text });
-    bus.emit("questionConfirmed", { text, kind });
+    bus.emit("questionConfirmed", homework ? { text, kind, homework } : { text, kind });
     setConfirmed(text);
     setDraft("");
+  };
+
+  // Put homework question i on the board, exactly like confirming a typed/photo question.
+  const pickHomework = (i: number) => {
+    const item = getHomework()?.items[i];
+    if (!item) return;
+    setHwList(false);
+    confirm(item.text, item.kind, hwSource.current, homeworkRef(i));
+  };
+
+  const readWorksheet = async (body: { imagePng?: string; text?: string }, source: "photo" | "typed") => {
+    setHwPanel(false);
+    setPad(false);
+    setReading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/worksheet", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-session-id": getSessionId() },
+        body: JSON.stringify({ ...body, source }),
+      });
+      const r = (await res.json()) as { questions?: HomeworkItem[]; title?: string; error?: string };
+      if (!res.ok) throw new Error(r.error ?? `HTTP ${res.status}`);
+      if (!r.questions?.length) throw new Error("Is homework mein koi sawaal nahi mila. Saaf photo ya text try karo.");
+      hwSource.current = source;
+      loadHomework(r.questions, r.title);
+      pickHomework(0);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setReading(false);
+    }
   };
 
   const readImage = async (imagePng: string, source: "photo" | "handwritten") => {
@@ -144,7 +278,9 @@ export default function QuestionBox() {
       const file = item?.getAsFile();
       if (!file) return;
       e.preventDefault();
-      void toDataUrl(file).then((url) => readImage(url, "photo"));
+      // With the homework panel open, a pasted screenshot is the whole worksheet.
+      if (hwPanel) void toDataUrl(file, 2000).then((imagePng) => readWorksheet({ imagePng }, "photo"));
+      else void toDataUrl(file).then((url) => readImage(url, "photo"));
     };
     window.addEventListener("paste", onPaste);
     return () => window.removeEventListener("paste", onPaste);
@@ -193,6 +329,20 @@ export default function QuestionBox() {
         <button type="button" className={iconBtn} title="Write the question by hand" disabled={reading} onClick={() => setPad((p) => !p)}>
           ✍️
         </button>
+        <button
+          type="button"
+          className={iconBtn}
+          title="Homework from your teacher: a worksheet photo, screenshot or pasted text"
+          aria-label="Homework"
+          disabled={reading}
+          onClick={() => {
+            setPad(false);
+            setHwList(false);
+            setHwPanel((p) => !p);
+          }}
+        >
+          📄
+        </button>
         <input
           ref={fileRef}
           type="file"
@@ -206,8 +356,16 @@ export default function QuestionBox() {
           }}
         />
       </form>
+      {homework && <HomeworkQueue homework={homework} open={hwList} setOpen={setHwList} pick={pickHomework} />}
       {error && <div className="mt-1 rounded-md bg-rose-50 px-2 py-1 text-xs text-rose-700">{error}</div>}
       {pad && <WritePad onDone={(png) => readImage(png, "handwritten")} onCancel={() => setPad(false)} />}
+      {hwPanel && (
+        <HomeworkPanel
+          onImage={(f) => void toDataUrl(f, 2000).then((imagePng) => readWorksheet({ imagePng }, "photo"))}
+          onText={(text) => void readWorksheet({ text }, "typed")}
+          onCancel={() => setHwPanel(false)}
+        />
+      )}
     </div>
   );
 }

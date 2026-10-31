@@ -54,8 +54,13 @@ export function questionFacts(question: string): string[] {
 
 // True when a correct line ends in the question's final answer written as a single number or
 // fraction ("11/12", "= 11/12", "9/12 + 2/12 = 11/12"), not an intermediate expression.
+// Equations: the line ends in the solution in simplest form ("x = 1" for "x - 1 = 0"; added 2026-11-01).
 export function reachesFinalAnswer(question: string, line: string): boolean {
   const ans = referenceAnswer(question);
+  if (ans?.kind === "equation") {
+    const sides = normalize(line).replace(/\s+/g, "").split("=");
+    return sides.length >= 2 && `${sides.at(-2)}=${sides.at(-1)}` === ans.text.replace(/\s+/g, "");
+  }
   if (!ans || ans.kind !== "value") return false;
   const last = normalize(line).split("=").pop()?.replace(/\s+/g, "") ?? "";
   if (!/^-?\d+(\/\d+)?$/.test(last)) return false;
