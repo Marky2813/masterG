@@ -5,6 +5,7 @@ import { bus } from "@/lib/bus";
 import type { Point } from "@/lib/types";
 import { mark as penMark, text as penText } from "@/lib/redpen";
 import { drawPenItems, type PlacedItem } from "@/lib/redpen/draw";
+import { markPen } from "@/lib/notebook/penState";
 import { assignIds, clusterStrokes, type ClusterGroup } from "@/lib/notebook/cluster";
 import { cropCluster } from "@/lib/notebook/crop";
 import { bboxOf, hitsStroke, strokePath, type InkStroke } from "@/lib/notebook/strokes";
@@ -231,6 +232,7 @@ export default function Notebook({ debug = false }: { debug?: boolean }) {
   const onDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
     e.currentTarget.setPointerCapture(e.pointerId);
+    markPen(true);
     cancelPause();
     const p = toPoint(e);
     if (isEraser(e)) {
@@ -268,6 +270,7 @@ export default function Notebook({ debug = false }: { debug?: boolean }) {
   };
 
   const onUp = () => {
+    markPen(false);
     if (erasingRef.current) {
       erasingRef.current = false;
       schedulePause();

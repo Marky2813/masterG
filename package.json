@@ -13,7 +13,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "check": "npm run typecheck && npm run lint && npm run test:checker && npm run test:cluster && npm run test:decide",
     "test:cluster": "tsx scripts/cluster-smoke.ts",
-    "test:decide": "tsx scripts/decide-smoke.ts"
+    "test:decide": "tsx scripts/decide-smoke.ts",
+    "logs": "tsx scripts/logs.ts"
   },
   "dependencies": {
     "@google/genai": "^2.32.0",

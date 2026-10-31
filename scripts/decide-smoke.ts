@@ -15,5 +15,8 @@ t("word problem: bad arithmetic caught", decide({ text: "500 - 235 = 335", alter
 t("word problem: right step stays right", decide({ text: "60 / 5 = 12", alternatives: [], modelVerdict: "correct", kind: "word_problem" }).status === "correct");
 t("garbled read (y = y) is unsure, not wrong", decide({ text: "y = y", alternatives: [], modelVerdict: "wrong", question: "7y - 9 = 19", previous: "7y = 28" }).status === "unsure");
 t("4 read as y: alternative accepted", decide({ text: "y = y", alternatives: ["y = 4"], modelVerdict: "wrong", question: "7y - 9 = 19", previous: "7y = 28" }).status === "correct");
+t("half-written 3/4 is not wrong", decide({ text: "3/4", alternatives: [], modelVerdict: "wrong", question: "3/4 + 1/6" }).status === "unsure");
+t("line ending in = is not wrong", decide({ text: "3/4 + 1/6 =", alternatives: [], modelVerdict: "wrong", question: "3/4 + 1/6" }).status === "unsure");
+t("full wrong line still wrong", decide({ text: "3/4 + 1/6 = 4/10", alternatives: [], modelVerdict: "wrong", question: "3/4 + 1/6" }).status === "wrong");
 if (failed) { console.log(`\n${failed} failed`); process.exit(1); }
 console.log("\nall passed");

@@ -58,6 +58,14 @@ export function decide(input: DecideInput): Decision {
   const usedAlternatives = plausibleAlternatives(input.text, input.alternatives);
   if (!input.text) return { status: "unsure", source: "model", reason: "nothing_read", usedAlternatives };
 
+  // A half-written line ("3/4" of "3/4 + 1/6", or ending in an operator) is not a mistake yet.
+  const t = normalize(input.text).replace(/\s+/g, "");
+  const q = normalize(input.question ?? "").replace(/\s+/g, "");
+  if (!t.includes("=") && ((q && q.startsWith(t) && t !== q) || /[-+*/(]$/.test(t))) {
+    return { status: "unsure", source: "checker", reason: "incomplete_line", usedAlternatives };
+  }
+  if (/=$/.test(t)) return { status: "unsure", source: "checker", reason: "incomplete_line", usedAlternatives };
+
   // Word problems: the question is prose, so the checker only sees the line itself.
   const ctx = input.kind === "word_problem" ? { previous: input.previous } : { question: input.question, previous: input.previous };
   const check = checkReadings([input.text, ...usedAlternatives], ctx);

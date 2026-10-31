@@ -8,6 +8,9 @@ import { unionBBox } from "./strokes";
 // Two strokes join the same cluster when either:
 //   - spatial: their bboxes are within hGap horizontally AND vGap vertically
 //     (same line, or a stacked fraction's numerator / bar / denominator), or
+//   - same row: their vertical extents overlap by at least rowOverlap of the
+//     shorter one, however far apart horizontally. Kids leave big gaps
+//     between terms ("3/4    +   1/6"); a written line is one step.
 //   - temporal: they were written one right after the other (< tGapMs apart)
 //     and are within jumpGap of each other. This keeps a stacked fraction
 //     together without letting the next line merge in: starting a new line is a
@@ -26,9 +29,18 @@ export interface ClusterOpts {
   vGap: number;
   tGapMs: number;
   jumpGap: number;
+  rowOverlap: number;
 }
 
-export const DEFAULT_CLUSTER_OPTS: ClusterOpts = { hGap: 70, vGap: 12, tGapMs: 1200, jumpGap: 45 };
+export const DEFAULT_CLUSTER_OPTS: ClusterOpts = { hGap: 70, vGap: 12, tGapMs: 1200, jumpGap: 45, rowOverlap: 0.35 };
+
+// Vertical overlap as a fraction of the shorter box (thin strokes like "-" count fully if inside the row).
+function rowOverlap(a: BBox, b: BBox): number {
+  const top = Math.max(a.y, b.y),
+    bottom = Math.min(a.y + a.h, b.y + b.h);
+  const shorter = Math.max(4, Math.min(a.h, b.h));
+  return Math.max(0, bottom - top) / shorter;
+}
 
 export interface ClusterGroup {
   strokeIds: string[];
@@ -53,7 +65,7 @@ export function clusterStrokes(strokes: ClusterInput[], opts: ClusterOpts = DEFA
   for (let i = 0; i < strokes.length; i++) {
     for (let j = i + 1; j < strokes.length; j++) {
       const { gx, gy } = gap(strokes[i].bbox, strokes[j].bbox);
-      if (gx <= opts.hGap && gy <= opts.vGap) union(i, j);
+      if ((gx <= opts.hGap && gy <= opts.vGap) || rowOverlap(strokes[i].bbox, strokes[j].bbox) >= opts.rowOverlap) union(i, j);
     }
   }
 

@@ -49,3 +49,6 @@ reference/
 .claude/settings.local.json
 *.swp
 *~
+
+# session logs (kid voice transcripts, crops)
+logs/
