@@ -14,6 +14,7 @@ Before a bulk run (full benchmark, rehearsal), check the quota or balance in Goo
 | Nov 1 01:25 | Claude | bench after adding the handwriting rating to the judge prompt | flash-lite ×1, A+guard only, run twice | 96 calls | paid | `benchmark/results/2026-10-31T19-55-28-900Z.md` (96% verdict, 0 false alarms, p95 1.81 s), `….md.md` (98%, 0 false alarms, p95 1.69 s; handwriting: 46 neat, 2 ok, 0 messy) |
 | Nov 1 01:20 | Claude | interrupt probe (`scripts/interrupt-probe.ts`): cut-off context note mid-reply | live 3.1 flash ×5 sessions | 5 sessions | paid | `logs/probe/interrupt-*.txt` (gitignored): no 1007; he resumed with "main keh raha tha…" but re-wrote the same working |
 | Oct 31 18:28 | Claude | burst test 25 parallel | gemini-3.5-flash-lite | 25 calls | paid: 25/25 ok, p50 1.2 s | `scripts/burst.ts` |
+| Nov 1 02:30 | Claude | teacher report e2e (`scripts/report-drive.mjs`): headless Chrome writes 3 sums with mouse strokes on /learn, opens 📋 Report | gemini-3.5-flash-lite | 2 full runs + 1 partial: 15 step calls + 2 report-summary calls | paid | `docs/screenshots/report/drive-result.json`: each full run: 6 steps, verdicts as intended (2 wrong, 4 correct; Flash labelled 3/8 `copied_wrong`, not `add_across`), AI summary written both runs, share link 795 chars |
 
 ## Results
 | Spike | Issue | Owner | Status | Result |

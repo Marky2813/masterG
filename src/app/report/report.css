@@ -1,0 +1,26 @@
+/* Teacher / parent report (/report). Light only, A4 when printed. */
+.report-page {
+  color-scheme: light;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  html,
+  body {
+    background: #f8f5ee !important;
+  }
+  .report-page {
+    font-size: 13px;
+  }
+  .report-page .break-inside-avoid {
+    break-inside: avoid;
+  }
+  .report-page a[href^="http"]::after {
+    content: none;
+  }
+}

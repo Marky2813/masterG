@@ -57,6 +57,7 @@ export interface Verdict {
   text: string; // what we read, in mathjs syntax
   category?: string; // ErrorCategory.id
   categoryIsNew?: boolean;
+  categoryLabel?: string; // ErrorCategory.label for `category`, so listeners (the report) needn't keep the list (added 2026-11-01)
   repeatCount: number; // how many times this category has happened this session (1 = first time)
   hintRung: HintRung;
   hint?: string; // what Masterji should get across at this rung (Voice phrases it)
