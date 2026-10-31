@@ -5,7 +5,7 @@
 // question and the nearest correct step above it. PLAN.md §5.
 import { bus } from "../bus";
 import { SEED_CATEGORIES } from "../categories";
-import type { BBox, ErrorCategory, MarkType, QuestionKind, Verdict } from "../types";
+import type { BBox, ErrorCategory, HintRung, MarkType, QuestionKind, Verdict } from "../types";
 import type { JudgeResult } from "../gemini/judge";
 import { clientLog, getSessionId } from "../log/client";
 import { waitForQuietPen } from "../notebook/penState";
@@ -25,6 +25,9 @@ export function startStepService(debug: StepServiceDebug = {}): () => void {
   const clusters = new Map<string, ClusterState>();
   const categories: ErrorCategory[] = [...SEED_CATEGORIES];
   const categoryCounts = new Map<string, number>();
+  // Hint ladder (PLAN.md §2): one rung per failed attempt on the same step, or per "nahi aata".
+  const rungs = new Map<string, HintRung>();
+  let lastWrong: { id: string; text: string; category?: string } | null = null;
   let question: string | undefined;
   let kind: QuestionKind | undefined;
 
@@ -98,15 +101,43 @@ export function startStepService(debug: StepServiceDebug = {}): () => void {
       category,
       categoryIsNew,
       repeatCount,
-      hintRung: r.status === "wrong" ? 1 : 0, // the full hint ladder lands with mistake memory (#15)
+      hintRung: r.status === "wrong" ? climb(id) : 0,
       hint: r.status === "wrong" ? r.explanation : undefined,
       source: r.source,
     };
+    if (r.status === "wrong") lastWrong = { id, text: r.text, category };
+    else if (r.status === "correct") {
+      rungs.delete(id);
+      if (lastWrong?.id === id) lastWrong = null;
+    }
     clientLog("verdict", { ...verdict });
     bus.emit("verdict", verdict);
   };
 
+  const climb = (id: string): HintRung => {
+    const next = Math.min(4, (rungs.get(id) ?? 0) + 1) as HintRung;
+    rungs.set(id, next);
+    return next;
+  };
+
   const offs = [
+    // "nahi aata" / "pata nahi" / "samajh nahi" on an open mistake → next rung, re-sent as a verdict.
+    bus.on("userUtterance", ({ text }) => {
+      if (!lastWrong || !/nahi\s*(aata|aati|pata)|pata\s*nahi|samajh\s*nahi|नहीं\s*(आता|आती|पता)|पता\s*नहीं|समझ\s*नहीं|don'?t know|no idea/i.test(text)) return;
+      const rung = climb(lastWrong.id);
+      clientLog("hint.stuck", { clusterId: lastWrong.id, rung, said: text });
+      bus.emit("verdict", {
+        clusterId: lastWrong.id,
+        status: "wrong",
+        mark: "circle",
+        text: lastWrong.text,
+        category: lastWrong.category,
+        categoryIsNew: false,
+        repeatCount: lastWrong.category ? (categoryCounts.get(lastWrong.category) ?? 1) : 0,
+        hintRung: rung,
+        source: "checker",
+      });
+    }),
     bus.on("questionConfirmed", (q) => {
       clientLog("question.confirmed", { ...q });
       question = q.text;

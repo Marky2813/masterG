@@ -6,8 +6,9 @@ import QuestionBox from "@/components/question/QuestionBox";
 import EventLog from "@/components/debug/EventLog";
 import VoiceBar from "@/components/voice/VoiceBar";
 import { startStepService } from "@/lib/brain/stepService";
+import "@/lib/sessionState";
 
-// Main screen. The full app shell (start screen, captions, toggles) comes in #12.
+// Full-screen whiteboard with Masterji floating on top.
 export default function Home() {
   const [debug, setDebug] = useState(false);
   useEffect(() => {
@@ -17,17 +18,13 @@ export default function Home() {
   useEffect(() => startStepService(), []);
 
   return (
-    <main className="mx-auto flex w-full max-w-7xl gap-4 p-4 text-slate-900">
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <h1 className="text-xl font-semibold">Master G</h1>
+    <main className="text-slate-900">
+      <Notebook debug={debug} />
+      <VoiceBar>
         <QuestionBox />
-        <Notebook debug={debug} />
-        <div className="sticky bottom-2">
-          <VoiceBar />
-        </div>
-      </div>
+      </VoiceBar>
       {debug && (
-        <div className="w-80 shrink-0">
+        <div className="fixed bottom-20 right-4 z-10 w-80">
           <EventLog />
         </div>
       )}

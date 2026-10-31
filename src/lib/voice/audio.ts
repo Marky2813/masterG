@@ -65,7 +65,10 @@ export class Mic {
   }
 }
 
+const PREROLL_S = 0.25;
+
 export class Player {
+  underruns = 0; // times the stream ran dry mid-reply (logged)
   private ctx = new AudioContext({ sampleRate: 24000 });
   private nextTime = 0;
   private sources = new Set<AudioBufferSourceNode>();
@@ -96,7 +99,11 @@ export class Player {
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     src.connect(this.ctx.destination);
-    const at = Math.max(this.ctx.currentTime + 0.02, this.nextTime);
+    // Jitter buffer: when starting from silence (new reply or after an underrun), wait 250 ms so
+    // small network hiccups don't cut words. Contiguous chunks play back to back.
+    const fromSilence = this.nextTime < this.ctx.currentTime;
+    if (fromSilence && this.nextTime > 0) this.underruns++;
+    const at = fromSilence ? this.ctx.currentTime + PREROLL_S : this.nextTime;
     src.start(at);
     this.nextTime = at + buf.duration;
     this.sources.add(src);

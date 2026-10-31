@@ -10,6 +10,8 @@
 import { GoogleGenAI, type LiveServerMessage, type Session } from "@google/genai";
 import { bus } from "../bus";
 import type { Language, Verdict } from "../types";
+import { questionFacts } from "../brain/facts";
+import { sessionState } from "../sessionState";
 import { clientLog, getSessionId } from "../log/client";
 import { Mic, Player } from "./audio";
 import { liveConfig } from "./liveConfig";
@@ -34,7 +36,10 @@ export class MasterjiVoice {
   private wasAudible = false;
   private pending: string[] = []; // notes held until Masterji finishes his sentence
   private talking = false; // push-to-talk held
-  private waitingSince = 0; // when we last asked for a reply (note sent / button released), for latency logs
+  private generating = false; // server is mid-reply (audio arrived, no turnComplete yet)
+  private discardStale = false; // kid interrupted: drop the old reply's leftover audio until the server ends it
+  private waitingSince = 0;
+  private written = new Set<string>(); // board writes already made (dedupe repeated tool calls) // when we last asked for a reply (note sent / button released), for latency logs
   language: Language;
 
   constructor(
@@ -84,7 +89,9 @@ export class MasterjiVoice {
       }
     }, 100);
     this.subscribe();
-    this.note("[SESSION START] Greet the child and ask their name.");
+    // One message: a second note right after would cut off his greeting.
+    const q = sessionState.question; // set before Masterji started?
+    this.note(`[SESSION START] Greet the child and ask their name.${q ? `\n${this.questionNote(q.text)}` : ""}`);
   }
 
   stop(): void {
@@ -102,6 +109,7 @@ export class MasterjiVoice {
     if (this.talking || !this.session) return;
     this.talking = true;
     await this.mic.resume();
+    if (this.generating) this.discardStale = true; // the server will keep streaming the old reply for a moment
     if (this.player?.speaking) {
       this.player.flush();
       if (this.masterjiLine) this.cb.onCaption?.("masterji", this.masterjiLine + " —", true);
@@ -155,13 +163,22 @@ export class MasterjiVoice {
   private subscribe(): void {
     this.offs.push(
       bus.on("verdict", (v) => this.onVerdict(v)),
-      bus.on("questionConfirmed", ({ text }) => this.note(`[QUESTION SET: ${text}]`)),
+      bus.on("questionConfirmed", ({ text }) => this.noteQuestion(text)),
       bus.on("clusterRemoved", ({ id }) => this.wrong.delete(id)),
       bus.on("languageChanged", ({ language }) => {
         this.language = language;
         this.note(`[LANGUAGE: ${language}]`);
       }),
     );
+  }
+
+  private questionNote(text: string): string {
+    const facts = questionFacts(text);
+    return `[QUESTION SET: ${text}]${facts.length ? `\n[FACTS (computed, correct; copy these when writing): ${facts.join(" ; ")}]` : ""}`;
+  }
+
+  private noteQuestion(text: string): void {
+    this.note(this.questionNote(text));
   }
 
   private onVerdict(v: Verdict): void {
@@ -174,6 +191,8 @@ export class MasterjiVoice {
         `rung ${v.hintRung}`,
         `repeat ${v.repeatCount}`,
         v.hint ? `hint: ${v.hint}` : null,
+        v.hintRung >= 4 ? "ACTION: call write_line with the correct step from FACTS, then ask the child to do the next line" : null,
+        v.hintRung === 3 ? "ACTION: write_note the one fact they need (from FACTS)" : null,
       ].filter(Boolean);
       this.note(`[${parts.join(" | ")}]`);
     } else if (v.status === "correct" && this.wrong.delete(v.clusterId)) {
@@ -184,6 +203,8 @@ export class MasterjiVoice {
   private onMessage(m: LiveServerMessage): void {
     const sc = m.serverContent;
     if (sc?.interrupted) {
+      this.discardStale = false;
+      this.generating = false;
       this.player?.flush();
       clientLog("voice.interrupted_by_server", { masterjiSaid: this.masterjiLine });
       if (this.masterjiLine) this.cb.onCaption?.("masterji", this.masterjiLine + " —", true);
@@ -191,6 +212,8 @@ export class MasterjiVoice {
     }
     for (const part of sc?.modelTurn?.parts ?? []) {
       if (part.inlineData?.data && part.inlineData.mimeType?.startsWith("audio/")) {
+        if (this.discardStale) continue;
+        this.generating = true;
         if (this.waitingSince) {
           clientLog("voice.first_audio", { ms: Math.round(performance.now() - this.waitingSince) });
           this.waitingSince = 0;
@@ -198,7 +221,7 @@ export class MasterjiVoice {
         this.player?.enqueue(part.inlineData.data);
       }
     }
-    if (sc?.outputTranscription?.text) {
+    if (sc?.outputTranscription?.text && !this.discardStale) {
       this.masterjiLine += sc.outputTranscription.text;
       this.cb.onCaption?.("masterji", this.masterjiLine, false);
     }
@@ -207,18 +230,30 @@ export class MasterjiVoice {
       this.cb.onCaption?.("kid", this.kidLine, false);
     }
     if (sc?.turnComplete) {
-      clientLog("voice.turn", { masterji: this.masterjiLine.trim(), kid: this.kidLine.trim() });
+      const wasStale = this.discardStale;
+      this.discardStale = false;
+      this.generating = false;
+      clientLog("voice.turn", { masterji: this.masterjiLine.trim(), kid: this.kidLine.trim(), underruns: this.player?.underruns ?? 0, staleDropped: wasStale });
       if (this.kidLine.trim()) bus.emit("userUtterance", { text: this.kidLine.trim() });
       this.masterjiLine = "";
       this.kidLine = "";
     }
     for (const fc of m.toolCall?.functionCalls ?? []) {
+      const args = (fc.args ?? {}) as { clusterId?: string; text?: string };
+      const text = args.text?.trim();
+      const key = `${fc.name}|${args.clusterId ?? ""}|${text}`;
+      const duplicate = this.written.has(key);
+      if (text && !duplicate) this.written.add(key);
       if (fc.name === "write_note") {
-        const { clusterId, text } = (fc.args ?? {}) as { clusterId?: string; text?: string };
-        clientLog("voice.write_note", { clusterId, text });
-        if (clusterId && text) bus.emit("writeNote", { clusterId, text: text.slice(0, 16) });
-        this.session?.sendToolResponse({ functionResponses: { id: fc.id, name: fc.name, response: { ok: true } } });
+        clientLog("voice.write_note", { clusterId: args.clusterId, text, duplicate });
+        if (args.clusterId && text && !duplicate) bus.emit("writeNote", { clusterId: args.clusterId, text: text.slice(0, 28) });
+      } else if (fc.name === "write_line") {
+        clientLog("voice.write_line", { text, duplicate });
+        if (text && !duplicate) bus.emit("writeLine", { text: text.slice(0, 44) });
       }
+      this.session?.sendToolResponse({
+        functionResponses: { id: fc.id, name: fc.name, response: { ok: !duplicate, ...(duplicate ? { note: "already written; don't repeat" } : {}) } },
+      });
     }
   }
 }

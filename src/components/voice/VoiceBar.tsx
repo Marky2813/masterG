@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { MasterjiVoice, type VoiceStatus } from "@/lib/voice/voiceService";
 import { bus } from "@/lib/bus";
 import type { Language } from "@/lib/types";
 
-// Start/stop Masterji, language toggle, and the two-line caption bar (PLAN.md §6 Captions).
-export default function VoiceBar() {
+// Floating Masterji card (top left): status pill, live captions, the question chip below,
+// and the push-to-talk pill (bottom centre). Hold SPACE to talk. PLAN.md §6.
+export default function VoiceBar({ children }: { children?: ReactNode }) {
   const voiceRef = useRef<MasterjiVoice | null>(null);
   const [status, setStatus] = useState<VoiceStatus>("idle");
   const [detail, setDetail] = useState("");
@@ -14,10 +15,37 @@ export default function VoiceBar() {
   const [masterji, setMasterji] = useState("");
   const [kid, setKid] = useState("");
   const [speaking, setSpeaking] = useState(false);
+  const [talking, setTalking] = useState(false);
 
   useEffect(() => () => voiceRef.current?.stop(), []);
 
-  const [talking, setTalking] = useState(false);
+  const start = async () => {
+    const v = new MasterjiVoice(language, {
+      onStatus: (s, d) => {
+        setStatus(s);
+        setDetail(d ?? "");
+      },
+      onCaption: (who, text) => (who === "masterji" ? setMasterji(text) : setKid(text)),
+      onSpeaking: setSpeaking,
+    });
+    voiceRef.current = v;
+    try {
+      await v.start();
+    } catch (e) {
+      setStatus("error");
+      setDetail(e instanceof Error ? e.message : String(e));
+    }
+  };
+  const stop = () => {
+    voiceRef.current?.stop();
+    voiceRef.current = null;
+  };
+  const toggleLanguage = () => {
+    const next: Language = language === "hinglish" ? "english" : "hinglish";
+    setLanguage(next);
+    bus.emit("languageChanged", { language: next });
+  };
+
   const down = () => {
     if (!voiceRef.current) return;
     setTalking(true);
@@ -49,79 +77,65 @@ export default function VoiceBar() {
     };
   });
 
-  const start = async () => {
-    const v = new MasterjiVoice(language, {
-      onStatus: (s, d) => {
-        setStatus(s);
-        setDetail(d ?? "");
-      },
-      onCaption: (who, text) => (who === "masterji" ? setMasterji(text) : setKid(text)),
-      onSpeaking: setSpeaking,
-    });
-    voiceRef.current = v;
-    try {
-      await v.start();
-    } catch (e) {
-      setStatus("error");
-      setDetail(e instanceof Error ? e.message : String(e));
-    }
-  };
-
-  const stop = () => {
-    voiceRef.current?.stop();
-    voiceRef.current = null;
-  };
-
-  const toggleLanguage = () => {
-    const next: Language = language === "hinglish" ? "english" : "hinglish";
-    setLanguage(next);
-    bus.emit("languageChanged", { language: next });
-  };
-
   const live = status === "live" || status === "connecting";
+  const pill = !live
+    ? { text: status === "error" ? "Error" : "Offline", cls: "bg-slate-200 text-slate-600" }
+    : status === "connecting"
+      ? { text: "Connecting", cls: "bg-slate-200 text-slate-600" }
+      : talking
+        ? { text: "Listening", cls: "bg-sky-600 text-white" }
+        : speaking
+          ? { text: "Speaking", cls: "bg-amber-700 text-white" }
+          : { text: "Watching", cls: "bg-emerald-600 text-white" };
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-slate-300 bg-slate-900 p-3 text-white">
-      <div className="flex items-center gap-2 text-sm">
+    <>
+      <div className="fixed left-4 top-4 z-10 flex w-[min(28rem,calc(100vw-2rem))] flex-col gap-2">
+        <div className="rounded-xl border border-amber-200/70 bg-white/95 p-2.5 shadow-sm backdrop-blur">
+          <div className="flex items-start gap-2">
+            <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold ${pill.cls}`}>{pill.text}</span>
+            <div className="min-w-0 flex-1 text-[13px] leading-snug">
+              {masterji ? (
+                <div className="text-slate-800">
+                  <span className="font-semibold text-amber-700">Masterji · </span>
+                  {masterji}
+                </div>
+              ) : (
+                <div className="text-slate-400">{live ? "…" : "Masterji is offline"}</div>
+              )}
+              {kid && <div className="mt-0.5 text-slate-500">You · {kid}</div>}
+              {status === "error" && <div className="mt-0.5 text-rose-600">{detail}</div>}
+            </div>
+          </div>
+        </div>
+        {children}
+      </div>
+
+      {/* bottom centre: start / push-to-talk */}
+      <div className="fixed bottom-5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2">
         {live ? (
-          <button className="rounded bg-rose-600 px-3 py-1" onClick={stop}>
-            Stop Masterji
-          </button>
+          <>
+            <button
+              className={`select-none rounded-full px-5 py-2.5 text-sm font-medium shadow-sm transition ${talking ? "bg-sky-600 text-white" : "border border-slate-200 bg-white/95 text-slate-700"}`}
+              onPointerDown={down}
+              onPointerUp={up}
+              onPointerLeave={() => talking && up()}
+            >
+              {talking ? "🎙️ Listening… release to send" : "🎙️ Hold SPACE to talk"}
+            </button>
+            <button className="rounded-full border border-slate-200 bg-white/95 px-3 py-2.5 text-xs text-slate-500 shadow-sm" onClick={toggleLanguage}>
+              {language === "hinglish" ? "Hinglish" : "English"}
+            </button>
+            <button className="rounded-full border border-slate-200 bg-white/95 px-3 py-2.5 text-xs text-slate-500 shadow-sm" onClick={stop}>
+              End
+            </button>
+          </>
         ) : (
-          <button className="rounded bg-emerald-600 px-3 py-1 font-medium" onClick={start}>
-            Start Masterji 🎙️
+          <button className="rounded-full bg-slate-900 px-6 py-3 text-sm font-medium text-white shadow" onClick={start}>
+            Start Masterji
           </button>
         )}
-        {live && (
-          <button
-            className={`select-none rounded px-4 py-1 font-medium ${talking ? "bg-sky-500 text-black" : "bg-slate-700"}`}
-            onPointerDown={down}
-            onPointerUp={up}
-            onPointerLeave={() => talking && up()}
-            title="Hold SPACE or this button to talk"
-          >
-            {talking ? "🎙️ Bol rahe ho… (chhodo to send)" : "🎙️ Hold SPACE to talk"}
-          </button>
-        )}
-        <span className="text-xs text-slate-400">{live && speaking ? "🔊 Masterji" : ""}</span>
-        <button className="rounded bg-slate-700 px-3 py-1" onClick={toggleLanguage}>
-          {language === "hinglish" ? "Hinglish" : "English"}
-        </button>
-        <span className="ml-auto font-mono text-xs text-slate-400">
-          {status}
-          {detail ? `: ${detail}` : ""}
-        </span>
       </div>
-      <div className="min-h-[3.5rem] space-y-1">
-        <div className="text-lg leading-snug">
-          <span className="mr-2 text-amber-400">Masterji:</span>
-          {masterji}
-        </div>
-        <div className="text-base leading-snug text-slate-300">
-          <span className="mr-2 text-sky-400">You:</span>
-          {kid}
-        </div>
-      </div>
-    </div>
+    </>
   );
 }

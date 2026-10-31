@@ -70,6 +70,7 @@ export interface MasterGEvents {
   questionConfirmed: { text: string; kind: QuestionKind };
   verdict: Verdict;
   writeNote: { clusterId: string; text: string };
+  writeLine: { text: string }; // Masterji writes a full worked line on the board, below the kid's work (added 2026-10-31)
   userUtterance: { text: string };
   modeChanged: { mode: Mode };
   languageChanged: { language: Language };

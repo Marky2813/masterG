@@ -191,3 +191,12 @@ export function checkReadings(readings: string[], ctx: CheckContext = {}): Check
   if (results.every((r) => r.status === "wrong")) return results[0];
   return { status: "unknown", reason: "mixed" };
 }
+
+// The exact answer a question pins down, formatted for people ("11/12", "x = 5"). Used to give
+// Masterji correct numbers to write on the board, so the voice model never computes maths itself.
+export function referenceAnswer(question: string): { kind: "value" | "equation"; text: string } | null {
+  const ref = analyze(question);
+  if (!ref || ref.kind === "expr") return null;
+  const fmt = (v: MathType) => math.format(v, { fraction: "ratio" }).replace(/^(-?\d+)\/1$/, "$1");
+  return ref.kind === "value" ? { kind: "value", text: fmt(ref.value) } : { kind: "equation", text: `${ref.variable} = ${fmt(ref.solution)}` };
+}

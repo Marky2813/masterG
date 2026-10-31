@@ -23,7 +23,8 @@ export async function POST(request: Request) {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions: { apiVersion: "v1alpha" } });
     const now = Date.now();
     const config = liveConfig(language);
-    const token = await ai.authTokens.create({
+    // One retry: a network blip ("fetch failed") shouldn't kill the session start on stage.
+    const create = () => ai.authTokens.create({
       config: {
         uses: 1,
         expireTime: new Date(now + 30 * 60 * 1000).toISOString(),
@@ -32,6 +33,13 @@ export async function POST(request: Request) {
         httpOptions: { apiVersion: "v1alpha" },
       },
     });
+    let token;
+    try {
+      token = await create();
+    } catch (e) {
+      await logEvent(sessionId, "voice.token_retry", { error: (e as Error).message });
+      token = await create();
+    }
     await logEvent(sessionId, "voice.token", { model: LIVE_MODEL, language, voice: config.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName });
     return Response.json({ token: token.name, model: LIVE_MODEL, language });
   } catch (e) {
