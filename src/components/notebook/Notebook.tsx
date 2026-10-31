@@ -15,7 +15,7 @@ import { bboxOf, hitsStroke, strokePath, type InkStroke } from "@/lib/notebook/s
 // main area and emits clusterUpdated / clusterRemoved on the bus. PLAN.md §4.
 
 export const PAGE_W = 1600; // notebook units (landscape whiteboard); the canvas scales to the screen
-export const PAGE_H = 1000;
+export const PAGE_H = 3000; // three screens tall: the page scrolls
 export const ROUGH_X = PAGE_W * 0.8; // rough-work column starts here
 export const GRID = 40; // grid cell, in notebook units
 const PAUSE_MS = 1500;
@@ -41,7 +41,8 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
   // Red-pen ink per cluster: the verdict mark plus any margin notes. Erasing the cluster removes it.
   const penRef = useRef<Map<string, { mark?: PlacedItem; notes: PlacedItem[] }>>(new Map());
   const animUntilRef = useRef(0);
-  const linesRef = useRef<{ item: PlacedItem; bottom: number }[]>([]); // Masterji's full lines of working (write_line) // keep redrawing the overlay until the last pen stroke is done
+  const linesRef = useRef<{ item: PlacedItem; bottom: number }[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null); // Masterji's full lines of working (write_line) // keep redrawing the overlay until the last pen stroke is done
 
   const [tool, setTool] = useState<Tool>("pen");
   const [clusters, setClusters] = useState<NotebookCluster[]>([]);
@@ -293,16 +294,39 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
     if (!cur) return;
     currentRef.current = null;
     cur.bbox = bboxOf(cur.points);
-    cur.rough = cur.bbox.x + cur.bbox.w / 2 >= ROUGH_X;
+    cur.rough = cur.bbox.x + cur.bbox.w / 2 >= ROUGH_X && !continuesLine(cur);
     strokesRef.current.push(cur);
     redraw();
     schedulePause();
+    autoScroll(cur);
   };
 
   const undo = () => {
     strokesRef.current.pop();
     redraw();
     schedulePause();
+  };
+
+  // A stroke past the rough-work line still belongs to the main area if it continues a written line
+  // (same row, close to that line's last stroke): long answers run into the column.
+  const continuesLine = (s: InkStroke): boolean =>
+    strokesRef.current.some((m) => {
+      if (m.rough) return false;
+      const top = Math.max(m.bbox.y, s.bbox.y),
+        bottom = Math.min(m.bbox.y + m.bbox.h, s.bbox.y + s.bbox.h);
+      const overlap = Math.max(0, bottom - top) / Math.max(4, Math.min(m.bbox.h, s.bbox.h));
+      const gap = s.bbox.x - (m.bbox.x + m.bbox.w);
+      return overlap >= 0.35 && gap <= 140;
+    });
+
+  // Writing near the bottom of the screen scrolls the page up so there's always room.
+  const autoScroll = (s: InkStroke) => {
+    const canvas = inkRef.current,
+      box = scrollRef.current;
+    if (!canvas || !box) return;
+    const rect = canvas.getBoundingClientRect();
+    const bottomPx = rect.top + ((s.bbox.y + s.bbox.h) / PAGE_H) * rect.height;
+    if (bottomPx > window.innerHeight * 0.72) box.scrollBy({ top: window.innerHeight * 0.4, behavior: "smooth" });
   };
 
   const clearAll = () => {
@@ -312,7 +336,21 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
     redraw();
     cancelPause();
     recluster();
+    scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  // A new question (typed, or chosen by Masterji) starts on a clean page.
+  const clearRef = useRef(clearAll);
+  useEffect(() => {
+    clearRef.current = clearAll;
+  });
+  useEffect(
+    () =>
+      bus.on("questionConfirmed", () => {
+        if (strokesRef.current.length > 0 || linesRef.current.length > 0) clearRef.current();
+      }),
+    [],
+  );
 
   // Pen cursor dot (PLAN.md §3: the pen cursor dot is visible on the canvas).
   const cursor =
@@ -324,11 +362,10 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
     `flex h-9 min-w-9 items-center justify-center rounded-lg px-2 text-sm transition ${active ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-white">
+    <div ref={scrollRef} className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-white">
       <div
-        className="relative max-h-full max-w-full"
+        className="relative w-full"
         style={{
-          width: `min(100vw, ${(100 * PAGE_W) / PAGE_H}vh)`,
           aspectRatio: `${PAGE_W} / ${PAGE_H}`,
           backgroundColor: "#fdfdfc",
           backgroundImage:
@@ -341,7 +378,7 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
           className="pointer-events-none absolute inset-y-0 right-0 border-l border-dashed border-slate-300"
           style={{ left: `${(ROUGH_X / PAGE_W) * 100}%` }}
         >
-          <div className="absolute bottom-3 w-full text-center text-[11px] font-medium uppercase tracking-widest text-slate-300">
+          <div className="sticky top-20 w-full pt-20 text-center text-[11px] font-medium uppercase tracking-widest text-slate-300">
             Rough work
           </div>
         </div>

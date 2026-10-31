@@ -1,19 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { bus } from "@/lib/bus";
-import type { QuestionKind } from "@/lib/types";
+import { kindOf } from "@/lib/brain/kind";
 
 // Typed question input (first slice of #10). Typed text needs no extraction, so it's
 // confirmed straight away; handwriting and photo input go through Flash later (#14).
-function kindOf(text: string): QuestionKind {
-  const letters = text.replace(/\b(lcm|hcf|gcd)\b/gi, "").match(/[a-z]/i);
-  return text.includes("=") && letters ? "equation" : "chain";
-}
+
 
 export default function QuestionBox() {
   const [draft, setDraft] = useState("");
   const [confirmed, setConfirmed] = useState<string | null>(null);
+  // Masterji can set the next question himself (set_question tool).
+  useEffect(() => bus.on("questionConfirmed", ({ text }) => setConfirmed(text)), []);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -69,6 +69,12 @@ export function decide(input: DecideInput): Decision {
   }
   if (/=$/.test(t)) return { status: "unsure", source: "checker", reason: "incomplete_line", usedAlternatives };
 
+  // LCM/HCF working ("lcm(4,6) = 12") is a side calculation: judge it on its own, not against the question.
+  if (/\b(lcm|hcf|gcd)\s*\(/i.test(t)) {
+    const side = checkReadings([input.text, ...usedAlternatives], {});
+    if (side.status !== "unknown") return { status: side.status, source: "checker", reason: `side_calc_${side.reason}`, usedAlternatives };
+  }
+
   // Word problems: the question is prose, so the checker only sees the line itself.
   const ctx = input.kind === "word_problem" ? { previous: input.previous } : { question: input.question, previous: input.previous };
   const check = checkReadings([input.text, ...usedAlternatives], ctx);

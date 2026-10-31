@@ -140,6 +140,8 @@ export function startStepService(debug: StepServiceDebug = {}): () => void {
     }),
     bus.on("questionConfirmed", (q) => {
       clientLog("question.confirmed", { ...q });
+      rungs.clear();
+      lastWrong = null;
       question = q.text;
       kind = q.kind;
     }),

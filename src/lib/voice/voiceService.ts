@@ -12,6 +12,7 @@ import { bus } from "../bus";
 import type { Language, Verdict } from "../types";
 import { isSimplified, questionFacts, reachesFinalAnswer, simplestAnswer } from "../brain/facts";
 import { sessionState } from "../sessionState";
+import { kindOf } from "../brain/kind";
 import { clientLog, getSessionId } from "../log/client";
 import { Mic, Player } from "./audio";
 import { liveConfig } from "./liveConfig";
@@ -290,6 +291,14 @@ export class MasterjiVoice {
       if (fc.name === "write_note") {
         clientLog("voice.write_note", { clusterId: args.clusterId, text, duplicate });
         if (args.clusterId && text && !duplicate) bus.emit("writeNote", { clusterId: args.clusterId, text: text.slice(0, 28) });
+      } else if (fc.name === "set_question") {
+        const question = ((fc.args ?? {}) as { question?: string }).question?.trim();
+        clientLog("voice.set_question", { question });
+        if (question) {
+          this.wrong.clear();
+          this.everWrong = false;
+          bus.emit("questionConfirmed", { text: question, kind: kindOf(question) });
+        }
       } else if (fc.name === "write_line") {
         clientLog("voice.write_line", { text, duplicate });
         if (text && !duplicate) bus.emit("writeLine", { text: text.slice(0, 44) });
