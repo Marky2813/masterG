@@ -16,6 +16,8 @@ import { kindOf } from "../brain/kind";
 import { clientLog, getSessionId } from "../log/client";
 import { Mic, Player } from "./audio";
 import { liveConfig } from "./liveConfig";
+import { planGraph } from "../redpen/graph";
+import { validCounting } from "../redpen/counting";
 
 export type VoiceStatus = "idle" | "connecting" | "live" | "error" | "closed";
 
@@ -46,6 +48,7 @@ export class MasterjiVoice {
   private stopping = false;
   private reconnecting = false;
   private history: string[] = []; // recent turns, handed over on reconnect
+  private recentWrites: { t: number; text: string; nums: string }[] = []; // board writes, for the cut-off note and re-write guard
   private selfSet: string | null = null; // question Masterji put on the board himself (don't echo it back as "QUESTION SET") // board writes already made (dedupe repeated tool calls) // when we last asked for a reply (note sent / button released), for latency logs
   language: Language;
 
@@ -158,11 +161,21 @@ export class MasterjiVoice {
     if (this.talking || !this.session) return;
     this.talking = true;
     await this.mic.resume();
+    const wasGenerating = this.generating;
     if (this.generating) this.discardStale = true; // the server will keep streaming the old reply for a moment
-    if (this.player?.speaking) {
-      this.player.flush();
-      if (this.masterjiLine) this.cb.onCaption?.("masterji", this.masterjiLine + " —", true);
-      clientLog("voice.interrupt", { by: "kid", masterjiSaid: this.masterjiLine });
+    if (this.player?.speaking || wasGenerating) {
+      const frac = this.player?.speaking ? this.player.flush() : 0;
+      // The server thinks the child heard everything it generated; the child heard only what played.
+      const words = this.masterjiLine.replace(/\[[^\]]*\]?/g, "").trim().split(/\s+/).filter(Boolean);
+      const heard = words.slice(0, Math.round(words.length * frac)).join(" ");
+      if (heard) this.cb.onCaption?.("masterji", heard + " —", true);
+      clientLog("voice.interrupt", { by: "kid", masterjiSaid: this.masterjiLine, heardFrac: +frac.toFixed(2), heard });
+      // Context only (turnComplete false): he answers after the child speaks. Probe: logs/probe/interrupt-cutnote.txt.
+      const onBoard = this.recentWrites.filter((w) => performance.now() - w.t < 90_000).map((w) => w.text);
+      this.session.sendClientContent({
+        turns: [{ role: "user", parts: [{ text: `[CUT OFF: the child pressed talk and stopped you mid-reply. They heard only: "${heard || "(nothing yet)"}".${onBoard.length ? ` Already on the board, don't write it again: ${onBoard.slice(-6).join(" ; ")}.` : ""} Answer what they say first; then continue from where they stopped you only if it still matters.]` }] }],
+        turnComplete: false,
+      });
       this.masterjiLine = "";
     }
     this.kidLine = "";
@@ -213,6 +226,7 @@ export class MasterjiVoice {
     this.offs.push(
       bus.on("verdict", (v) => this.onVerdict(v)),
       bus.on("questionConfirmed", ({ text }) => {
+        this.recentWrites = []; // a new sum: earlier board writes are not repeats
         if (this.selfSet === text) {
           this.selfSet = null;
           const facts = questionFacts(text);
@@ -242,6 +256,25 @@ export class MasterjiVoice {
     }
   }
 
+  private remember(lines: string[]): void {
+    const t = performance.now();
+    for (const text of lines) this.recentWrites.push({ t, text, nums: (text.match(/\d+/g) ?? []).join(",") });
+    this.recentWrites = this.recentWrites.slice(-20);
+  }
+
+  // After an interrupt he tends to re-write the same working in new words ("multiples of 4: 4, 8, 12"
+  // then "4 ke multiples: 4, 8, 12, 16"). Same numbers in most lines, written in the last 90 s = a repeat.
+  private rewritesRecent(lines: string[]): boolean {
+    const recent = this.recentWrites.filter((w) => performance.now() - w.t < 90_000 && w.nums);
+    const numbered = lines.map((l) => (l.match(/\d+/g) ?? []).join(",")).filter(Boolean);
+    if (!numbered.length || !recent.length) return false;
+    // Same number sequence, or one a prefix of the other when both are long (4+ numbers).
+    // A loose prefix rule blocked the "3 + 4" working because "1,2" looked like "1,2,3" (log 20-06-47).
+    const long = (x: string) => x.split(",").length >= 4;
+    const same = numbered.filter((n) => recent.some((w) => w.nums === n || (long(n) && long(w.nums) && (w.nums.startsWith(n) || n.startsWith(w.nums)))));
+    return same.length / numbered.length >= 0.6;
+  }
+
   private questionNote(text: string): string {
     const facts = questionFacts(text);
     return `[QUESTION SET: ${text}]${facts.length ? `\n[FACTS (computed, correct; copy these when writing): ${facts.join(" ; ")}]` : ""}`;
@@ -251,7 +284,23 @@ export class MasterjiVoice {
     this.note(this.questionNote(text));
   }
 
+  // Messy handwriting (Flash rates every crop): mention it at most once a minute, so he doesn't nag.
+  private lastHandwritingAt = -1e9;
+  private handwritingPart(v: Verdict): string | null {
+    if (v.handwriting !== "messy" || performance.now() - this.lastHandwritingAt < 60_000) return null;
+    this.lastHandwritingAt = performance.now();
+    return `HANDWRITING messy: ${v.handwritingNote || "hard to read"}`;
+  }
+
   private onVerdict(v: Verdict): void {
+    const hw = this.handwritingPart(v);
+    if (hw) clientLog("voice.handwriting_flag", { clusterId: v.clusterId, note: v.handwritingNote, status: v.status });
+    // Correct-step notes carry the handwriting remark inside the bracket.
+    const withHw = (n: string) => (hw ? n.replace("]", ` | ${hw}]`) + " Also mention the handwriting once, kindly." : n);
+    if (v.status === "unsure" && hw) {
+      this.note(`[STEP ${v.clusterId} ${hw}] Kindly ask the child to write that more clearly so you can check it. Don't say whether it's right or wrong.`);
+      return;
+    }
     if (v.status === "wrong") {
       this.wrong.add(v.clusterId);
       const parts = [
@@ -261,6 +310,7 @@ export class MasterjiVoice {
         `rung ${v.hintRung}`,
         `repeat ${v.repeatCount}`,
         v.hint ? `hint: ${v.hint}` : null,
+        hw,
         ...methodFacts(v.text).slice(0, 6).map((m) => `METHOD ${m}`),
         v.hintRung >= 4 ? "ACTION (silent): write the correct step from FACTS with the line tool, then ask the child to do the next line" : null,
         v.hintRung === 3 ? "ACTION (silent): note the one fact they need (from FACTS) with the note tool" : null,
@@ -273,17 +323,17 @@ export class MasterjiVoice {
       const hadMistake = this.wrong.size > 0 || fixed || this.everWrong;
       if (final && isSimplified(v.text)) {
         this.wrong.clear();
-        this.note(`[FINAL ANSWER CORRECT | child wrote: ${v.text} | ${hadMistake ? "after fixing a mistake: praise the effort" : "first try"}] Praise warmly in one or two sentences, then ask if they want the next sum.`);
+        this.note(withHw(`[FINAL ANSWER CORRECT | child wrote: ${v.text} | ${hadMistake ? "after fixing a mistake: praise the effort" : "first try"}] Praise warmly in one or two sentences, then ask if they want the next sum.`));
       } else if (final) {
         this.wrong.clear();
-        this.note(`[STEP ${v.clusterId} CORRECT, NOT SIMPLIFIED YET | child wrote: ${v.text} | simplest form: ${q ? simplestAnswer(q) : "?"}] Say it's right, then ask them to simplify it (don't give the simplest form unless they're stuck).`);
+        this.note(withHw(`[STEP ${v.clusterId} CORRECT, NOT SIMPLIFIED YET | child wrote: ${v.text} | simplest form: ${q ? simplestAnswer(q) : "?"}] Say it's right, then ask them to simplify it (don't give the simplest form unless they're stuck).`));
       } else if (fixed || this.wrong.size > 0) {
         // Corrected on the same line, or a right step on a new line after a mistake.
-        this.note(`[STEP ${v.clusterId} CORRECT NOW | child wrote: ${v.text}] Short praise, then let them continue.`);
+        this.note(withHw(`[STEP ${v.clusterId} CORRECT NOW | child wrote: ${v.text}] Short praise, then let them continue.`));
         this.wrong.clear();
       } else {
         // Every correct step gets a short acknowledgement, so he follows the child's progress.
-        this.note(`[STEP ${v.clusterId} CORRECT | child wrote: ${v.text}] Very short praise (2-5 words), let them continue. Don't ask for anything they've already done.`);
+        this.note(withHw(`[STEP ${v.clusterId} CORRECT | child wrote: ${v.text}] Very short praise (2-5 words), let them continue. Don't ask for anything they've already done.`));
       }
     }
     if (v.status === "wrong") this.everWrong = true;
@@ -348,7 +398,7 @@ export class MasterjiVoice {
       const args = (fc.args ?? {}) as { clusterId?: string; text?: string };
       const text = args.text?.trim();
       const key = `${fc.name}|${args.clusterId ?? ""}|${text}`;
-      const duplicate = this.written.has(key);
+      let duplicate = this.written.has(key);
       if (text && !duplicate) this.written.add(key);
       if (fc.name === "write_note") {
         clientLog("voice.write_note", { clusterId: args.clusterId, text, duplicate });
@@ -359,20 +409,60 @@ export class MasterjiVoice {
         const markX = typeof a.markX === "number" && Number.isFinite(a.markX) ? a.markX : undefined;
         const gkey = `graph|${lines.join("|")}|${markX}`;
         const dup = this.written.has(gkey);
-        clientLog("voice.draw_graph", { lines, markX, duplicate: dup });
-        if (lines.length && !dup) {
+        const plan = lines.length ? planGraph(lines, markX) : null;
+        clientLog("voice.draw_graph", { lines, markX, duplicate: dup, plottable: !!plan, crossesAt: plan?.markX });
+        if (plan && !dup) {
           this.written.add(gkey);
-          bus.emit("drawGraph", { lines: lines.map((expr) => ({ expr, label: `y = ${expr}` })), markX });
+          bus.emit("drawGraph", { lines: lines.map((expr) => ({ expr })), markX: plan.markX });
         }
+        // Tell him what is really on the board, so he never says "x = 3" for a crossing at x = 1
+        // or "maine draw kiya hai" when nothing could be drawn.
+        this.session?.sendToolResponse({
+          functionResponses: {
+            id: fc.id,
+            name: fc.name,
+            response: !plan
+              ? { ok: false, error: "Nothing drawn: those lines could not be plotted. Use expressions in x ('3x + 5', '20') or equations ('8x + 2y = 4'). Don't say it's on the board." }
+              : dup
+                ? { ok: false, note: "already on the board; don't draw it again" }
+                : { ok: true, drawn: plan.lines.map((l) => l.label), crossesAt: plan.markX ?? "they don't cross in view", note: "Say the crossing exactly as given here." },
+          },
+        });
+        continue;
+      } else if (fc.name === "show_counting") {
+        const a = (fc.args ?? {}) as { a?: unknown; b?: unknown; op?: unknown };
+        const spec = validCounting(a.a, a.b, a.op);
+        const ckey = spec ? `count|${spec.a}${spec.op}${spec.b}` : "";
+        const dupC = !!spec && this.written.has(ckey);
+        clientLog("voice.show_counting", { args: a, valid: !!spec, duplicate: dupC });
+        if (spec && !dupC) {
+          this.written.add(ckey);
+          bus.emit("drawCounting", spec);
+        }
+        const result = spec ? (spec.op === "+" ? spec.a + spec.b : spec.a - spec.b) : null;
+        this.session?.sendToolResponse({
+          functionResponses: {
+            id: fc.id,
+            name: fc.name,
+            response: !spec
+              ? { ok: false, error: "Nothing drawn: use whole numbers 0-10 (and for '-' the first must be bigger). Don't say it's on the board." }
+              : dupC
+                ? { ok: false, note: "already on the board; point at it instead" }
+                : { ok: true, drawn: `${spec.a} ${spec.op} ${spec.b} as sticks, counted one by one`, answer: result },
+          },
+        });
+        continue;
       } else if (fc.name === "write_working") {
         const a = (fc.args ?? {}) as { title?: unknown; lines?: unknown };
         const lines = (Array.isArray(a.lines) ? a.lines : []).filter((l): l is string => typeof l === "string" && !!l.trim()).slice(0, 6);
         const title = typeof a.title === "string" && a.title.trim() ? a.title.trim() : null;
         const wkey = `working|${lines.join("|")}`;
-        const dupW = this.written.has(wkey);
+        const dupW = this.written.has(wkey) || this.rewritesRecent(lines);
         clientLog("voice.write_working", { title, lines, duplicate: dupW });
+        duplicate = dupW;
         if (lines.length && !dupW) {
           this.written.add(wkey);
+          this.remember(title ? [title, ...lines] : lines);
           for (const l of title ? [title, ...lines] : lines) bus.emit("writeLine", { text: l.trim().slice(0, 44) });
         }
       } else if (fc.name === "set_question") {
@@ -388,10 +478,13 @@ export class MasterjiVoice {
         }
       } else if (fc.name === "write_line") {
         clientLog("voice.write_line", { text, duplicate });
-        if (text && !duplicate) bus.emit("writeLine", { text: text.slice(0, 44) });
+        if (text && !duplicate) {
+          this.remember([text]);
+          bus.emit("writeLine", { text: text.slice(0, 44) });
+        }
       }
       this.session?.sendToolResponse({
-        functionResponses: { id: fc.id, name: fc.name, response: { ok: !duplicate, ...(duplicate ? { note: "already written; don't repeat" } : {}) } },
+        functionResponses: { id: fc.id, name: fc.name, response: { ok: !duplicate, ...(duplicate ? { note: "already on the board; don't write it again, just refer to it" } : {}) } },
       });
     }
   }

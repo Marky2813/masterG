@@ -104,6 +104,8 @@ export function startStepService(debug: StepServiceDebug = {}): () => void {
       hintRung: r.status === "wrong" ? climb(id) : 0,
       hint: r.status === "wrong" ? r.explanation : undefined,
       source: r.source,
+      handwriting: r.handwriting,
+      handwritingNote: r.handwritingNote,
     };
     if (r.status === "wrong") lastWrong = { id, text: r.text, category };
     else if (r.status === "correct") {

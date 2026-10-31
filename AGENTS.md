@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Master G: team rules for every agent (Claude Code, Codex, Cursor, ...)
 
-AI math tuition teacher ("Masterji") for NCERT Classes 5–8. A kid writes on a stylus notebook. Masterji watches every step, stays quiet while it's right, and steps in by voice and red pen when it's wrong. **He never calls a correct step wrong.** That is the bar the whole product rests on.
+AI math tuition teacher ("Masterji") for NCERT Classes 1–8. A kid writes on a stylus notebook. Masterji watches every step, stays quiet while it's right, and steps in by voice and red pen when it's wrong. **He never calls a correct step wrong.** That is the bar the whole product rests on.
 
 **`PLAN.md` is the product source of truth.** Read it before any non-trivial work. This file holds the *working rules*. If the two conflict, stop and ask in team chat.
 
@@ -26,7 +26,7 @@ The code is split into areas that only talk through the shared contract, so two 
 | **Voice** | `src/lib/voice/`, `src/components/voice/`, `src/app/api/live-token/` | `lane:voice` |
 | **Brain** | `src/lib/checker.ts`, `src/lib/gemini/`, `src/lib/brain/`, `src/lib/memory/` (MEKO), `benchmark/` | `lane:brain` |
 | **Red-pen engine** | `src/lib/redpen/`: pure module `(bbox, mark \| text) → animated strokes`; Notebook only renders it | `lane:brain` |
-| Shared | `src/lib/types.ts`, `src/lib/bus.ts`, `src/components/debug/` (read-only event log at `/?debug=1`) | `lane:shared` |
+| Shared | `src/lib/types.ts`, `src/lib/bus.ts`, `src/components/debug/` (read-only event log at `/learn?debug=1`) | `lane:shared` |
 
 Issues labelled `needs-hardware` need the stylus board, the demo laptop or the speakers: whoever has them takes those.
 
@@ -49,7 +49,7 @@ Issues labelled `needs-hardware` need the stylus board, the demo laptop or the s
 
 ## Tracks we're entering (given by the team, 2026-10-31)
 
-- **EdTech**: math tutor for NCERT Classes 5–8.
+- **EdTech**: math tutor for NCERT Classes 1–8.
 - **MLH Best Use of Gemini API**: Flash (vision read/judge) and the Live API (voice). Name exactly the models and APIs in the live path, nothing else.
 - **Yugabyte: MEKO is required.** MEKO is Yugabyte's shared memory/context layer for multi-agent systems on YugabyteDB. Our use: the judging agent writes each mistake and fix to MEKO, Masterji (voice agent) recalls the kid's past mistakes across sessions, and optionally a parent-report agent reads the same memory (#33, #34, #35). MEKO calls are async and never sit in the ≤ 2 s verdict path.
 

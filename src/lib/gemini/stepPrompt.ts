@@ -17,6 +17,8 @@ export interface StepResponse {
   text: string;
   alternatives: string[];
   legible: boolean;
+  handwriting?: "neat" | "ok" | "messy";
+  handwritingNote?: string;
   verdict?: "correct" | "wrong" | "unsure";
   category?: string;
   newCategoryLabel?: string;
@@ -33,7 +35,8 @@ Output mathjs syntax:
 - a raised / middle dot between two factors means multiply ("2·3" → "2*3", "2·x" → "2*x"); a dot on the baseline inside a number is a decimal point ("2.5"). If you cannot tell which, put one reading in "text" and the other in "alternatives"
 - "x" between two numbers ("3 x 4") is multiplication → "3*4"; "x" next to a coefficient ("3x") is the variable
 If a character could be read two ways (1/7, 4/9, 5/S, 6/b, 0/6), put your best reading in "text" and every other plausible full-line reading in "alternatives". Otherwise "alternatives" is [].
-Set "legible" to false only if you cannot read the step at all.`;
+Set "legible" to false only if you cannot read the step at all.
+Rate the handwriting in "handwriting": "neat", "ok", or "messy". "messy" means a teacher would have to squint: a digit or sign is badly formed and could easily be misread (a 6 like a 0, a 1 like a 7, a 4 like a 9, a + like a x), or the writing is very cramped or scrawled. If messy, say which character and what it looks like in "handwritingNote" (English, under 10 words, e.g. "the 6 looks like a 0"). The rating never changes your reading or verdict.`;
 
 function judgeRules(categories: ErrorCategory[]): string {
   const list = categories.map((c) => `- ${c.id}: ${c.label}`).join("\n");
@@ -54,7 +57,7 @@ export function buildStepPrompt(input: StepPromptInput): string {
   ].join("\n");
   const rules =
     input.task === "judge" ? `${READ_RULES}\n\n${judgeRules(input.categories ?? SEED_CATEGORIES)}` : READ_RULES;
-  return `You are checking one step of a school student's handwritten math working (NCERT Class 5–8).\n${ctx}\n\n${rules}\n\nRespond with JSON only.`;
+  return `You are checking one step of a school student's handwritten math working (NCERT Class 1–8).\n${ctx}\n\n${rules}\n\nRespond with JSON only.`;
 }
 
 export function stepResponseSchema(task: StepTask): object {
@@ -62,8 +65,10 @@ export function stepResponseSchema(task: StepTask): object {
     text: { type: "string" },
     alternatives: { type: "array", items: { type: "string" } },
     legible: { type: "boolean" },
+    handwriting: { type: "string", enum: ["neat", "ok", "messy"] },
+    handwritingNote: { type: "string" },
   };
-  const required = ["text", "alternatives", "legible"];
+  const required = ["text", "alternatives", "legible", "handwriting"];
   if (task === "judge") {
     properties.verdict = { type: "string", enum: ["correct", "wrong", "unsure"] };
     properties.category = { type: "string" };

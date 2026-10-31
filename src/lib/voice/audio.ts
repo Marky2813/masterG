@@ -84,6 +84,7 @@ export class Player {
   private nextTime = 0;
   private sources = new Set<AudioBufferSourceNode>();
   private lastEnd = 0; // performance.now() when the last queued audio finished
+  private turnS = 0; // seconds of audio received for the current reply
 
   get speaking(): boolean {
     return this.sources.size > 0;
@@ -114,6 +115,8 @@ export class Player {
     // small network hiccups don't cut words. Contiguous chunks play back to back.
     const fromSilence = this.nextTime < this.ctx.currentTime;
     if (fromSilence && !this.newTurn) this.underruns++;
+    if (this.newTurn) this.turnS = 0;
+    this.turnS += buf.duration;
     this.newTurn = false;
     const at = fromSilence ? this.ctx.currentTime + PREROLL_S : this.nextTime;
     src.start(at);
@@ -125,8 +128,11 @@ export class Player {
     };
   }
 
-  // Interruption: stop mid-word, drop everything queued.
-  flush(): void {
+  // Interruption: stop mid-word, drop everything queued. Returns how much of the current reply
+  // was actually played (0..1), so Masterji can be told what the child really heard.
+  flush(): number {
+    const unplayed = Math.max(0, this.nextTime - this.ctx.currentTime);
+    const heard = this.turnS > 0 ? Math.max(0, Math.min(1, 1 - unplayed / this.turnS)) : 1;
     for (const s of this.sources) {
       try {
         s.stop();
@@ -137,6 +143,9 @@ export class Player {
     this.sources.clear();
     this.nextTime = 0;
     this.lastEnd = 0; // interrupted on purpose: open the mic right away
+    this.turnS = 0;
+    this.newTurn = true;
+    return heard;
   }
 
   close(): void {

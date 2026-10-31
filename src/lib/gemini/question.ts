@@ -13,7 +13,7 @@ export interface QuestionRead {
   ms: number;
 }
 
-const PROMPT = `This image contains ONE school maths question (NCERT Class 5-8): a photo of a textbook, a screenshot, or handwriting.
+const PROMPT = `This image contains ONE school maths question (NCERT Class 1-8): a photo of a textbook, a screenshot, or handwriting.
 Return the question exactly, ready to solve:
 - sums and equations in mathjs syntax: "*" for times, "/" for fractions, mixed numbers as "(1+2/3)", "lcm(4,6)", "hcf(12,18)", keep "=" for equations, variables as letters ("3x + 5 = 20")
 - a word problem: the full sentence in plain text (keep the language it is written in)

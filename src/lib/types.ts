@@ -61,6 +61,8 @@ export interface Verdict {
   hintRung: HintRung;
   hint?: string; // what Masterji should get across at this rung (Voice phrases it)
   source: "model" | "checker"; // who decided the status
+  handwriting?: "neat" | "ok" | "messy"; // Flash's read of the crop: Masterji asks for neater writing (added 2026-11-01)
+  handwritingNote?: string; // e.g. "the 6 looks like a 0"
 }
 
 export interface MasterGEvents {
@@ -72,6 +74,7 @@ export interface MasterGEvents {
   writeNote: { clusterId: string; text: string };
   writeLine: { text: string };
   drawGraph: { lines: { expr: string; label?: string }[]; xMin?: number; xMax?: number; markX?: number }; // Masterji draws a graph (added 2026-10-31) // Masterji writes a full worked line on the board, below the kid's work (added 2026-10-31)
+  drawCounting: { a: number; b: number; op: "+" | "-" }; // counting sticks for Classes 1-2 (added 2026-11-01)
   userUtterance: { text: string };
   modeChanged: { mode: Mode };
   languageChanged: { language: Language };

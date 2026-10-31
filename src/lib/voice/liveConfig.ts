@@ -57,14 +57,29 @@ export const SET_QUESTION = {
 export const DRAW_GRAPH = {
   name: "draw_graph",
   description:
-    "Draw a graph on the board in red pen for an equation: each side as a line (in x), and circle where they cross. E.g. for 3x + 5 = 20: lines ['3x + 5', '20'], markX 5. Use only the FACTS graph.",
+    "Draw a graph on the board in red pen and circle where the lines cross. Pass the child's equations exactly as written, e.g. ['3x + 5 = 20'] or ['8x + 2y = 4', '3x + y = 1'], or expressions in x like ['3x + 5', '20']. The board works out the crossing and returns it as crossesAt: say THAT number, and only after the result comes back.",
   parameters: {
     type: Type.OBJECT,
     properties: {
-      lines: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Expressions in x, e.g. ['3x + 5', '20']" },
-      markX: { type: Type.NUMBER, description: "x where the lines cross (the answer)" },
+      lines: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Equations or expressions in x, e.g. ['8x + 2y = 4', '3x + y = 1'] or ['3x + 5', '20']" },
+      markX: { type: Type.NUMBER, description: "Optional: roughly where you expect the crossing" },
     },
     required: ["lines"],
+  },
+};
+
+export const SHOW_COUNTING = {
+  name: "show_counting",
+  description:
+    "For small additions and subtractions (Classes 1-3, numbers up to 10): draw counting sticks on the board, e.g. 2 + 3 as | |  +  | | |, then each stick gets counted 1, 2, 3, 4, 5 and the answer is circled. Subtraction crosses out the sticks taken away. Count out loud with it: 'ek, do, teen, chaar, paanch!'",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      a: { type: Type.NUMBER, description: "first number, 0-10" },
+      b: { type: Type.NUMBER, description: "second number, 0-10" },
+      op: { type: Type.STRING, enum: ["+", "-"], description: "+ or -" },
+    },
+    required: ["a", "b", "op"],
   },
 };
 
@@ -80,6 +95,6 @@ export function liveConfig(language: Language, voice = MASTERJI_VOICE): LiveConn
     // Push-to-talk: the kid holds a key/button to speak (activityStart/End). No voice-activity
     // detection, so Masterji never hears himself through the speakers. PLAN.md §6 "stage mode".
     realtimeInputConfig: { automaticActivityDetection: { disabled: true } },
-    tools: [{ functionDeclarations: [WRITE_NOTE, WRITE_LINE, WRITE_WORKING, SET_QUESTION, DRAW_GRAPH] }],
+    tools: [{ functionDeclarations: [WRITE_NOTE, WRITE_LINE, WRITE_WORKING, SET_QUESTION, DRAW_GRAPH, SHOW_COUNTING] }],
   };
 }

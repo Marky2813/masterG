@@ -8,7 +8,7 @@ This doc is the single source of truth for the 12-hour build. Every decision bel
 
 ## 1. Product
 
-**Users:** Classes 5–8, NCERT syllabus (new *Maths Mela* / *Ganita Prakash* books), mostly in India. Parents are the buyers.
+**Users:** Classes 1–8, NCERT syllabus (new *Maths Mela* / *Ganita Prakash* books), mostly in India. Parents are the buyers.
 
 **Experience:** the kid writes on a notebook with a stylus. Masterji watches every step, stays quiet while things are right, steps in when a step is wrong, and pushes the kid to find the mistake themselves.
 

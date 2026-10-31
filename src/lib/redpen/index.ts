@@ -57,14 +57,19 @@ function smooth(pts: Pt[], perSeg = 6): Pt[] {
   return out;
 }
 
+export const TEXT_SPEED = 0.65; // px/ms
+const TEXT_LIFT: [number, number] = [35, 70]; // ms between strokes
+
 // Turns stroke geometry into a timed sequence: pen speed in px/ms, a short lift between strokes.
-function timed(strokes: Pt[][], speed: number, r: () => number, start = 0): PenItem {
+// Text pace is tuned to Masterji's speech: ~7-8 chars/s, so a line is written in about the time it
+// takes him to say it (it was 2.5 chars/s: a 24-char line took 10 s against ~3 s of speech).
+function timed(strokes: Pt[][], speed: number, r: () => number, start = 0, lift: [number, number] = [120, 220], minMs = 60): PenItem {
   let t = start;
   const out: AnimatedStroke[] = [];
   for (const points of strokes) {
-    const duration = Math.max(60, lengthOf(points) / speed);
+    const duration = Math.max(minMs, lengthOf(points) / speed);
     out.push({ points, delay: t, duration });
-    t += duration + between(r, 120, 220);
+    t += duration + between(r, lift[0], lift[1]);
   }
   return { strokes: out, total: t };
 }
@@ -185,7 +190,7 @@ export function text(str: string, x: number, y: number, size = 26, seed?: number
     }
     pen += g.w * scale + LETTER_GAP;
   }
-  return { item: timed(strokes, 0.2, r), width: pen * u };
+  return { item: timed(strokes, TEXT_SPEED, r, 0, TEXT_LIFT, 25), width: pen * u };
 }
 
 // How much of an item to draw at time t: each stroke's points up to its progress.

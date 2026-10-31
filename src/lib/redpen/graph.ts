@@ -11,7 +11,97 @@ export interface GraphSpec {
   markX?: number; // where to circle the crossing
 }
 
-const asMath = (e: string) => e.replace(/(\d)\s*([a-z(])/gi, "$1*$2").replace(/×/g, "*");
+const asMath = (e: string) =>
+  e
+    .replace(/[−–]/g, "-")
+    .replace(/×/g, "*")
+    .replace(/÷/g, "/")
+    .replace(/(\d)\s*([a-z(])/gi, "$1*$2")
+    .replace(/\)\s*([a-z(\d])/gi, ")*$1");
+
+export interface PlotLine {
+  f: (x: number) => number;
+  label: string;
+}
+
+// One line from the model, in whatever shape it comes: "3x + 5", "y = 2 - 4x", "8x + 2y = 4"
+// (solved for y) or "3x + 5 = 20" (both sides become lines). Lines that don't evaluate are dropped:
+// an unparsable "8x + 2y = 4" used to throw and nothing was drawn, while Masterji said it was there.
+export function parseLine(raw: string): PlotLine[] {
+  const s = asMath(raw.trim());
+  const mk = (expr: string, label: string): PlotLine[] => {
+    try {
+      const c = compile(expr);
+      const f = (x: number) => Number(c.evaluate({ x }));
+      return [-2, 0, 1, 3].some((x) => Number.isFinite(f(x))) ? [{ f, label }] : [];
+    } catch {
+      return [];
+    }
+  };
+  const sides = s.split("=").map((t) => t.trim());
+  if (sides.length === 1) return mk(s, `y = ${raw.trim()}`);
+  if (sides.length !== 2 || !sides[0] || !sides[1]) return [];
+  const [L, R] = sides;
+  const hasY = (t: string) => /\by\b|\dy\b|\*y\b/.test(t);
+  if (/^y$/i.test(L) && !hasY(R)) return mk(R, raw.trim());
+  if (/^y$/i.test(R) && !hasY(L)) return mk(L, raw.trim());
+  if (hasY(L) || hasY(R)) {
+    // Linear in y: g(x, y) = L - R = 0  ->  y = -g(x, 0) / (g(x, 1) - g(x, 0)).
+    try {
+      const g = compile(`(${L}) - (${R})`);
+      const ev = (x: number, y: number) => Number(g.evaluate({ x, y }));
+      const f = (x: number) => {
+        const g0 = ev(x, 0),
+          d = ev(x, 1) - g0;
+        return Math.abs(d) < 1e-12 ? NaN : -g0 / d;
+      };
+      return Number.isFinite(f(0)) || Number.isFinite(f(1)) ? [{ f, label: raw.trim() }] : [];
+    } catch {
+      return [];
+    }
+  }
+  return [...mk(L, `y = ${sides[0]}`), ...mk(R, `y = ${sides[1]}`)];
+}
+
+// Where the first two lines cross (or where a single line meets the x-axis), computed, not taken
+// from the model: it once circled x = 3 for lines that really crossed at x = 1.
+export function crossing(lines: PlotLine[], near = 0): number | undefined {
+  if (!lines.length) return undefined;
+  const h = lines.length >= 2 ? (x: number) => lines[0].f(x) - lines[1].f(x) : (x: number) => lines[0].f(x);
+  const roots: number[] = [];
+  const step = 0.05;
+  let px = -30,
+    pv = h(px);
+  for (let x = px + step; x <= 30; x += step) {
+    const v = h(x);
+    if (Number.isFinite(v) && Number.isFinite(pv)) {
+      if (v === 0) roots.push(x);
+      else if (pv * v < 0) {
+        let a = px,
+          b = x;
+        for (let i = 0; i < 40; i++) {
+          const m = (a + b) / 2;
+          if (h(a) * h(m) <= 0) b = m;
+          else a = m;
+        }
+        roots.push((a + b) / 2);
+      }
+    }
+    px = x;
+    pv = v;
+  }
+  if (!roots.length) return undefined;
+  const best = roots.sort((a, b) => Math.abs(a - near) - Math.abs(b - near))[0];
+  return Math.abs(best - Math.round(best)) < 1e-6 ? Math.round(best) : +best.toFixed(2);
+}
+
+// Validates the model's lines and works out the true crossing. null if nothing can be plotted.
+export function planGraph(exprs: string[], markX?: number): { lines: PlotLine[]; markX?: number } | null {
+  const lines = exprs.flatMap(parseLine).slice(0, 3);
+  if (!lines.length) return null;
+  const x = lines.length >= 2 || markX !== undefined ? crossing(lines, markX ?? 0) : undefined;
+  return { lines, markX: x };
+}
 
 function niceStep(range: number): number {
   const raw = range / 6;
@@ -21,10 +111,14 @@ function niceStep(range: number): number {
 
 export function graph(spec: GraphSpec, box: { x: number; y: number; w: number; h: number }, seed?: number): PenItem {
   const r = rng(seed);
-  const fns = spec.lines.map((l) => {
-    const c = compile(asMath(l.expr));
-    return (x: number) => Number(c.evaluate({ x }));
-  });
+  const plan = planGraph(
+    spec.lines.map((l) => l.expr),
+    spec.markX,
+  );
+  if (!plan) throw new Error(`graph: nothing plottable in ${JSON.stringify(spec.lines)}`);
+  const fns = plan.lines.map((l) => l.f);
+  const labels = plan.lines.map((l) => l.label);
+  spec = { ...spec, markX: plan.markX };
   const xMin = spec.xMin ?? Math.min(-1, (spec.markX ?? 0) - 4);
   const xMax = spec.xMax ?? Math.max(6, (spec.markX ?? 0) + 3);
   let yMin = 0,
@@ -48,13 +142,13 @@ export function graph(spec: GraphSpec, box: { x: number; y: number; w: number; h
   let t = 0;
   const add = (points: Pt[], speed: number) => {
     const len = points.slice(1).reduce((s, p, i) => s + Math.hypot(p[0] - points[i][0], p[1] - points[i][1]), 0);
-    const duration = Math.max(80, len / speed);
+    const duration = Math.max(60, len / (speed * 2.2)); // ~2x the old pace: a graph in ~10 s, not 23
     out.push({ points, delay: t, duration });
-    t += duration + 140;
+    t += duration + 60;
   };
   const addItem = (item: PenItem) => {
     for (const s of item.strokes) out.push({ ...s, delay: s.delay + t });
-    t += item.total + 100;
+    t += item.total + 40;
   };
 
   // axes (slightly wobbly, with arrow heads)
@@ -90,7 +184,7 @@ export function graph(spec: GraphSpec, box: { x: number; y: number; w: number; h
       if (Number.isFinite(v) && v >= yMin && v <= yMax) pts.push([X(x) + j(0.8), Y(v) + j(0.8)]);
     }
     if (pts.length > 1) add(pts, 0.35);
-    const label = spec.lines[i].label ?? `y = ${spec.lines[i].expr}`;
+    const label = labels[i];
     const end = pts[pts.length - 1];
     if (end) addItem(text(label, Math.min(end[0] + 8, box.x + box.w - 60), end[1] - 12 - i * 4, 18, Math.floor(r() * 1e6)).item);
   });

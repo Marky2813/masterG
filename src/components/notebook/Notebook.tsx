@@ -6,6 +6,7 @@ import type { Point } from "@/lib/types";
 import { mark as penMark, text as penText } from "@/lib/redpen";
 import { drawPenItems, type PlacedItem } from "@/lib/redpen/draw";
 import { graph as penGraph } from "@/lib/redpen/graph";
+import { counting as penCounting } from "@/lib/redpen/counting";
 import { markPen } from "@/lib/notebook/penState";
 import { assignIds, clusterStrokes, type ClusterGroup } from "@/lib/notebook/cluster";
 import { cropCluster } from "@/lib/notebook/crop";
@@ -190,6 +191,45 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
     pauseTimer.current = null;
   };
 
+  // ---------- keeping red ink in view ----------
+  // Floating panels (Masterji's card + question chip, toolbar, talk button) sit over the board. They
+  // are sized in CSS px, so at 120% browser zoom they cover more of it: red ink placed by fixed
+  // board units landed behind the card. Measure them live instead.
+  const unitPx = () => (inkRef.current?.clientWidth || PAGE_W) / PAGE_W;
+  const safeBand = () => {
+    let top = 0,
+      bottom = window.innerHeight;
+    document.querySelectorAll<HTMLElement>("[data-overlay]").forEach((el) => {
+      const r = el.getBoundingClientRect();
+      if (el.dataset.overlay === "top") top = Math.max(top, r.bottom);
+      else bottom = Math.min(bottom, r.top);
+    });
+    return { top: top + 16, bottom: bottom - 16 };
+  };
+  // Scroll just enough that Masterji's new ink (board units y0..y1) is visible between the panels.
+  // Batched, so a multi-line write_working is revealed as one block. Never while the pen is down.
+  const revealRef = useRef<{ y0: number; y1: number } | null>(null);
+  const reveal = (y0: number, y1: number) => {
+    const r = revealRef.current;
+    revealRef.current = r ? { y0: Math.min(r.y0, y0), y1: Math.max(r.y1, y1) } : { y0, y1 };
+    if (r) return;
+    setTimeout(() => {
+      const want = revealRef.current;
+      revealRef.current = null;
+      const el = scrollRef.current;
+      if (!want || !el || currentRef.current) return;
+      const u = unitPx(),
+        band = safeBand();
+      const top = want.y0 * u - el.scrollTop,
+        bot = want.y1 * u - el.scrollTop;
+      if (top >= band.top && bot <= band.bottom) return;
+      const target = top < band.top || bot - top > band.bottom - band.top ? want.y0 * u - band.top : want.y1 * u - band.bottom;
+      el.scrollTo({ top: Math.max(0, target), behavior: "smooth" });
+    }, 80);
+  };
+  // First line Masterji may write on a fresh question page: below the floating card, in board units.
+  const safeTopUnits = () => Math.max(120, safeBand().top / unitPx());
+
   // ---------- pages ----------
   const screenPx = () => ((inkRef.current?.clientWidth ?? 0) * SCREEN_H) / PAGE_W;
   const growTo = (n: number) => {
@@ -252,6 +292,7 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
       }
       const note = { item: penText(text, x, y, size).item, start: performance.now() };
       ink.notes.push(note);
+      reveal(y - size - 8, y + 12);
       animUntilRef.current = Math.max(animUntilRef.current, note.start + note.item.total);
       penRef.current.set(clusterId, ink);
       drawOverlay([...clustersRef.current.values()]);
@@ -260,7 +301,7 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
     const offLine = bus.on("writeLine", ({ text }) => {
       const size = 30;
       const bottoms = [...clustersRef.current.values()].map((c) => c.bbox.y + c.bbox.h).concat(linesRef.current.map((l) => l.bottom));
-      const y = Math.max(questionTopRef.current + 140, ...bottoms) + size + 40;
+      const y = Math.max(questionTopRef.current + safeTopUnits(), ...bottoms) + size + 40;
       if (y > pageHRef.current - 40) growTo(Math.ceil((y + 80) / SCREEN_H));
       // Consecutive lines (write_working) are written one after another, like a teacher.
       const lastEnd = Math.max(0, ...linesRef.current.map((l) => l.item.start + l.item.item.total));
@@ -268,11 +309,12 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
       linesRef.current.push({ item, bottom: y + 12 });
       animUntilRef.current = Math.max(animUntilRef.current, item.start + item.item.total);
       drawOverlay([...clustersRef.current.values()]);
+      reveal(y - size - 10, y + 16);
     });
     // drawGraph from Voice → a hand-drawn graph under the current working.
     const offGraph = bus.on("drawGraph", (spec) => {
       const bottoms = [...clustersRef.current.values()].map((c) => c.bbox.y + c.bbox.h).concat(linesRef.current.map((l) => l.bottom));
-      const top = Math.max(questionTopRef.current + 120, ...bottoms) + 70;
+      const top = Math.max(questionTopRef.current + safeTopUnits(), ...bottoms) + 70;
       const box = { x: 170, y: top, w: 640, h: 360 };
       if (box.y + box.h + 90 > pageHRef.current) growTo(Math.ceil((box.y + box.h + 120) / SCREEN_H));
       try {
@@ -280,18 +322,25 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
         linesRef.current.push({ item, bottom: box.y + box.h + 70 });
         animUntilRef.current = Math.max(animUntilRef.current, item.start + item.item.total);
         drawOverlay([...clustersRef.current.values()]);
-        // bring it into view
-        const el = scrollRef.current,
-          canvas = inkRef.current;
-        if (el && canvas) {
-          const unit = canvas.clientWidth / PAGE_W;
-          el.scrollTo({ top: Math.max(0, (box.y - 80) * unit), behavior: "smooth" });
-        }
+        reveal(box.y - 30, box.y + box.h + 80);
       } catch (e) {
         console.warn("[notebook] graph failed", e);
       }
     });
+    // drawCounting from Voice → counting sticks (Classes 1-2) under the current working.
+    const offCount = bus.on("drawCounting", (spec) => {
+      const bottoms = [...clustersRef.current.values()].map((c) => c.bbox.y + c.bbox.h).concat(linesRef.current.map((l) => l.bottom));
+      const top = Math.max(questionTopRef.current + safeTopUnits(), ...bottoms) + 40;
+      const item = penCounting(spec, { x: 120, y: top });
+      if (top + item.height + 60 > pageHRef.current) growTo(Math.ceil((top + item.height + 100) / SCREEN_H));
+      const placed = { item, start: performance.now() };
+      linesRef.current.push({ item: placed, bottom: top + item.height });
+      animUntilRef.current = Math.max(animUntilRef.current, placed.start + item.total);
+      drawOverlay([...clustersRef.current.values()]);
+      reveal(top - 10, top + item.height + 10);
+    });
     return () => {
+      offCount();
       offVerdict();
       offNote();
       offLine();
@@ -439,7 +488,7 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
       </div>
 
       {/* floating toolbar, top right */}
-      <div className="fixed right-4 top-4 flex items-center gap-1 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-sm backdrop-blur">
+      <div data-overlay="top" className="fixed right-4 top-4 flex items-center gap-1 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-sm backdrop-blur">
         <button className={btn(tool === "pen")} onClick={() => setTool("pen")} title="Pen">
           ✏️
         </button>
