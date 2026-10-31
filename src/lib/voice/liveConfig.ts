@@ -57,12 +57,12 @@ export const SET_QUESTION = {
 export const DRAW_GRAPH = {
   name: "draw_graph",
   description:
-    "Draw a graph on the board in red pen for an equation: each side as a line (in x), and circle where they cross. E.g. for 3x + 5 = 20: lines ['3x + 5', '20'], markX 5. Use only the FACTS graph.",
+    "Draw a graph on the board in red pen and circle where the lines cross. Pass the child's equations exactly as written, e.g. ['3x + 5 = 20'] or ['8x + 2y = 4', '3x + y = 1'], or expressions in x like ['3x + 5', '20']. The board works out the crossing and returns it as crossesAt: say THAT number, and only after the result comes back.",
   parameters: {
     type: Type.OBJECT,
     properties: {
-      lines: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Expressions in x, e.g. ['3x + 5', '20']" },
-      markX: { type: Type.NUMBER, description: "x where the lines cross (the answer)" },
+      lines: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Equations or expressions in x, e.g. ['8x + 2y = 4', '3x + y = 1'] or ['3x + 5', '20']" },
+      markX: { type: Type.NUMBER, description: "Optional: roughly where you expect the crossing" },
     },
     required: ["lines"],
   },

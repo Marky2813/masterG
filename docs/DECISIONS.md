@@ -4,6 +4,9 @@ Every scope, product, workflow and access decision, on the day it's made. Newest
 
 | Date (IST) | Decision | Who decided | Why | Replaces |
 |---|---|---|---|---|
+| Nov 1 01:15 | Target users widened from Classes 5–8 to Classes 1–8 (NCERT). Masterji asks the class and pitches sums to it; never refuses an easy sum. | Team, after the mentor session | Mentor: 5–8 alone looks thin to judges; the checker already handles Class 1–4 arithmetic. | Classes 5–8 |
+| Nov 1 01:15 | The kid's speech-to-text is no longer shown on screen (still logged). | Akash | It flipped between Hindi and English scripts and misheard digits ("6" → "sex"). | "You · …" caption |
+| Nov 1 01:15 | Flash rates handwriting (neat/ok/messy) on every step; Masterji mentions messy writing at most once a minute. It never changes the verdict. | Akash, mentor's point | He only got text, so he couldn't know a digit was scrawled. | — |
 | Oct 31 18:35 | Step judging = **A+guard** on `gemini-3.5-flash-lite` + shared rule (`decide.ts`): checker wins; alternatives only via confusable characters; uncomputable chain/equation steps → unsure; word problems keep the model's setup verdict. | Claude, proposed; **latency exception needs Akash** | Benchmark run 3: 97.9 % verdict, 0 false alarms; p95 2.5 s vs the 2 s rule. | PLAN.md §7 rule (≤ 2 s p95) |
 | Oct 31 18:25 | Gemini key upgraded to paid. | Akash | Free tier hit 429 after ~15 calls/min: a demo risk. | free tier |
 | Oct 31 18:20 | Live voice model = `gemini-2.5-flash-native-audio-latest`. | Claude | Answers text notes in ~3.5 s; preview-09-2025 ignored realtime text. | — |

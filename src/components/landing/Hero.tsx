@@ -40,7 +40,7 @@ export default function Hero() {
         <div>
           <p className="inline-flex items-center gap-2 rounded-full border-2 border-kohl bg-paper px-4 py-1.5 text-sm font-semibold">
             <span aria-hidden="true" className="size-2.5 rounded-full border border-kohl bg-peela" />
-            Class 5–8 maths · Masterji
+            Class 1–8 maths · Masterji
           </p>
 
           <h1 className="mt-5 font-display text-[clamp(46px,5.4vw,74px)] leading-[0.92] font-black tracking-[-0.015em] text-balance [font-stretch:125%]">

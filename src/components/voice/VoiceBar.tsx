@@ -13,7 +13,6 @@ export default function VoiceBar({ children }: { children?: ReactNode }) {
   const [detail, setDetail] = useState("");
   const [language, setLanguage] = useState<Language>("hinglish");
   const [masterji, setMasterji] = useState("");
-  const [kid, setKid] = useState("");
   const [speaking, setSpeaking] = useState(false);
   const [talking, setTalking] = useState(false);
 
@@ -25,7 +24,11 @@ export default function VoiceBar({ children }: { children?: ReactNode }) {
         setStatus(s);
         setDetail(d ?? "");
       },
-      onCaption: (who, text) => (who === "masterji" ? setMasterji(text) : setKid(text)),
+      // Only Masterji's words are shown. The kid's speech-to-text flips between Hindi and English
+      // scripts and mishears digits ("6" came out as "sex"), so it stays in the logs, off screen.
+      onCaption: (who, text) => {
+        if (who === "masterji") setMasterji(text);
+      },
       onSpeaking: setSpeaking,
     });
     voiceRef.current = v;
@@ -90,7 +93,7 @@ export default function VoiceBar({ children }: { children?: ReactNode }) {
 
   return (
     <>
-      <div className="fixed left-4 top-4 z-10 flex w-[min(28rem,calc(100vw-2rem))] flex-col gap-2">
+      <div data-overlay="top" className="fixed left-4 top-4 z-10 flex w-[min(28rem,calc(100vw-2rem))] flex-col gap-2">
         <div className="rounded-xl border border-amber-200/70 bg-white/95 p-2.5 shadow-sm backdrop-blur">
           <div className="flex items-start gap-2">
             <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold ${pill.cls}`}>{pill.text}</span>
@@ -98,12 +101,12 @@ export default function VoiceBar({ children }: { children?: ReactNode }) {
               {masterji ? (
                 <div className="text-slate-800">
                   <span className="font-semibold text-amber-700">Masterji · </span>
-                  {masterji}
+                  {/* the latest ~3 lines only, so the card stays small and off the board */}
+                  {masterji.length > 190 ? "…" + masterji.slice(-190).replace(/^\S*\s/, "") : masterji}
                 </div>
               ) : (
                 <div className="text-slate-400">{live ? "…" : "Masterji is offline"}</div>
               )}
-              {kid && <div className="mt-0.5 text-slate-500">You · {kid}</div>}
               {status === "error" && <div className="mt-0.5 text-rose-600">{detail}</div>}
             </div>
           </div>
@@ -112,7 +115,7 @@ export default function VoiceBar({ children }: { children?: ReactNode }) {
       </div>
 
       {/* bottom centre: start / push-to-talk */}
-      <div className="fixed bottom-5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2">
+      <div data-overlay="bottom" className="fixed bottom-5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2">
         {live ? (
           <>
             <button

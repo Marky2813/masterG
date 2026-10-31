@@ -61,6 +61,8 @@ export interface Verdict {
   hintRung: HintRung;
   hint?: string; // what Masterji should get across at this rung (Voice phrases it)
   source: "model" | "checker"; // who decided the status
+  handwriting?: "neat" | "ok" | "messy"; // Flash's read of the crop: Masterji asks for neater writing (added 2026-11-01)
+  handwritingNote?: string; // e.g. "the 6 looks like a 0"
 }
 
 export interface MasterGEvents {

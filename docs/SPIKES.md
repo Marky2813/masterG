@@ -11,6 +11,8 @@ Before a bulk run (full benchmark, rehearsal), check the quota or balance in Goo
 | Oct 31 18:07 | Claude | bench run 1 (free tier) | gemini-3.5-flash-lite | 144 calls, ~110 got 429 | free tier: per-minute quota hit | `benchmark/results/2026-10-31T12-37-57-098Z.md` (invalid) |
 | Oct 31 18:15 | Claude | bench run 2, `--rpm 12` | gemini-3.5-flash-lite | 144 calls | free tier, 0 errors | `benchmark/results/2026-10-31T12-54-25-479Z.md` |
 | Oct 31 18:30 | Claude | bench run 3 (key upgraded to paid by Akash) | flash-lite ×2 repeats; pro-latest ×1 | 288 + 48 calls | paid; pro: 20 API errors | `benchmark/results/2026-10-31T13-00-01-249Z.md`, `…12-57-15-307Z.md` |
+| Nov 1 01:25 | Claude | bench after adding the handwriting rating to the judge prompt | flash-lite ×1, A+guard only, run twice | 96 calls | paid | `benchmark/results/2026-10-31T19-55-28-900Z.md` (96% verdict, 0 false alarms, p95 1.81 s), `….md.md` (98%, 0 false alarms, p95 1.69 s; handwriting: 46 neat, 2 ok, 0 messy) |
+| Nov 1 01:20 | Claude | interrupt probe (`scripts/interrupt-probe.ts`): cut-off context note mid-reply | live 3.1 flash ×5 sessions | 5 sessions | paid | `logs/probe/interrupt-*.txt` (gitignored): no 1007; he resumed with "main keh raha tha…" but re-wrote the same working |
 | Oct 31 18:28 | Claude | burst test 25 parallel | gemini-3.5-flash-lite | 25 calls | paid: 25/25 ok, p50 1.2 s | `scripts/burst.ts` |
 
 ## Results

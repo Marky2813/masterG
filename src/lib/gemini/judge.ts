@@ -31,6 +31,8 @@ export interface JudgeResult {
   text: string;
   alternatives: string[];
   legible: boolean;
+  handwriting?: "neat" | "ok" | "messy";
+  handwritingNote?: string;
   status: VerdictStatus;
   source: "model" | "checker";
   checkerReason?: string;
@@ -76,6 +78,8 @@ export async function judgeStep(input: JudgeInput): Promise<JudgeResult> {
     text: r.text ?? "",
     alternatives: r.alternatives ?? [],
     legible: r.legible ?? true,
+    handwriting: r.legible === false ? ("messy" as const) : r.handwriting,
+    handwritingNote: r.handwritingNote || (r.legible === false ? "the step can't be read" : undefined),
     modelVerdict: r.verdict,
     category: r.category || undefined,
     newCategoryLabel: r.newCategoryLabel || undefined,

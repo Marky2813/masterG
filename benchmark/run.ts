@@ -38,6 +38,8 @@ interface Row {
   topic: string;
   ms: number;
   error?: string;
+  handwriting?: string;
+  handwritingNote?: string;
   read?: string;
   readOk: boolean;
   predicted: "correct" | "wrong" | "unsure";
@@ -194,6 +196,8 @@ async function main() {
             category: parsed.category,
             expectedCategory: sample.category,
             explanation: parsed.explanation,
+            handwriting: parsed.handwriting,
+            handwritingNote: parsed.handwritingNote,
           });
         }
         process.stdout.write(".");

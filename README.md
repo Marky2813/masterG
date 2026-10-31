@@ -1,6 +1,6 @@
 # Master G
 
-AI math tuition teacher ("Masterji") for NCERT Classes 5–8. **Read [PLAN.md](PLAN.md) first** — it's the source of truth.
+AI math tuition teacher ("Masterji") for NCERT Classes 1–8. **Read [PLAN.md](PLAN.md) first** — it's the source of truth.
 
 ## Setup
 

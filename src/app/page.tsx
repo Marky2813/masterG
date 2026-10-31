@@ -11,7 +11,7 @@ import Tapes from "@/components/landing/Tapes";
 export const metadata: Metadata = {
   title: "Master G · Masterji, AI maths tuition",
   description:
-    "Masterji checks each step of a Class 5–8 maths sum written on a digital notebook, ticks what is right, and circles the galti in red pen.",
+    "Masterji checks each step of a Class 1–8 maths sum written on a digital notebook, ticks what is right, and circles the galti in red pen.",
 };
 
 // Landing page at /. Its one call to action opens the whiteboard app at /learn.
