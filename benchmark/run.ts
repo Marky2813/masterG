@@ -9,7 +9,8 @@
 import { GoogleGenAI, ThinkingLevel, type ThinkingConfig } from "@google/genai";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { checkReadings, normalize } from "../src/lib/checker";
+import { normalize } from "../src/lib/checker";
+import { decide as decideShared } from "../src/lib/brain/decide";
 import { buildStepPrompt, stepResponseSchema, type StepResponse, type StepTask } from "../src/lib/gemini/stepPrompt";
 
 interface Sample {
@@ -135,15 +136,16 @@ async function runPool<T>(items: T[], size: number, fn: (item: T) => Promise<voi
 function decide(cfg: ConfigDef, sample: Sample, r: StepResponse): Pick<Row, "predicted" | "verdictSource"> {
   const modelVerdict = r.verdict ?? "unsure";
   if (cfg.verdictFrom === "model") return { predicted: modelVerdict, verdictSource: "model" };
-  const check = checkReadings([r.text, ...(r.alternatives ?? [])], {
+  // Same rule the app ships (src/lib/brain/decide.ts). B has no model verdict to fall back on.
+  const d = decideShared({
+    text: r.text,
+    alternatives: r.alternatives ?? [],
+    modelVerdict: cfg.verdictFrom === "checker" ? undefined : modelVerdict,
     question: sample.question,
     previous: sample.previous,
+    kind: sample.topic === "word_problem" ? "word_problem" : undefined,
   });
-  if (check.status !== "unknown") return { predicted: check.status, verdictSource: "checker" };
-  // Checker can't decide: B has nothing to fall back on (stay silent); guards fall back to the model.
-  return cfg.verdictFrom === "checker"
-    ? { predicted: "unsure", verdictSource: "checker" }
-    : { predicted: modelVerdict, verdictSource: "model" };
+  return { predicted: d.status, verdictSource: d.source };
 }
 
 async function main() {
