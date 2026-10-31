@@ -37,6 +37,11 @@ export class Mic {
   private node?: AudioWorkletNode;
   muted = false;
 
+  // A context created after awaits may start suspended (no user gesture left): resume on press.
+  async resume(): Promise<void> {
+    if (this.ctx?.state === "suspended") await this.ctx.resume();
+  }
+
   async start(onChunk: (base64Pcm16: string) => void): Promise<void> {
     this.stream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },

@@ -17,17 +17,37 @@ export default function VoiceBar() {
 
   useEffect(() => () => voiceRef.current?.stop(), []);
 
-  // Spacebar = "Ruko": stop Masterji and talk (unless typing in a field).
+  const [talking, setTalking] = useState(false);
+  const down = () => {
+    if (!voiceRef.current) return;
+    setTalking(true);
+    void voiceRef.current.startTalking();
+  };
+  const up = () => {
+    setTalking(false);
+    voiceRef.current?.stopTalking();
+  };
+
+  // Hold SPACE to talk (unless typing in a field). Pressing while Masterji talks stops him.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const el = e.target as HTMLElement | null;
-      if (e.code !== "Space" || el?.tagName === "INPUT" || el?.tagName === "TEXTAREA") return;
+    const isField = (e: KeyboardEvent) => ["INPUT", "TEXTAREA"].includes((e.target as HTMLElement | null)?.tagName ?? "");
+    const onDown = (e: KeyboardEvent) => {
+      if (e.code !== "Space" || isField(e)) return;
       e.preventDefault();
-      voiceRef.current?.interrupt();
+      if (!e.repeat) down();
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+    const onUp = (e: KeyboardEvent) => {
+      if (e.code !== "Space" || isField(e)) return;
+      e.preventDefault();
+      up();
+    };
+    window.addEventListener("keydown", onDown);
+    window.addEventListener("keyup", onUp);
+    return () => {
+      window.removeEventListener("keydown", onDown);
+      window.removeEventListener("keyup", onUp);
+    };
+  });
 
   const start = async () => {
     const v = new MasterjiVoice(language, {
@@ -74,14 +94,16 @@ export default function VoiceBar() {
         )}
         {live && (
           <button
-            className={`rounded px-3 py-1 ${speaking ? "bg-amber-500 text-black" : "bg-slate-700 text-slate-400"}`}
-            onClick={() => voiceRef.current?.interrupt()}
-            title="Spacebar"
+            className={`select-none rounded px-4 py-1 font-medium ${talking ? "bg-sky-500 text-black" : "bg-slate-700"}`}
+            onPointerDown={down}
+            onPointerUp={up}
+            onPointerLeave={() => talking && up()}
+            title="Hold SPACE or this button to talk"
           >
-            ✋ Ruko (space)
+            {talking ? "🎙️ Bol rahe ho… (chhodo to send)" : "🎙️ Hold SPACE to talk"}
           </button>
         )}
-        <span className="text-xs text-slate-400">{live ? (speaking ? "🔊 Masterji bol rahe hain (mic paused)" : "🎙️ sun rahe hain") : ""}</span>
+        <span className="text-xs text-slate-400">{live && speaking ? "🔊 Masterji" : ""}</span>
         <button className="rounded bg-slate-700 px-3 py-1" onClick={toggleLanguage}>
           {language === "hinglish" ? "Hinglish" : "English"}
         </button>
