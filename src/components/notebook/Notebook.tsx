@@ -15,7 +15,11 @@ import { bboxOf, hitsStroke, strokePath, type InkStroke } from "@/lib/notebook/s
 // main area and emits clusterUpdated / clusterRemoved on the bus. PLAN.md §4.
 
 export const PAGE_W = 1600; // notebook units (landscape whiteboard); the canvas scales to the screen
-export const PAGE_H = 3000; // three screens tall: the page scrolls
+export const SCREEN_H = 1000; // one screen-sized page, in notebook units; the board grows page by page
+// Canvas backing stores are capped well under browser limits (a 3-screen page at DPR 2 on a big
+// display threw "InvalidStateError: canvas exceeds max size").
+const MAX_CANVAS_PX = 16_000_000;
+const MAX_CANVAS_DIM = 16_000;
 // Rough work lives on its own pull-out sheet (RoughPad), so the whole board is the main area.
 // ROUGH_X is now just the right margin that notes never cross.
 export const ROUGH_X = PAGE_W - 40;
@@ -44,7 +48,13 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
   const penRef = useRef<Map<string, { mark?: PlacedItem; notes: PlacedItem[] }>>(new Map());
   const animUntilRef = useRef(0);
   const linesRef = useRef<{ item: PlacedItem; bottom: number }[]>([]);
-  const scrollRef = useRef<HTMLDivElement>(null); // Masterji's full lines of working (write_line) // keep redrawing the overlay until the last pen stroke is done
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // Earlier questions stay on the board above, read-only: never re-clustered or re-checked.
+  const archivedRef = useRef<InkStroke[]>([]);
+  const archivedInkRef = useRef<PlacedItem[]>([]);
+  const questionTopRef = useRef(0); // where the current question's page starts (units)
+  const [pages, setPages] = useState(1);
+  const pageHRef = useRef(SCREEN_H);
 
   const [tool, setTool] = useState<Tool>("pen");
   const [clusters, setClusters] = useState<NotebookCluster[]>([]);
@@ -59,6 +69,7 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.setTransform(s, 0, 0, s, 0, 0);
     ctx.fillStyle = "#1e293b";
+    for (const st of archivedRef.current) ctx.fill(strokePath(st.points));
     for (const st of strokesRef.current) ctx.fill(strokePath(st.points));
     if (currentRef.current) ctx.fill(strokePath(currentRef.current.points));
   }, []);
@@ -73,7 +84,7 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.setTransform(s, 0, 0, s, 0, 0);
       // Masterji's red pen (animated).
-      const placed: PlacedItem[] = [];
+      const placed: PlacedItem[] = [...archivedInkRef.current];
       for (const ink of penRef.current.values()) {
         if (ink.mark) placed.push(ink.mark);
         placed.push(...ink.notes);
@@ -110,8 +121,11 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
     const ink = inkRef.current!;
     const ro = new ResizeObserver(() => {
       const dpr = window.devicePixelRatio || 1;
-      const w = Math.round(ink.clientWidth * dpr);
-      const h = Math.round((w * PAGE_H) / PAGE_W);
+      const cssW = ink.clientWidth,
+        cssH = (cssW * pageHRef.current) / PAGE_W;
+      const scale = Math.min(dpr, Math.sqrt(MAX_CANVAS_PX / Math.max(1, cssW * cssH)), MAX_CANVAS_DIM / Math.max(1, cssH), MAX_CANVAS_DIM / Math.max(1, cssW));
+      const w = Math.round(cssW * scale);
+      const h = Math.round(cssH * scale);
       for (const c of [inkRef.current, overlayRef.current]) {
         if (c && (c.width !== w || c.height !== h)) {
           c.width = w;
@@ -175,6 +189,40 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
     pauseTimer.current = null;
   };
 
+  // ---------- pages ----------
+  const screenPx = () => ((inkRef.current?.clientWidth ?? 0) * SCREEN_H) / PAGE_W;
+  const growTo = (n: number) => {
+    if (n * SCREEN_H <= pageHRef.current) return;
+    pageHRef.current = n * SCREEN_H;
+    setPages(n);
+  };
+  // "+ Space": one more page below; scroll to it.
+  const addSpace = () => {
+    const n = pageHRef.current / SCREEN_H + 1;
+    growTo(n);
+    requestAnimationFrame(() => scrollRef.current?.scrollTo({ top: (n - 1) * screenPx(), behavior: "smooth" }));
+  };
+  // New question: keep the old work above (read-only), start on a fresh page and scroll to it.
+  const newQuestionPage = () => {
+    if (strokesRef.current.length === 0 && linesRef.current.length === 0) return;
+    const bottom = Math.max(0, ...strokesRef.current.map((s) => s.bbox.y + s.bbox.h), ...linesRef.current.map((l) => l.bottom));
+    archivedRef.current.push(...strokesRef.current);
+    for (const ink of penRef.current.values()) archivedInkRef.current.push(...(ink.mark ? [ink.mark] : []), ...ink.notes);
+    archivedInkRef.current.push(...linesRef.current.map((l) => l.item));
+    strokesRef.current = [];
+    penRef.current.clear();
+    linesRef.current = [];
+    cancelPause();
+    recluster(); // the Brain forgets the old clusters (clusterRemoved)
+    const page = Math.floor(bottom / SCREEN_H) + 1;
+    questionTopRef.current = page * SCREEN_H;
+    growTo(page + 1);
+    requestAnimationFrame(() => {
+      redraw();
+      scrollRef.current?.scrollTo({ top: page * screenPx(), behavior: "smooth" });
+    });
+  };
+
   useEffect(() => () => cancelPause(), []);
 
   // Verdicts from the Brain → a red-pen mark on the cluster's bbox (placed by code, PLAN.md §4).
@@ -212,7 +260,8 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
     const offLine = bus.on("writeLine", ({ text }) => {
       const size = 30;
       const bottoms = [...clustersRef.current.values()].map((c) => c.bbox.y + c.bbox.h).concat(linesRef.current.map((l) => l.bottom));
-      const y = Math.min(PAGE_H - 40, Math.max(140, ...bottoms) + size + 40);
+      const y = Math.max(questionTopRef.current + 140, ...bottoms) + size + 40;
+      if (y > pageHRef.current - 40) growTo(Math.ceil((y + 80) / SCREEN_H));
       const item = { item: penText(text, 120, y, size).item, start: performance.now() };
       linesRef.current.push({ item, bottom: y + 12 });
       animUntilRef.current = Math.max(animUntilRef.current, item.start + item.item.total);
@@ -230,7 +279,7 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
     const rect = e.currentTarget.getBoundingClientRect();
     return {
       x: ((e.clientX - rect.left) / rect.width) * PAGE_W,
-      y: ((e.clientY - rect.top) / rect.height) * PAGE_H,
+      y: ((e.clientY - rect.top) / rect.width) * PAGE_W,
       pressure: e.pointerType === "pen" ? Math.max(0.05, e.pressure) : 0.5,
       t: performance.now(),
     };
@@ -274,7 +323,7 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
       for (const ce of events) {
         cur.points.push({
           x: ((ce.clientX - rect.left) / rect.width) * PAGE_W,
-          y: ((ce.clientY - rect.top) / rect.height) * PAGE_H,
+          y: ((ce.clientY - rect.top) / rect.width) * PAGE_W,
           pressure: ce.pointerType === "pen" ? Math.max(0.05, ce.pressure) : 0.5,
           t: performance.now(),
         });
@@ -300,7 +349,6 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
     strokesRef.current.push(cur);
     redraw();
     schedulePause();
-    autoScroll(cur);
   };
 
   const undo = () => {
@@ -309,18 +357,13 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
     schedulePause();
   };
 
-  // Writing near the bottom of the screen scrolls the page up so there's always room.
-  const autoScroll = (s: InkStroke) => {
-    const canvas = inkRef.current,
-      box = scrollRef.current;
-    if (!canvas || !box) return;
-    const rect = canvas.getBoundingClientRect();
-    const bottomPx = rect.top + ((s.bbox.y + s.bbox.h) / PAGE_H) * rect.height;
-    if (bottomPx > window.innerHeight * 0.72) box.scrollBy({ top: window.innerHeight * 0.4, behavior: "smooth" });
-  };
-
   const clearAll = () => {
     strokesRef.current = [];
+    archivedRef.current = [];
+    archivedInkRef.current = [];
+    questionTopRef.current = 0;
+    pageHRef.current = SCREEN_H;
+    setPages(1);
     penRef.current.clear();
     linesRef.current = [];
     redraw();
@@ -330,17 +373,11 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
   };
 
   // A new question (typed, or chosen by Masterji) starts on a clean page.
-  const clearRef = useRef(clearAll);
+  const newQuestionRef = useRef(newQuestionPage);
   useEffect(() => {
-    clearRef.current = clearAll;
+    newQuestionRef.current = newQuestionPage;
   });
-  useEffect(
-    () =>
-      bus.on("questionConfirmed", () => {
-        if (strokesRef.current.length > 0 || linesRef.current.length > 0) clearRef.current();
-      }),
-    [],
-  );
+  useEffect(() => bus.on("questionConfirmed", () => newQuestionRef.current()), []);
 
   // Pen cursor dot (PLAN.md §3: the pen cursor dot is visible on the canvas).
   const cursor =
@@ -356,11 +393,11 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
       <div
         className="relative w-full"
         style={{
-          aspectRatio: `${PAGE_W} / ${PAGE_H}`,
+          aspectRatio: `${PAGE_W} / ${pages * SCREEN_H}`,
           backgroundColor: "#fdfdfc",
           backgroundImage:
             "linear-gradient(to right, #e7ebf0 1px, transparent 1px), linear-gradient(to bottom, #e7ebf0 1px, transparent 1px)",
-          backgroundSize: `${(100 * GRID) / PAGE_W}% ${(100 * GRID) / PAGE_H}%`,
+          backgroundSize: `${(100 * GRID) / PAGE_W}% ${(100 * GRID) / (pages * SCREEN_H)}%`,
         }}
       >
         <canvas
@@ -386,6 +423,9 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
         </button>
         <button className={btn(false)} onClick={undo} title="Undo">
           ↶
+        </button>
+        <button className={btn(false)} onClick={addSpace} title="Add a page of space below">
+          + Space
         </button>
         <button className={btn(false)} onClick={clearAll} title="Clear page">
           Clear
