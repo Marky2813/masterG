@@ -13,8 +13,21 @@ export default function VoiceBar() {
   const [language, setLanguage] = useState<Language>("hinglish");
   const [masterji, setMasterji] = useState("");
   const [kid, setKid] = useState("");
+  const [speaking, setSpeaking] = useState(false);
 
   useEffect(() => () => voiceRef.current?.stop(), []);
+
+  // Spacebar = "Ruko": stop Masterji and talk (unless typing in a field).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (e.code !== "Space" || el?.tagName === "INPUT" || el?.tagName === "TEXTAREA") return;
+      e.preventDefault();
+      voiceRef.current?.interrupt();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const start = async () => {
     const v = new MasterjiVoice(language, {
@@ -23,6 +36,7 @@ export default function VoiceBar() {
         setDetail(d ?? "");
       },
       onCaption: (who, text) => (who === "masterji" ? setMasterji(text) : setKid(text)),
+      onSpeaking: setSpeaking,
     });
     voiceRef.current = v;
     try {
@@ -58,6 +72,16 @@ export default function VoiceBar() {
             Start Masterji 🎙️
           </button>
         )}
+        {live && (
+          <button
+            className={`rounded px-3 py-1 ${speaking ? "bg-amber-500 text-black" : "bg-slate-700 text-slate-400"}`}
+            onClick={() => voiceRef.current?.interrupt()}
+            title="Spacebar"
+          >
+            ✋ Ruko (space)
+          </button>
+        )}
+        <span className="text-xs text-slate-400">{live ? (speaking ? "🔊 Masterji bol rahe hain (mic paused)" : "🎙️ sun rahe hain") : ""}</span>
         <button className="rounded bg-slate-700 px-3 py-1" onClick={toggleLanguage}>
           {language === "hinglish" ? "Hinglish" : "English"}
         </button>

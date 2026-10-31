@@ -2,33 +2,25 @@
 
 // Masterji's voice: a Gemini Live session (native audio) that only ever speaks
 // from verdicts we send it as hidden notes. PLAN.md §5, §6.
-import { GoogleGenAI, Modality, StartSensitivity, Type, type LiveServerMessage, type Session } from "@google/genai";
+//
+// Echo: on laptop speakers the model hears itself and answers its own words
+// ("I just asked you that"). So the mic is half-duplex: nothing is sent while
+// Masterji is audible (+600 ms tail). The kid interrupts with the spacebar or
+// the Ruko button, which stops him instantly and opens the mic.
+import { GoogleGenAI, type LiveServerMessage, type Session } from "@google/genai";
 import { bus } from "../bus";
 import type { Language, Verdict } from "../types";
-import { DEFAULT_VOICE } from "./config";
+import { clientLog, getSessionId } from "../log/client";
 import { Mic, Player } from "./audio";
-import { masterjiPrompt } from "./persona";
+import { liveConfig } from "./liveConfig";
 
 export type VoiceStatus = "idle" | "connecting" | "live" | "error" | "closed";
 
 export interface VoiceCallbacks {
   onStatus?: (s: VoiceStatus, detail?: string) => void;
   onCaption?: (who: "masterji" | "kid", text: string, final: boolean) => void;
+  onSpeaking?: (speaking: boolean) => void;
 }
-
-const WRITE_NOTE = {
-  name: "write_note",
-  description:
-    "Write a short red-pen margin note (max 12 characters) next to one step on the child's notebook, e.g. 'LCM?', 'carry 1', '9/12'.",
-  parameters: {
-    type: Type.OBJECT,
-    properties: {
-      clusterId: { type: Type.STRING, description: "The step id from the latest note, e.g. c3" },
-      text: { type: Type.STRING, description: "The note, max 12 characters" },
-    },
-    required: ["clusterId", "text"],
-  },
-};
 
 export class MasterjiVoice {
   private session?: Session;
@@ -38,6 +30,9 @@ export class MasterjiVoice {
   private wrong = new Set<string>(); // clusters currently marked wrong, to detect FIXED
   private masterjiLine = "";
   private kidLine = "";
+  private speakingTimer?: ReturnType<typeof setInterval>;
+  private wasAudible = false;
+  private pending: string[] = []; // notes held until Masterji finishes his sentence
   language: Language;
 
   constructor(
@@ -49,38 +44,45 @@ export class MasterjiVoice {
 
   // Must be called from a user gesture (mic permission + audio autoplay).
   async start(): Promise<void> {
-    this.cb.onStatus?.("connecting");
+    this.status("connecting");
     this.player = new Player();
     await this.player.resume();
 
-    const res = await fetch("/api/live-token", { method: "POST" });
+    const res = await fetch("/api/live-token", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-session-id": getSessionId() },
+      body: JSON.stringify({ language: this.language }),
+    });
     const json = await res.json();
     if (!res.ok) {
-      this.cb.onStatus?.("error", json.error ?? `token HTTP ${res.status}`);
+      this.status("error", json.error ?? `token HTTP ${res.status}`);
       throw new Error(json.error);
     }
     const ai = new GoogleGenAI({ apiKey: json.token, httpOptions: { apiVersion: "v1alpha" } });
     this.session = await ai.live.connect({
       model: json.model,
-      config: {
-        responseModalities: [Modality.AUDIO],
-        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: DEFAULT_VOICE } } },
-        systemInstruction: masterjiPrompt(this.language),
-        inputAudioTranscription: {},
-        outputAudioTranscription: {},
-        // Lower sensitivity so his own voice from the speakers doesn't trigger a barge-in (PLAN.md §6 layer 2).
-        realtimeInputConfig: { automaticActivityDetection: { startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_LOW } },
-        tools: [{ functionDeclarations: [WRITE_NOTE] }],
-      },
+      config: liveConfig(this.language),
       callbacks: {
-        onopen: () => this.cb.onStatus?.("live"),
+        onopen: () => this.status("live"),
         onmessage: (m: LiveServerMessage) => this.onMessage(m),
-        onerror: (e: ErrorEvent) => this.cb.onStatus?.("error", e.message),
-        onclose: (e: CloseEvent) => this.cb.onStatus?.("closed", e.reason),
+        onerror: (e: ErrorEvent) => this.status("error", e.message),
+        onclose: (e: CloseEvent) => this.status("closed", `${e.code} ${e.reason}`),
       },
     });
 
-    await this.mic.start((data) => this.session?.sendRealtimeInput({ audio: { data, mimeType: "audio/pcm;rate=16000" } }));
+    await this.mic.start((data) => {
+      // Half-duplex: drop mic audio while Masterji is audible, so he never hears himself.
+      if (this.player?.isAudible()) return;
+      this.session?.sendRealtimeInput({ audio: { data, mimeType: "audio/pcm;rate=16000" } });
+    });
+    this.speakingTimer = setInterval(() => {
+      this.flushNotes();
+      const audible = !!this.player?.isAudible();
+      if (audible !== this.wasAudible) {
+        this.wasAudible = audible;
+        this.cb.onSpeaking?.(audible);
+      }
+    }, 100);
     this.subscribe();
     this.note("[SESSION START] Greet the child and ask their name.");
   }
@@ -88,15 +90,45 @@ export class MasterjiVoice {
   stop(): void {
     this.offs.forEach((off) => off());
     this.offs = [];
+    clearInterval(this.speakingTimer);
     this.mic.stop();
     this.player?.close();
     this.session?.close();
-    this.cb.onStatus?.("closed");
+    this.status("closed");
   }
 
-  // Hidden system note to Masterji (the child never sees these).
+  // The kid wants to talk: stop Masterji mid-word and open the mic now.
+  interrupt(): void {
+    if (!this.player?.speaking) return;
+    this.player.flush();
+    if (this.masterjiLine) this.cb.onCaption?.("masterji", this.masterjiLine + " —", true);
+    clientLog("voice.interrupt", { by: "kid", masterjiSaid: this.masterjiLine });
+    this.masterjiLine = "";
+  }
+
+  // Hidden system note to Masterji (the child never sees these). A note sent mid-sentence
+  // cuts him off, so notes wait until he's quiet (checked every 100 ms by the speaking timer).
   note(text: string): void {
+    if (this.player?.isAudible(300)) {
+      clientLog("voice.note_queued", { text });
+      this.pending.push(text);
+      return;
+    }
+    clientLog("voice.note", { text });
     this.session?.sendRealtimeInput({ text });
+  }
+
+  private flushNotes(): void {
+    if (this.pending.length === 0 || this.player?.isAudible(300)) return;
+    const text = this.pending.join("\n");
+    this.pending = [];
+    clientLog("voice.note", { text, queued: true });
+    this.session?.sendRealtimeInput({ text });
+  }
+
+  private status(s: VoiceStatus, detail?: string): void {
+    clientLog("voice.status", { status: s, detail });
+    this.cb.onStatus?.(s, detail);
   }
 
   private subscribe(): void {
@@ -131,8 +163,8 @@ export class MasterjiVoice {
   private onMessage(m: LiveServerMessage): void {
     const sc = m.serverContent;
     if (sc?.interrupted) {
-      // The kid started talking: stop mid-word, freeze his caption with a dash.
       this.player?.flush();
+      clientLog("voice.interrupted_by_server", { masterjiSaid: this.masterjiLine });
       if (this.masterjiLine) this.cb.onCaption?.("masterji", this.masterjiLine + " —", true);
       this.masterjiLine = "";
     }
@@ -148,6 +180,7 @@ export class MasterjiVoice {
       this.cb.onCaption?.("kid", this.kidLine, false);
     }
     if (sc?.turnComplete) {
+      clientLog("voice.turn", { masterji: this.masterjiLine.trim(), kid: this.kidLine.trim() });
       if (this.kidLine.trim()) bus.emit("userUtterance", { text: this.kidLine.trim() });
       this.masterjiLine = "";
       this.kidLine = "";
@@ -155,6 +188,7 @@ export class MasterjiVoice {
     for (const fc of m.toolCall?.functionCalls ?? []) {
       if (fc.name === "write_note") {
         const { clusterId, text } = (fc.args ?? {}) as { clusterId?: string; text?: string };
+        clientLog("voice.write_note", { clusterId, text });
         if (clusterId && text) bus.emit("writeNote", { clusterId, text: text.slice(0, 16) });
         this.session?.sendToolResponse({ functionResponses: { id: fc.id, name: fc.name, response: { ok: true } } });
       }

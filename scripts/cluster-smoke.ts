@@ -26,6 +26,15 @@ const line2 = [
 // Line 3, a simple linear step on one ruled line (y≈360–392): 3x = 15
 const line3 = [s("3x", 100, 360, 40, 32, 2500), s("=3", 156, 372, 26, 12), s("15", 196, 360, 36, 32)];
 
+// Akash's real line from 2026-10-31 (screenshot, notebook units): big gaps between terms, written with pauses.
+const wide = [
+  s("w3", 225, 430, 60, 85, 0), s("wbar", 205, 500, 110, 60), s("w4", 245, 555, 45, 65),
+  s("w+", 398, 450, 70, 35, 2500), s("w1", 565, 390, 10, 65), s("wbar2", 540, 450, 80, 40), s("w6", 578, 485, 40, 70),
+  s("w=a", 695, 435, 50, 10, 2000), s("w=b", 710, 458, 35, 12), s("w4b", 822, 348, 60, 75), s("wbar3", 812, 440, 95, 25), s("w10", 830, 485, 80, 65),
+];
+// The next line, written below with normal spacing.
+const below = [s("n=", 200, 730, 40, 12, 3000), s("n9", 260, 690, 40, 60), s("nbar", 250, 755, 70, 8), s("n12", 255, 770, 60, 55)];
+
 let failed = 0;
 const check = (name: string, ok: boolean, detail = "") => {
   console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? "  " + detail : ""}`);
@@ -37,6 +46,9 @@ check("three lines -> three clusters", groups.length === 3, `got ${groups.length
 check("line 1 complete", groups[0]?.strokeIds.length === line1.length);
 check("line 2 complete", groups[1]?.strokeIds.length === line2.length);
 check("line 3 complete", groups[2]?.strokeIds.length === line3.length);
+
+const wg = clusterStrokes([...wide, ...below]);
+check("wide-gapped line = one cluster", wg.length === 2 && wg[0].strokeIds.length === wide.length, `got ${wg.map((g) => g.strokeIds.length).join(",")}`);
 
 // Stable ids: adding a stroke to line 2 keeps ids; erasing line 3 drops one.
 let n = 0;

@@ -64,9 +64,15 @@ export class Player {
   private ctx = new AudioContext({ sampleRate: 24000 });
   private nextTime = 0;
   private sources = new Set<AudioBufferSourceNode>();
+  private lastEnd = 0; // performance.now() when the last queued audio finished
 
   get speaking(): boolean {
     return this.sources.size > 0;
+  }
+
+  // True while Masterji is audible, plus a tail for room echo to die down.
+  isAudible(tailMs = 600): boolean {
+    return this.sources.size > 0 || performance.now() - this.lastEnd < tailMs;
   }
 
   async resume(): Promise<void> {
@@ -89,7 +95,10 @@ export class Player {
     src.start(at);
     this.nextTime = at + buf.duration;
     this.sources.add(src);
-    src.onended = () => this.sources.delete(src);
+    src.onended = () => {
+      this.sources.delete(src);
+      if (this.sources.size === 0) this.lastEnd = performance.now();
+    };
   }
 
   // Interruption: stop mid-word, drop everything queued.
@@ -103,6 +112,7 @@ export class Player {
     }
     this.sources.clear();
     this.nextTime = 0;
+    this.lastEnd = 0; // interrupted on purpose: open the mic right away
   }
 
   close(): void {

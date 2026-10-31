@@ -7,6 +7,8 @@ import { bus } from "../bus";
 import { SEED_CATEGORIES } from "../categories";
 import type { BBox, ErrorCategory, MarkType, QuestionKind, Verdict } from "../types";
 import type { JudgeResult } from "../gemini/judge";
+import { clientLog, getSessionId } from "../log/client";
+import { waitForQuietPen } from "../notebook/penState";
 
 interface ClusterState {
   id: string;
@@ -42,8 +44,8 @@ export function startStepService(debug: StepServiceDebug = {}): () => void {
     try {
       const res = await fetch("/api/step", {
         method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ imagePng, question, kind, previous: previousFor(c.bbox), categories }),
+        headers: { "content-type": "application/json", "x-session-id": getSessionId() },
+        body: JSON.stringify({ clusterId: id, imagePng, question, kind, previous: previousFor(c.bbox), categories }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
@@ -56,7 +58,20 @@ export function startStepService(debug: StepServiceDebug = {}): () => void {
     }
     // Drop stale answers: the cluster changed or vanished while the call was in flight.
     const now = clusters.get(id);
-    if (!now || now.version !== version) return;
+    if (!now || now.version !== version) {
+      clientLog("verdict.stale_dropped", { clusterId: id, text: r.text, status: r.status });
+      return;
+    }
+    // Never scold mid-writing: hold a "wrong" until the pen has been still for 2.5 s, then re-check
+    // that the cluster didn't change meanwhile (if it did, the new version gets judged instead).
+    if (r.status === "wrong") {
+      await waitForQuietPen(2500);
+      const still = clusters.get(id);
+      if (!still || still.version !== version) {
+        clientLog("verdict.wrong_dropped_kept_writing", { clusterId: id, text: r.text });
+        return;
+      }
+    }
     now.result = r;
     debug.onResult?.(id, r);
 
@@ -87,15 +102,18 @@ export function startStepService(debug: StepServiceDebug = {}): () => void {
       hint: r.status === "wrong" ? r.explanation : undefined,
       source: r.source,
     };
+    clientLog("verdict", { ...verdict });
     bus.emit("verdict", verdict);
   };
 
   const offs = [
     bus.on("questionConfirmed", (q) => {
+      clientLog("question.confirmed", { ...q });
       question = q.text;
       kind = q.kind;
     }),
-    bus.on("clusterUpdated", ({ id, bbox, imagePng }) => {
+    bus.on("clusterUpdated", ({ id, bbox, imagePng, strokeIds }) => {
+      clientLog("cluster.updated", { id, bbox, strokes: strokeIds.length });
       const c = clusters.get(id) ?? { id, bbox, version: 0 };
       c.bbox = bbox;
       c.version++;
@@ -104,6 +122,7 @@ export function startStepService(debug: StepServiceDebug = {}): () => void {
       void judge(id, imagePng);
     }),
     bus.on("clusterRemoved", ({ id }) => {
+      clientLog("cluster.removed", { id });
       clusters.delete(id);
     }),
   ];
