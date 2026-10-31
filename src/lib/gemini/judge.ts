@@ -6,7 +6,7 @@ import { checkReadings } from "../checker";
 import type { ErrorCategory, VerdictStatus } from "../types";
 import { buildStepPrompt, stepResponseSchema, type StepResponse } from "./stepPrompt";
 
-export const FLASH_MODEL = process.env.GEMINI_FLASH_MODEL || "gemini-flash-latest";
+export const FLASH_MODEL = process.env.GEMINI_FLASH_MODEL || "gemini-3.5-flash-lite"; // probe 2026-10-31: 1.8 s; flash-latest 62-122 s
 
 let client: GoogleGenAI | null = null;
 function ai(): GoogleGenAI {

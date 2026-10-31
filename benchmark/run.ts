@@ -51,7 +51,7 @@ const ROOT = path.resolve(__dirname, "..");
 const SAMPLES_DIR = path.join(ROOT, "benchmark", "samples");
 const RESULTS_DIR = path.join(ROOT, "benchmark", "results");
 
-const FLASH = process.env.GEMINI_FLASH_MODEL || "gemini-flash-latest";
+const FLASH = process.env.GEMINI_FLASH_MODEL || "gemini-3.5-flash-lite";
 const PRO = process.env.GEMINI_PRO_MODEL || "gemini-pro-latest";
 
 const CONFIGS: ConfigDef[] = [
@@ -82,7 +82,19 @@ function percentile(values: number[], p: number): number {
   return sorted[Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1)];
 }
 
+// --rpm N spaces calls out to stay under a per-minute quota (free tier: ~15 RPM on flash-lite, 2026-10-31).
+const RPM = Number(process.argv.find((a, i) => process.argv[i - 1] === "--rpm") ?? 0);
+let nextSlot = 0;
+async function throttle() {
+  if (!RPM) return;
+  const now = Date.now();
+  const at = Math.max(now, nextSlot);
+  nextSlot = at + 60000 / RPM;
+  if (at > now) await new Promise((r) => setTimeout(r, at - now));
+}
+
 async function callModel(ai: GoogleGenAI, cfg: ConfigDef, sample: Sample, png: string) {
+  await throttle();
   const started = performance.now();
   const res = await ai.models.generateContent({
     model: cfg.model,
