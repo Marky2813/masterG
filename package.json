@@ -11,7 +11,8 @@
     "bench:models": "node --env-file-if-exists=.env.local --import tsx benchmark/models.ts",
     "test:checker": "tsx scripts/checker-smoke.ts",
     "typecheck": "next typegen && tsc --noEmit",
-    "check": "npm run typecheck && npm run lint && npm run test:checker"
+    "check": "npm run typecheck && npm run lint && npm run test:checker && npm run test:cluster",
+    "test:cluster": "tsx scripts/cluster-smoke.ts"
   },
   "dependencies": {
     "@google/genai": "^2.32.0",

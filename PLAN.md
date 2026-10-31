@@ -186,7 +186,7 @@ npm run bench:models   # lists the Gemini models your key can use
 
 ## 8. Shared contract (frozen in hour 0)
 
-All three parts talk **only** through `src/lib/types.ts` + the event bus in `src/lib/bus.ts`. Build against fake events until integration at hour 5.5.
+All three parts talk **only** through `src/lib/types.ts` + the event bus in `src/lib/bus.ts`. *(2026-10-31: no fake events. The real pipeline is built in order, each part tested against the real part before it.)*
 
 | Event | From → To | Payload |
 |---|---|---|
@@ -224,7 +224,7 @@ Flash read/judge prompt + JSON schema · mathjs checker (chain, linear equation,
 | Hours | Work |
 |---|---|
 | 0–1.5 | **All:** repo + types frozen · write benchmark samples · run benchmark (P3) · echo test + voice audition (P2) · clustering spike (P1) |
-| 1.5–5.5 | Parallel builds against fake events |
+| 1.5–5.5 | Parallel builds (superseded: see the note above) |
 | 5.5–6.5 | **Integration #1:** one fraction problem end-to-end |
 | 6.5–9 | Linear equations, word problems, modes, erase/re-check, hint ladder, guardrails, reconnection, language switch, long division (optional) |
 | **9** | **FEATURE FREEZE** |
