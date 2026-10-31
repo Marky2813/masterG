@@ -34,16 +34,3 @@ export function questionFacts(question: string): string[] {
   }
   return facts;
 }
-
-// True when a correct line ends in the question's final answer written as a single number or
-// fraction ("11/12", "= 11/12", "9/12 + 2/12 = 11/12"), not an intermediate expression.
-export function reachesFinalAnswer(question: string, line: string): boolean {
-  const ans = referenceAnswer(question);
-  if (!ans || ans.kind !== "value") return false;
-  const last = normalize(line).split("=").pop()?.replace(/\s+/g, "") ?? "";
-  if (!/^-?\d+(\/\d+)?$/.test(last)) return false;
-  const [n, d = "1"] = last.replace("-", "").split("/");
-  const [an, ad = "1"] = ans.text.replace("-", "").split("/");
-  const neg = last.startsWith("-") !== ans.text.startsWith("-");
-  return !neg && Number(n) * Number(ad) === Number(an) * Number(d);
-}
