@@ -1,0 +1,434 @@
+[
+ {
+  "topic": "fractions",
+  "question": "3/4 + 1/6",
+  "previous": "",
+  "write": "3/4 + 1/6 = 4/10",
+  "correct": false,
+  "category": "add_across",
+  "messy": ""
+ },
+ {
+  "topic": "fractions",
+  "question": "3/4 + 1/6",
+  "previous": "",
+  "write": "3/4 + 1/6 = 9/12 + 2/12",
+  "correct": true,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "fractions",
+  "question": "3/4 + 1/6",
+  "previous": "= 9/12 + 2/12",
+  "write": "= 11/12",
+  "correct": true,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "fractions",
+  "question": "2/3 + 1/5",
+  "previous": "",
+  "write": "2/3 + 1/5 = 3/8",
+  "correct": false,
+  "category": "add_across",
+  "messy": ""
+ },
+ {
+  "topic": "fractions",
+  "question": "2/3 + 1/5",
+  "previous": "",
+  "write": "2/3 + 1/5 = 10/15 + 3/15 = 13/15",
+  "correct": true,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "fractions",
+  "question": "5/6 - 1/4",
+  "previous": "",
+  "write": "5/6 - 1/4 = 10/12 - 3/12 = 7/12",
+  "correct": true,
+  "category": "",
+  "messy": "write the 7 like a 1"
+ },
+ {
+  "topic": "fractions",
+  "question": "5/6 - 1/4",
+  "previous": "",
+  "write": "5/6 - 1/4 = 4/2",
+  "correct": false,
+  "category": "add_across",
+  "messy": ""
+ },
+ {
+  "topic": "fractions",
+  "question": "(1+1/2) + (2+1/3)",
+  "previous": "",
+  "write": "(1+1/2) + (2+1/3) = (3+5/6)",
+  "correct": true,
+  "category": "",
+  "messy": "write as mixed fractions: 1\u00bd + 2\u2153 = 3\u215a"
+ },
+ {
+  "topic": "fractions",
+  "question": "4/9 * 3/8",
+  "previous": "",
+  "write": "4/9 * 3/8 = 12/72 = 1/6",
+  "correct": true,
+  "category": "",
+  "messy": "make the 4 and 9 look alike"
+ },
+ {
+  "topic": "fractions",
+  "question": "7/10 + 1/5",
+  "previous": "",
+  "write": "7/10 + 1/5 = 7/10 + 2/10 = 8/10",
+  "correct": false,
+  "category": "table_slip",
+  "messy": "make the 7 look like a 1"
+ },
+ {
+  "topic": "linear",
+  "question": "3x + 5 = 20",
+  "previous": "",
+  "write": "3x = 20 + 5",
+  "correct": false,
+  "category": "sign_transpose",
+  "messy": ""
+ },
+ {
+  "topic": "linear",
+  "question": "3x + 5 = 20",
+  "previous": "",
+  "write": "3x = 20 - 5",
+  "correct": true,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "linear",
+  "question": "3x + 5 = 20",
+  "previous": "3x = 15",
+  "write": "x = 5",
+  "correct": true,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "linear",
+  "question": "4(m + 6) - 8 = 2m - 4",
+  "previous": "",
+  "write": "4m + 6 - 8 = 2m - 4",
+  "correct": false,
+  "category": "distribute_partial",
+  "messy": ""
+ },
+ {
+  "topic": "linear",
+  "question": "4(m + 6) - 8 = 2m - 4",
+  "previous": "",
+  "write": "4m + 24 - 8 = 2m - 4",
+  "correct": true,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "linear",
+  "question": "4(m + 6) - 8 = 2m - 4",
+  "previous": "4m + 16 = 2m - 4",
+  "write": "2m = -20",
+  "correct": true,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "linear",
+  "question": "4(m + 6) - 8 = 2m - 4",
+  "previous": "2m = -20",
+  "write": "m = 10",
+  "correct": false,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "linear",
+  "question": "7y - 9 = 19",
+  "previous": "",
+  "write": "7y = 28",
+  "correct": true,
+  "category": "",
+  "messy": "make the 7 look like a 1"
+ },
+ {
+  "topic": "linear",
+  "question": "7y - 9 = 19",
+  "previous": "7y = 28",
+  "write": "y = 4",
+  "correct": true,
+  "category": "",
+  "messy": "make the 4 look like a 9"
+ },
+ {
+  "topic": "linear",
+  "question": "5a + 3 = 2a + 12",
+  "previous": "",
+  "write": "5a + 2a = 12 - 3",
+  "correct": false,
+  "category": "sign_transpose",
+  "messy": ""
+ },
+ {
+  "topic": "bodmas_decimals",
+  "question": "2 + 3 * 4",
+  "previous": "",
+  "write": "2 + 3 * 4 = 20",
+  "correct": false,
+  "category": "bodmas_order",
+  "messy": ""
+ },
+ {
+  "topic": "bodmas_decimals",
+  "question": "2 + 3 * 4",
+  "previous": "",
+  "write": "2 + 3 * 4 = 14",
+  "correct": true,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "bodmas_decimals",
+  "question": "18 / 3 * 2",
+  "previous": "",
+  "write": "18 / 3 * 2 = 3",
+  "correct": false,
+  "category": "bodmas_order",
+  "messy": ""
+ },
+ {
+  "topic": "bodmas_decimals",
+  "question": "18 / 3 * 2",
+  "previous": "",
+  "write": "= 6 * 2 = 12",
+  "correct": true,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "bodmas_decimals",
+  "question": "0.5 + 0.25",
+  "previous": "",
+  "write": "0.5 + 0.25 = 0.30",
+  "correct": false,
+  "category": "decimal_misaligned",
+  "messy": ""
+ },
+ {
+  "topic": "bodmas_decimals",
+  "question": "4.5 + 2.35",
+  "previous": "",
+  "write": "4.5 + 2.35 = 2.80",
+  "correct": false,
+  "category": "decimal_misaligned",
+  "messy": ""
+ },
+ {
+  "topic": "bodmas_decimals",
+  "question": "4.5 + 2.35",
+  "previous": "",
+  "write": "4.5 + 2.35 = 6.85",
+  "correct": true,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "bodmas_decimals",
+  "question": "7.2 - 1.9",
+  "previous": "",
+  "write": "7.2 - 1.9 = 5.3",
+  "correct": true,
+  "category": "",
+  "messy": "sloppy 7 and 9"
+ },
+ {
+  "topic": "bodmas_decimals",
+  "question": "(6 + 4) * 3 - 5",
+  "previous": "",
+  "write": "(6 + 4) * 3 - 5 = 25",
+  "correct": true,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "bodmas_decimals",
+  "question": "3.6 * 2",
+  "previous": "",
+  "write": "3.6 * 2 = 6.12",
+  "correct": false,
+  "category": "carry_forgot",
+  "messy": ""
+ },
+ {
+  "topic": "lcm_hcf",
+  "question": "lcm(4, 6)",
+  "previous": "",
+  "write": "lcm(4, 6) = 12",
+  "correct": true,
+  "category": "",
+  "messy": "write it as LCM(4, 6)"
+ },
+ {
+  "topic": "lcm_hcf",
+  "question": "lcm(4, 6)",
+  "previous": "",
+  "write": "lcm(4, 6) = 24",
+  "correct": false,
+  "category": "",
+  "messy": "write it as LCM(4, 6)"
+ },
+ {
+  "topic": "lcm_hcf",
+  "question": "hcf(12, 18)",
+  "previous": "",
+  "write": "hcf(12, 18) = 6",
+  "correct": true,
+  "category": "",
+  "messy": "write it as HCF(12, 18)"
+ },
+ {
+  "topic": "lcm_hcf",
+  "question": "hcf(12, 18)",
+  "previous": "",
+  "write": "hcf(12, 18) = 3",
+  "correct": false,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "lcm_hcf",
+  "question": "lcm(8, 12)",
+  "previous": "",
+  "write": "lcm(8, 12) = 96",
+  "correct": false,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "lcm_hcf",
+  "question": "hcf(24, 36)",
+  "previous": "",
+  "write": "hcf(24, 36) = 12",
+  "correct": true,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "lcm_hcf",
+  "question": "lcm(9, 15)",
+  "previous": "",
+  "write": "lcm(9, 15) = 45",
+  "correct": true,
+  "category": "",
+  "messy": "sloppy 9 and 5 (5 like an S)"
+ },
+ {
+  "topic": "lcm_hcf",
+  "question": "hcf(14, 21)",
+  "previous": "",
+  "write": "hcf(14, 21) = 7",
+  "correct": true,
+  "category": "",
+  "messy": "make the 1s and 7 look alike"
+ },
+ {
+  "topic": "lcm_hcf",
+  "question": "lcm(6, 8)",
+  "previous": "",
+  "write": "lcm(6, 8) = 48",
+  "correct": false,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "lcm_hcf",
+  "question": "prime factors of 24",
+  "previous": "",
+  "write": "24 = 2 * 2 * 2 * 3",
+  "correct": true,
+  "category": "",
+  "messy": "write \u00d7 for *"
+ },
+ {
+  "topic": "word_problem",
+  "question": "5 pens cost Rs 60. What do 8 pens cost?",
+  "previous": "",
+  "write": "60 / 5 = 12",
+  "correct": true,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "word_problem",
+  "question": "5 pens cost Rs 60. What do 8 pens cost?",
+  "previous": "",
+  "write": "12 * 8 = 96",
+  "correct": true,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "word_problem",
+  "question": "5 pens cost Rs 60. What do 8 pens cost?",
+  "previous": "",
+  "write": "60 * 5 = 300",
+  "correct": false,
+  "category": "",
+  "messy": "wrong setup"
+ },
+ {
+  "topic": "word_problem",
+  "question": "Find 20% of Rs 450",
+  "previous": "",
+  "write": "20/100 * 450 = 90",
+  "correct": true,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "word_problem",
+  "question": "Find 20% of Rs 450",
+  "previous": "",
+  "write": "20/100 * 450 = 9",
+  "correct": false,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "word_problem",
+  "question": "Riya had Rs 500 and spent Rs 235. How much is left?",
+  "previous": "",
+  "write": "500 - 235 = 335",
+  "correct": false,
+  "category": "borrow_error",
+  "messy": ""
+ },
+ {
+  "topic": "word_problem",
+  "question": "Riya had Rs 500 and spent Rs 235. How much is left?",
+  "previous": "",
+  "write": "500 - 235 = 265",
+  "correct": true,
+  "category": "",
+  "messy": ""
+ },
+ {
+  "topic": "word_problem",
+  "question": "A car goes 60 km in 1 hour. How far in 3.5 hours?",
+  "previous": "",
+  "write": "60 * 3.5 = 210",
+  "correct": true,
+  "category": "",
+  "messy": ""
+ }
+]
