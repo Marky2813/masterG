@@ -95,7 +95,7 @@ ok(r.qs[0].st.length === 4 && r.qs[0].st[0].x === 1, `erased wrong step kept, me
 ok(!r.qs[0].st.slice(1).some((x) => x.x), "archived correct steps are not marked erased");
 ok(r.qs[0].n === 1 && r.qs[0].m?.l === 1, "nahi aata and Masterji's working line counted");
 ok(r.qs[0].st[0].r === 2 && r.qs[0].st[0].h === "the 4 looks like a 9", "highest rung and handwriting remark kept");
-ok(r.qs[2].hw?.i === 2 && r.qs[2].hw?.n === 5, "homework position carried");
+ok(r.qs[2].hw?.i === 3 && r.qs[2].hw?.n === 5, "homework position carried (0-based index 2 -> shown as 3)");
 ok(outcomeOf(r.qs[0]) === "fixed", `Q1 fixed (got ${outcomeOf(r.qs[0])})`);
 ok(outcomeOf(r.qs[1]) === "first_try", `Q2 first try (got ${outcomeOf(r.qs[1])})`);
 ok(outcomeOf(r.qs[2]) === "unfinished", `Q3 unfinished (got ${outcomeOf(r.qs[2])})`);

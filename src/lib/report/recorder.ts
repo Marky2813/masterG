@@ -8,7 +8,8 @@ import type { MasterGEvents } from "../types";
 import type { Report, ReportQuestion, ReportStep } from "./model";
 
 // Same phrases the step service treats as "stuck" (src/lib/brain/stepService.ts), Hinglish and Devanagari.
-export const STUCK_RE = /nahi\s*(aata|aati|pata)|pata\s*nahi|samajh\s*nahi|नहीं\s*(आता|आती|पता)|पता\s*नहीं|समझ\s*नहीं|don'?t know|no idea/i;
+export const STUCK_RE =
+  /nahi\s*(aata|aati|pata)|pata\s*nahi|samajh\s*nahi|नहीं\s*(आता|आती|पता)|पता\s*नहीं|समझ\s*नहीं|don'?t know|no idea/i;
 
 export const LOCAL_KEY = "masterg.report.latest";
 
@@ -51,8 +52,17 @@ function onQuestion(q: MasterGEvents["questionConfirmed"]): void {
   // The same sum confirmed twice in a row with nothing written yet is one question, not two.
   if (current && current.q === q.text && current.st.length === 0) return;
   // An empty "free practice" bucket with nothing in it is replaced by the real question.
-  if (current && current.q === "" && current.st.length === 0 && !current.m && !current.n) report.qs.pop();
-  const hw = (q as { homework?: { index?: unknown; total?: unknown; title?: unknown } }).homework;
+  if (
+    current &&
+    current.q === "" &&
+    current.st.length === 0 &&
+    !current.m &&
+    !current.n
+  )
+    report.qs.pop();
+  const hw = (
+    q as { homework?: { index?: unknown; total?: unknown; title?: unknown } }
+  ).homework;
   current = {
     q: q.text,
     k: q.kind,
@@ -60,7 +70,13 @@ function onQuestion(q: MasterGEvents["questionConfirmed"]): void {
     t1: now(),
     st: [],
     ...(hw && typeof hw.index === "number" && typeof hw.total === "number"
-      ? { hw: { i: hw.index, n: hw.total, ...(typeof hw.title === "string" ? { ti: hw.title } : {}) } }
+      ? {
+          hw: {
+            i: hw.index + 1,
+            n: hw.total, // HomeworkRef.index is 0-based (PR #62); the report shows 1-based
+            ...(typeof hw.title === "string" ? { ti: hw.title } : {}),
+          },
+        }
       : {}),
   };
   report.qs.push(current);
@@ -72,7 +88,13 @@ function onVerdict(v: MasterGEvents["verdict"]): void {
   const q = question();
   let s: ReportStep | undefined = q.st.find((x) => x.id === v.clusterId);
   if (!s) {
-    s = { id: v.clusterId, t: v.text, s: "u", y: tops.get(v.clusterId) ?? 0, a: now() - q.t0 };
+    s = {
+      id: v.clusterId,
+      t: v.text,
+      s: "u",
+      y: tops.get(v.clusterId) ?? 0,
+      a: now() - q.t0,
+    };
     q.st.push(s);
   }
   s.t = v.text || s.t;
@@ -130,7 +152,8 @@ function onUpdated(id: string, y: number, strokeIds: string[]): void {
       s.y = y;
       return true;
     }
-    const merged = removed.has(s.id) && (strokesOf.get(s.id) ?? []).some((k) => mine.has(k));
+    const merged =
+      removed.has(s.id) && (strokesOf.get(s.id) ?? []).some((k) => mine.has(k));
     return !merged || s.w === 1;
   });
 }
@@ -153,7 +176,9 @@ export function startReportRecorder(): () => void {
   const offs = [
     bus.on("questionConfirmed", onQuestion),
     bus.on("verdict", onVerdict),
-    bus.on("clusterUpdated", ({ id, bbox, strokeIds }) => onUpdated(id, Math.round(bbox.y), strokeIds)),
+    bus.on("clusterUpdated", ({ id, bbox, strokeIds }) =>
+      onUpdated(id, Math.round(bbox.y), strokeIds),
+    ),
     bus.on("clusterRemoved", ({ id }) => onRemoved(id)),
     bus.on("userUtterance", ({ text }) => {
       if (!report || !STUCK_RE.test(text)) return;
