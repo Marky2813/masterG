@@ -569,7 +569,7 @@ export class MasterjiVoice {
               ? { ok: false, error: "Nothing drawn: those lines could not be plotted. Use expressions in x ('3x + 5', '20') or equations ('8x + 2y = 4'). Don't say it's on the board." }
               : dup
                 ? { ok: false, note: "already on the board; don't draw it again" }
-                : { ok: true, drawn: plan.lines.map((l) => l.label), crossesAt: plan.markX ?? "they don't cross in view", note: "Say the crossing exactly as given here." },
+                : { ok: true, drawn: plan.lines.map((l) => l.label), crossesAt: plan.markX ?? "they don't cross in view", note: "If you mention the crossing, use exactly this number. Unless the child has already solved it or is at rung 4, don't announce it as the answer: ask the child to read where the lines meet (\"Dekho, lines kahaan mil rahi hain? x kitna hai?\")." },
           },
         });
         continue;
@@ -592,7 +592,7 @@ export class MasterjiVoice {
               ? { ok: false, error: "Nothing drawn: use whole numbers 0-10 (and for '-' the first must be bigger). Don't say it's on the board." }
               : dupC
                 ? { ok: false, note: "already on the board; point at it instead" }
-                : { ok: true, drawn: `${spec.a} ${spec.op} ${spec.b} as sticks, counted one by one`, answer: result },
+                : { ok: true, drawn: `${spec.a} ${spec.op} ${spec.b} as sticks, counted one by one`, answer: result, note: "Count along slowly, then ask the child how many there are in total. Let the child say the total first; only confirm it after they say it." },
           },
         });
         continue;
