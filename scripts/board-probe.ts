@@ -19,11 +19,14 @@ async function main() {
       if (m.serverContent?.turnComplete) { console.log(`   SAID "${said.trim()}"`); said = ""; done(); }
     } } });
   const send = async (label: string, text: string) => { console.log(`> ${label}`); const w = wait(); session.sendClientContent({ turns: [{ role: "user", parts: [{ text }] }], turnComplete: true }); await w; };
-  const q = "3/4 + 1/6";
+  const q = process.argv[2] ?? "3/4 + 1/6";
   await send("start", `[SESSION START] Greet the child and ask their name.\n[QUESTION SET: ${q}]\n[FACTS (computed, correct; copy these when writing): ${questionFacts(q).join(" ; ")}]`);
-  await send("wrong rung 1", "[STEP c1 WRONG | child wrote: 3/4 + 1/6 = 4/10 | category: add_across | rung 1 | repeat 1]");
-  await send("correct new line", "[STEP c2 CORRECT NOW | child wrote: 9/12 + 2/12] Short praise, then let them continue.");
-  await send("final", "[FINAL ANSWER CORRECT | child wrote: 11/12 | after fixing a mistake: praise the effort] Praise warmly in one or two sentences, then ask if they want the next sum.");
+  const script: [string, string][] = JSON.parse(process.argv[3] ?? "[]");
+  if (script.length) for (const [label, text] of script) await send(label, text);
+  else {
+    await send("wrong rung 1", "[STEP c1 WRONG | child wrote: 3/4 + 1/6 = 4/10 | category: add_across | rung 1 | repeat 1]");
+    await send("final", "[FINAL ANSWER CORRECT | child wrote: 11/12 | first try] Praise warmly in one or two sentences, then ask if they want the next sum.");
+  }
   session.close();
 }
 main();

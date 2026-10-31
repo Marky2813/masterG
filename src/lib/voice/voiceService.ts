@@ -10,7 +10,7 @@
 import { GoogleGenAI, type LiveServerMessage, type Session } from "@google/genai";
 import { bus } from "../bus";
 import type { Language, Verdict } from "../types";
-import { questionFacts, reachesFinalAnswer } from "../brain/facts";
+import { isSimplified, questionFacts, reachesFinalAnswer, simplestAnswer } from "../brain/facts";
 import { sessionState } from "../sessionState";
 import { clientLog, getSessionId } from "../log/client";
 import { Mic, Player } from "./audio";
@@ -216,13 +216,19 @@ export class MasterjiVoice {
       const final = !!q && reachesFinalAnswer(q, v.text);
       const fixed = this.wrong.delete(v.clusterId);
       const hadMistake = this.wrong.size > 0 || fixed || this.everWrong;
-      if (final) {
+      if (final && isSimplified(v.text)) {
         this.wrong.clear();
         this.note(`[FINAL ANSWER CORRECT | child wrote: ${v.text} | ${hadMistake ? "after fixing a mistake: praise the effort" : "first try"}] Praise warmly in one or two sentences, then ask if they want the next sum.`);
+      } else if (final) {
+        this.wrong.clear();
+        this.note(`[STEP ${v.clusterId} CORRECT, NOT SIMPLIFIED YET | child wrote: ${v.text} | simplest form: ${q ? simplestAnswer(q) : "?"}] Say it's right, then ask them to simplify it (don't give the simplest form unless they're stuck).`);
       } else if (fixed || this.wrong.size > 0) {
         // Corrected on the same line, or a right step on a new line after a mistake.
         this.note(`[STEP ${v.clusterId} CORRECT NOW | child wrote: ${v.text}] Short praise, then let them continue.`);
         this.wrong.clear();
+      } else {
+        // Every correct step gets a short acknowledgement, so he follows the child's progress.
+        this.note(`[STEP ${v.clusterId} CORRECT | child wrote: ${v.text}] Very short praise (2-5 words), let them continue. Don't ask for anything they've already done.`);
       }
     }
     if (v.status === "wrong") this.everWrong = true;
