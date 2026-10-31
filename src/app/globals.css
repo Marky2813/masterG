@@ -24,3 +24,119 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ---- Landing page (Master G style guide) ----------------------------------
+   Tokens and motion for src/app/page.tsx and src/components/landing/. The app
+   at /learn does not use these names, so its look is unchanged. */
+@theme {
+  --color-kagaz: #f8f5ee;
+  --color-kohl: #161513;
+  --color-kohl-ink: #0c0b0a;
+  --color-peela: #ffe36e;
+  --color-rabar: #f5b3c1;
+  --color-rabar-wash: #fce9ee;
+  --color-red-pen: #c83a22;
+  --color-paper: #fcfbf7;
+  --color-mist: #fbf9f4;
+  --color-pencil: #3a3530;
+  --color-muted: #4d4943;
+  --color-margin: #f2a19d;
+  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-hand: var(--font-kalam), cursive;
+  --radius-control: 14px;
+  --radius-window: 20px;
+  --radius-tile: 28px;
+  --shadow-hard-sm: 4px 4px 0 var(--color-kohl-ink);
+  --shadow-hard: 6px 6px 0 var(--color-kohl-ink);
+  --shadow-hard-lg: 8px 8px 0 var(--color-kohl-ink);
+  --shadow-hard-xl: 12px 12px 0 var(--color-kohl-ink);
+  --animate-ink: landing-ink 0.9s ease-out both;
+  --animate-float: landing-float 9s ease-in-out infinite;
+  --animate-tape-left: landing-tape-left 36s linear infinite;
+  --animate-tape-right: landing-tape-right 42s linear infinite;
+}
+
+@keyframes landing-ink {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes landing-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(0, -12px, 0) rotate(8deg);
+  }
+}
+
+@keyframes landing-tape-left {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes landing-tape-right {
+  from {
+    transform: translate3d(-50%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 36px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.landing-ruled {
+  background-color: var(--color-kagaz);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 35px,
+    #e7e4dd 35px,
+    #e7e4dd 36px
+  );
+}
+
+.landing-sheet {
+  background-color: var(--color-paper);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 43px,
+    #e4ded2 43px,
+    #e4ded2 44px
+  );
+}
+
+/* Scroll-linked reveals. Only with view-timeline support and no reduced-motion
+   request; otherwise every element is simply shown in its final state. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .landing-reveal {
+      animation: landing-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+    .landing-ink-on-view {
+      animation: landing-ink linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 45%;
+    }
+  }
+}
