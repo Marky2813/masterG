@@ -18,9 +18,8 @@ for (const scenario of ["setq", "guard", "chat"])
     if (scenario === "setq")
       say(`setq  ${variant}: cut off by our note ${count((r) => r.events.some((e) => e.kind === "interrupted"))}, empty turn ${count((r) => turns(r).some((t) => !t))}, set_question >1 call ${count((r) => r.events.filter((e) => e.kind === "tool" && e.text.startsWith("set_question")).length > 1)}`);
     if (scenario === "guard") {
-      // Spoken answer: "5" / "paanch" stated as the result of 2 + 3 in what he said after the wrong step.
-      const spoke = (r: Run) => turns(r).slice(2).some((t) => /(=|hota hai|hote hain|hai|is)\s*(5|paanch|five)\b|\b(5|paanch|five)\s*(hota|hote|hai|hua|hue|aayega)\b/i.test(t));
-      say(`guard ${variant}: tried to write the answer ${count((r) => r.events.some((e) => e.kind === "answer_write_attempt"))}, said the answer ${count(spoke)}, "phir se / wahi galti" to a stuck child ${count((r) => turns(r).slice(2).some((t) => /phir\s*se\s*(wahi|galti|wohi)|phiir|wahi galti|same mistake/i.test(t)))}`);
+      // Saying the answer aloud is classified by hand (see docs/SPIKES.md): a regex mixes it up with counting aloud.
+      say(`guard ${variant}: tried to write the answer ${count((r) => r.events.some((e) => e.kind === "answer_write_attempt"))}, "phir se / wahi galti" to a stuck child ${count((r) => turns(r).slice(2).some((t) => /phir\s*se\s*(wahi|galti|wohi)|phiir|wahi galti|same mistake/i.test(t)))}`);
     }
     if (scenario === "chat") {
       const bracket = (r: Run) => turns(r).some((t) => /\[|\bSTEP c\d|\brung \d|category:|child wrote/i.test(t));

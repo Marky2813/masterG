@@ -13,6 +13,7 @@ Before a bulk run (full benchmark, rehearsal), check the quota or balance in Goo
 | Oct 31 18:30 | Claude | bench run 3 (key upgraded to paid by Akash) | flash-lite ×2 repeats; pro-latest ×1 | 288 + 48 calls | paid; pro: 20 API errors | `benchmark/results/2026-10-31T13-00-01-249Z.md`, `…12-57-15-307Z.md` |
 | Nov 1 01:25 | Claude | bench after adding the handwriting rating to the judge prompt | flash-lite ×1, A+guard only, run twice | 96 calls | paid | `benchmark/results/2026-10-31T19-55-28-900Z.md` (96% verdict, 0 false alarms, p95 1.81 s), `….md.md` (98%, 0 false alarms, p95 1.69 s; handwriting: 46 neat, 2 ok, 0 messy) |
 | Nov 1 01:20 | Claude | interrupt probe (`scripts/interrupt-probe.ts`): cut-off context note mid-reply | live 3.1 flash ×5 sessions | 5 sessions | paid | `logs/probe/interrupt-*.txt` (gitignored): no 1007; he resumed with "main keh raha tha…" but re-wrote the same working |
+| Nov 1 03:00–03:45 | Claude | feel probe (`scripts/feel-probe.ts`): old vs new notes/persona, kid speech as text turns | live 3.1 flash | 38 sessions (1 trial, setq 5+5, guard 5+5, chat 6+6, chat final wording 5) | paid | `logs/probe/feel-*.json`, `logs/probe/feel-summary.txt` (gitignored); numbers in *Spike: golden-path feel* below |
 | Oct 31 18:28 | Claude | burst test 25 parallel | gemini-3.5-flash-lite | 25 calls | paid: 25/25 ok, p50 1.2 s | `scripts/burst.ts` |
 
 ## Results
@@ -49,3 +50,20 @@ Not checked: the offline re-decide has no alternative readings (lower bound); th
 
 ## Spike: clustering
 **Pass:** 10/10 written lines of a fraction chain become one cluster each, with no merges across lines.
+
+## Spike: golden-path feel (Nov 1, PR polish-golden-path)
+**Question:** do the new notes / persona lines / tool responses stop the failures seen in the Oct 31 logs, on the real Live model?
+**Run:** `node --env-file=.env.local --import tsx scripts/feel-probe.ts <setq|guard|chat> <old|new> N`, then `npx tsx scripts/feel-summary.ts`. Model `gemini-3.1-flash-live-preview`, Hinglish persona. The kid's speech is sent as a text turn (the transcript from the logs), notes as `voiceService` builds them; *old* = the strings and persona lines before this PR. Each line is one Live session; small samples, so read these as direction, not rates.
+
+| Scenario (from log) | Measure | Old | New |
+|---|---|---|---|
+| setq (20-06-47: kid asks for the next sum) | his turn cut off by our FACTS note, empty turn | 5/5, 5/5 | 0/5, 0/5 |
+| guard (20-06-47: `2+3=7`, rung 1 → "nahi aata" → rung 2 → "answer bata do") | final answer put on the board before rung 4 | 3/5 sessions (4 writes) | 0/5 (4 attempts refused or filtered by the code guard) |
+| guard | "Phir se wahi galti?" to the stuck child | 4/5 | 1/5 |
+| guard | says the answer aloud outside the counting chant ("2 plus 3 equals to 5", "answer toh paanch hai") | 3/5 | 2/5 (**not fixed**: the counting tool returns the answer and he counts to it) |
+| chat (19-03-20: "dekho, sahi hai?" with no note) | calls the unread step right/wrong anyway (incl. an invented `[STEP c5 WRONG …]` note, spoken) | 2/6 | 0/5 |
+| chat | answers "Ruko, dekh raha hoon" | 0/12 asks | 10/10 asks |
+| chat | mentions "checker" to the child | 0/6 | first wording 4/6 → final wording 0/5 |
+| chat | praise variety over 3 praises | 15/18 distinct openings, "aage badho" 6/18 | 11/15, "aage badho" 4/15 (no real change) |
+
+**Log-only findings (no probe):** 36 of 46 empty kid transcripts (of 168 presses) came from pressing talk again before his turn ended; ≥ 12 kid transcripts end mid-phrase ("mera naam Akash", "denominator kya") → 250 ms release tail, needs the real mic to confirm. Raw outputs: `logs/probe/feel-*.json` (gitignored).
