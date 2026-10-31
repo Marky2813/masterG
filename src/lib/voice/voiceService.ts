@@ -10,7 +10,7 @@
 import { GoogleGenAI, type LiveServerMessage, type Session } from "@google/genai";
 import { bus } from "../bus";
 import type { Language, Verdict } from "../types";
-import { isSimplified, methodFacts, questionFacts, reachesFinalAnswer, simplestAnswer } from "../brain/facts";
+import { isSimplified, methodFacts, questionFacts, reachesFinalAnswer, revealsAnswer, simplestAnswer } from "../brain/facts";
 import { sessionState } from "../sessionState";
 import { kindOf } from "../brain/kind";
 import { clientLog, getSessionId } from "../log/client";
@@ -18,6 +18,9 @@ import { Mic, Player } from "./audio";
 import { liveConfig } from "./liveConfig";
 import { planGraph } from "../redpen/graph";
 import { validCounting } from "../redpen/counting";
+
+const RELEASE_TAIL_MS = 250; // mic stays open this long after the talk key is released
+const REPLY_WAIT_MS = 5000; // hold notes at most this long after the last sign of a reply we asked for
 
 export type VoiceStatus = "idle" | "connecting" | "live" | "error" | "closed";
 
@@ -50,6 +53,16 @@ export class MasterjiVoice {
   private history: string[] = []; // recent turns, handed over on reconnect
   private recentWrites: { t: number; text: string; nums: string }[] = []; // board writes, for the cut-off note and re-write guard
   private selfSet: string | null = null; // question Masterji put on the board himself (don't echo it back as "QUESTION SET") // board writes already made (dedupe repeated tool calls) // when we last asked for a reply (note sent / button released), for latency logs
+  private micOpen = false; // mic audio goes to the server: while held, plus a short tail after release
+  private releaseTimer?: ReturnType<typeof setTimeout>;
+  private replyOwedAt = 0; // we asked for a reply (talk released / note sent) and it hasn't finished: notes wait
+  private open = new Map<string, { rung: number; text: string }>(); // open mistakes (answer guard, "stuck" re-sends)
+  private solved = false; // the child has written the final answer to this question
+  private finalPraised = false; // the final answer was already celebrated (don't celebrate a re-written copy)
+  private praised = new Set<string>(); // steps already praised (a re-judged step isn't praised again)
+  private quiet: string[] = []; // context that needs no reply: goes along with the next note
+  private recentPraise: string[] = []; // his last short praises, so the next one uses new words
+  private praiseTurn = false;
   language: Language;
 
   constructor(
@@ -68,7 +81,7 @@ export class MasterjiVoice {
     await this.openSession();
 
     await this.mic.start((data) => {
-      if (this.talking) this.session?.sendRealtimeInput({ audio: { data, mimeType: "audio/pcm;rate=16000" } });
+      if (this.micOpen) this.session?.sendRealtimeInput({ audio: { data, mimeType: "audio/pcm;rate=16000" } });
     });
     this.speakingTimer = setInterval(() => {
       this.flushNotes();
@@ -150,6 +163,7 @@ export class MasterjiVoice {
     this.offs.forEach((off) => off());
     this.offs = [];
     clearInterval(this.speakingTimer);
+    clearTimeout(this.releaseTimer);
     this.mic.stop();
     this.player?.close();
     this.session?.close();
@@ -160,6 +174,13 @@ export class MasterjiVoice {
   async startTalking(): Promise<void> {
     if (this.talking || !this.session) return;
     this.talking = true;
+    if (this.releaseTimer) {
+      // Pressed again inside the release tail: the same activity is still open, just keep listening.
+      clearTimeout(this.releaseTimer);
+      this.releaseTimer = undefined;
+      clientLog("voice.ptt_down", { resumed: true });
+      return;
+    }
     await this.mic.resume();
     const wasGenerating = this.generating;
     if (this.generating) this.discardStale = true; // the server will keep streaming the old reply for a moment
@@ -178,25 +199,51 @@ export class MasterjiVoice {
       });
       this.masterjiLine = "";
     }
-    this.kidLine = "";
+    // The last press's words arrive while he answers; pressing again before his turn ends used to wipe
+    // them (36 of 46 empty "kid" turns in the logs), so they never reached the stuck detector.
+    const early = this.kidLine.trim();
+    if (early) clientLog("voice.kid_said", { kid: early, before: "turnComplete" });
+    this.commitKid();
     this.cb.onCaption?.("kid", "…", false);
     this.session.sendRealtimeInput({ activityStart: {} });
+    this.micOpen = true; // only after activityStart, so no audio lands outside the activity
     clientLog("voice.ptt_down", {});
   }
 
-  // Push-to-talk released: Masterji answers.
+  // Push-to-talk released: Masterji answers. Kids let go on the last syllable ("mera naam Akash [hai]",
+  // "denominator kya [hota hai]" in the logs), so the mic stays open a moment longer before activityEnd.
   stopTalking(): void {
     if (!this.talking) return;
     this.talking = false;
-    this.session?.sendRealtimeInput({ activityEnd: {} });
-    this.waitingSince = performance.now();
     clientLog("voice.ptt_up", {});
+    this.releaseTimer = setTimeout(() => {
+      this.releaseTimer = undefined;
+      this.micOpen = false;
+      this.session?.sendRealtimeInput({ activityEnd: {} });
+      this.waitingSince = performance.now();
+      this.replyOwedAt = performance.now();
+    }, RELEASE_TAIL_MS);
+  }
+
+  private commitKid(): void {
+    const said = this.kidLine.trim();
+    this.kidLine = "";
+    if (!said) return;
+    bus.emit("userUtterance", { text: said });
+    this.history.push(`child: ${said}`);
+  }
+
+  // Notes wait while the child talks, while he is audible, and while a reply we asked for is still coming:
+  // a note sent then cuts that reply off (set_question called twice, log 20-06-47) or hijacks the answer
+  // to the child (a stale praise answered instead of "graph dikha do", log 18-57-48).
+  private busy(): boolean {
+    return this.talking || this.micOpen || !!this.player?.isAudible(300) || (this.replyOwedAt > 0 && performance.now() - this.replyOwedAt < REPLY_WAIT_MS);
   }
 
   // Hidden system note to Masterji (the child never sees these). A note sent mid-sentence
   // cuts him off, so notes wait until he's quiet (checked every 100 ms by the speaking timer).
   note(text: string): void {
-    if (this.talking || this.player?.isAudible(300)) {
+    if (this.busy()) {
       clientLog("voice.note_queued", { text });
       this.pending.push(text);
       return;
@@ -205,13 +252,22 @@ export class MasterjiVoice {
   }
 
   private sendNote(text: string, queued = false): void {
+    if (this.quiet.length) text = `${this.quiet.join("\n")}\n${text}`;
+    this.quiet = [];
     clientLog("voice.note", { text, queued });
     this.waitingSince = performance.now();
+    this.replyOwedAt = performance.now();
     this.session?.sendClientContent({ turns: [{ role: "user", parts: [{ text }] }], turnComplete: true });
   }
 
+  // Context he should know but needn't answer (a re-judged step, a re-written answer): no turn of its own.
+  private quietNote(text: string): void {
+    clientLog("voice.note_quiet", { text });
+    this.quiet = [...this.quiet, text].slice(-4);
+  }
+
   private flushNotes(): void {
-    if (this.pending.length === 0 || this.talking || this.player?.isAudible(300)) return;
+    if (this.pending.length === 0 || this.busy()) return;
     const text = this.pending.join("\n");
     this.pending = [];
     this.sendNote(text, true);
@@ -227,13 +283,19 @@ export class MasterjiVoice {
       bus.on("verdict", (v) => this.onVerdict(v)),
       bus.on("questionConfirmed", ({ text }) => {
         this.recentWrites = []; // a new sum: earlier board writes are not repeats
-        if (this.selfSet === text) {
-          this.selfSet = null;
-          const facts = questionFacts(text);
-          this.note(`[FACTS for the sum you just put on the board (copy these when writing): ${facts.join(" ; ")}] It is on the board now; don't set it again.`);
-        } else this.noteQuestion(text);
+        this.open.clear();
+        this.solved = this.finalPraised = false;
+        this.praised.clear();
+        this.quiet = [];
+        // His own set_question gets the FACTS in its tool response: a note here, sent while he waits for
+        // that response, cut his turn off and made him call set_question again (logs 18-44-20, 20-06-47).
+        if (this.selfSet === text) this.selfSet = null;
+        else this.noteQuestion(text);
       }),
-      bus.on("clusterRemoved", ({ id }) => this.wrong.delete(id)),
+      bus.on("clusterRemoved", ({ id }) => {
+        this.wrong.delete(id);
+        this.open.delete(id);
+      }),
       bus.on("languageChanged", ({ language }) => {
         this.language = language;
         this.note(`[LANGUAGE: ${language}]`);
@@ -250,11 +312,28 @@ export class MasterjiVoice {
       const key = `spoken|${kind}|${clusterId ?? ""}|${text}`;
       if (this.written.has(key)) continue;
       this.written.add(key);
+      if (this.givesAway(text)) {
+        clientLog("voice.answer_withheld", { tool: `spoken write_${kind}`, text });
+        continue;
+      }
       clientLog("voice.spoken_tool_executed", { kind, clusterId, text });
       if (kind.toLowerCase() === "note" && clusterId) bus.emit("writeNote", { clusterId, text: text.slice(0, 28) });
       else bus.emit("writeLine", { text: text.slice(0, 44) });
     }
   }
+
+  // Answer guard: a board write that states the final answer before the child has written it, while no
+  // open mistake has reached rung 4 (SHOW). Log 20-06-47: "2 + 3 = 5" as a note at rung 2, and
+  // "Final answer = 7" in a working before the child wrote anything.
+  private givesAway(text: string): boolean {
+    const q = sessionState.question?.text;
+    if (!q || this.solved) return false;
+    const rung = Math.max(0, ...[...this.open.values()].map((o) => o.rung));
+    return rung < 4 && revealsAnswer(q, text);
+  }
+
+  private static readonly WITHHELD =
+    "Not written: that gives away the final answer, and the child hasn't reached it yet. Don't say the answer either. Give the next hint, or teach one step of the method, and let the child write the answer.";
 
   private remember(lines: string[]): void {
     const t = performance.now();
@@ -303,13 +382,20 @@ export class MasterjiVoice {
     }
     if (v.status === "wrong") {
       this.wrong.add(v.clusterId);
+      // Same step, same text again = the child said "nahi aata" (or the step was re-read), not a new
+      // mistake. Sent as a plain WRONG it made him open with "Phir se wahi galti?" (logs 18-44-20, 20-06-47).
+      const again = this.open.get(v.clusterId)?.text === v.text;
+      this.open.set(v.clusterId, { rung: v.hintRung, text: v.text });
+      // Flash's explanation can contain the answer ("2 plus 3 is 5, not 7.", log 20-06-47): keep it for rung 4.
+      const q = sessionState.question?.text;
+      const hint = v.hint && !(q && v.hintRung < 4 && revealsAnswer(q, v.hint)) ? v.hint : null;
       const parts = [
-        `STEP ${v.clusterId} WRONG`,
+        again ? `STEP ${v.clusterId} STILL WRONG (same step: the child is stuck and asked for help; NOT a repeated mistake)` : `STEP ${v.clusterId} WRONG`,
         `child wrote: ${v.text}`,
         v.category ? `category: ${v.category}` : null,
         `rung ${v.hintRung}`,
-        `repeat ${v.repeatCount}`,
-        v.hint ? `hint: ${v.hint}` : null,
+        again ? null : `repeat ${v.repeatCount}`,
+        hint ? `hint: ${hint}` : null,
         hw,
         ...methodFacts(v.text).slice(0, 6).map((m) => `METHOD ${m}`),
         v.hintRung >= 4 ? "ACTION (silent): write the correct step from FACTS with the line tool, then ask the child to do the next line" : null,
@@ -321,7 +407,15 @@ export class MasterjiVoice {
       const final = !!q && reachesFinalAnswer(q, v.text);
       const fixed = this.wrong.delete(v.clusterId);
       const hadMistake = this.wrong.size > 0 || fixed || this.everWrong;
-      if (final && isSimplified(v.text)) {
+      this.open.delete(v.clusterId);
+      if (final || (!!q && revealsAnswer(q, v.text))) this.solved = true; // from now on he may write the answer
+      const seen = this.praised.has(v.clusterId);
+      this.praised.add(v.clusterId);
+      if (final && isSimplified(v.text) && this.finalPraised) {
+        // The answer re-written on a new line got three celebrations in a row (log 19-03-20).
+        this.quietNote(`[STEP ${v.clusterId} CORRECT | child wrote: ${v.text} | the final answer again, already praised: no reply needed for this]`);
+      } else if (final && isSimplified(v.text)) {
+        this.finalPraised = true;
         this.wrong.clear();
         this.note(withHw(`[FINAL ANSWER CORRECT | child wrote: ${v.text} | ${hadMistake ? "after fixing a mistake: praise the effort" : "first try"}] Praise warmly in one or two sentences, then ask if they want the next sum.`));
       } else if (final) {
@@ -331,9 +425,16 @@ export class MasterjiVoice {
         // Corrected on the same line, or a right step on a new line after a mistake.
         this.note(withHw(`[STEP ${v.clusterId} CORRECT NOW | child wrote: ${v.text}] Short praise, then let them continue.`));
         this.wrong.clear();
+      } else if (seen && !hw) {
+        // The same step re-judged as it grew ("= 8(1 - y/3) + 2y" then "x = 8(1 - y/3) + 2y", log 18-57-48):
+        // he already praised it, so he just keeps it in mind.
+        this.quietNote(`[STEP ${v.clusterId} CORRECT | child wrote: ${v.text} | already praised this step: no reply needed for this]`);
       } else {
-        // Every correct step gets a short acknowledgement, so he follows the child's progress.
-        this.note(withHw(`[STEP ${v.clusterId} CORRECT | child wrote: ${v.text}] Very short praise (2-5 words), let them continue. Don't ask for anything they've already done.`));
+        // Every correct step gets a short acknowledgement, so he follows the child's progress. 13 of 22
+        // logged praises were "...aage badho": tell him what he just said so he picks new words.
+        const last = this.recentPraise.length ? ` (not again: ${this.recentPraise.map((p) => `"${p}"`).join(", ")})` : "";
+        this.praiseTurn = true;
+        this.note(withHw(`[STEP ${v.clusterId} CORRECT | child wrote: ${v.text}] Very short praise (2-5 words) in fresh words${last}, let them continue. Don't ask for anything they've already done.`));
       }
     }
     if (v.status === "wrong") this.everWrong = true;
@@ -346,6 +447,7 @@ export class MasterjiVoice {
       return;
     }
     const sc = m.serverContent;
+    if (this.replyOwedAt && (sc?.modelTurn || m.toolCall)) this.replyOwedAt = performance.now(); // still coming
     if (sc?.interrupted) {
       this.discardStale = false;
       this.generating = false;
@@ -387,22 +489,27 @@ export class MasterjiVoice {
       this.generating = false;
       clientLog("voice.turn", { masterji: this.masterjiLine.trim(), kid: this.kidLine.trim(), underruns: this.player?.takeUnderruns() ?? 0, staleDropped: wasStale });
       this.player?.endTurn();
-      if (this.kidLine.trim()) bus.emit("userUtterance", { text: this.kidLine.trim() });
-      if (this.kidLine.trim()) this.history.push(`child: ${this.kidLine.trim()}`);
-      if (this.masterjiLine.trim()) this.history.push(`you: ${this.masterjiLine.trim().slice(0, 160)}`);
+      this.replyOwedAt = 0;
+      this.commitKid();
+      const said = this.masterjiLine.trim();
+      if (said) this.history.push(`you: ${said.slice(0, 160)}`);
+      if (this.praiseTurn && said) this.recentPraise = [...this.recentPraise, said.replace(/\[[^\]]*\]?/g, "").trim().slice(0, 50)].slice(-2);
+      this.praiseTurn = false;
       this.history = this.history.slice(-12);
       this.masterjiLine = "";
-      this.kidLine = "";
     }
     for (const fc of m.toolCall?.functionCalls ?? []) {
       const args = (fc.args ?? {}) as { clusterId?: string; text?: string };
       const text = args.text?.trim();
       const key = `${fc.name}|${args.clusterId ?? ""}|${text}`;
-      let duplicate = this.written.has(key);
-      if (text && !duplicate) this.written.add(key);
+      const withheld = (fc.name === "write_note" || fc.name === "write_line") && !!text && this.givesAway(text);
+      let duplicate = !withheld && this.written.has(key);
+      if (text && !duplicate && !withheld) this.written.add(key);
+      let response: Record<string, unknown> | null = withheld ? { ok: false, error: MasterjiVoice.WITHHELD } : null;
+      if (withheld) clientLog("voice.answer_withheld", { tool: fc.name, text, rungs: [...this.open.values()].map((o) => o.rung) });
       if (fc.name === "write_note") {
-        clientLog("voice.write_note", { clusterId: args.clusterId, text, duplicate });
-        if (args.clusterId && text && !duplicate) bus.emit("writeNote", { clusterId: args.clusterId, text: text.slice(0, 28) });
+        clientLog("voice.write_note", { clusterId: args.clusterId, text, duplicate, withheld });
+        if (args.clusterId && text && !duplicate && !withheld) bus.emit("writeNote", { clusterId: args.clusterId, text: text.slice(0, 28) });
       } else if (fc.name === "draw_graph") {
         const a = (fc.args ?? {}) as { lines?: unknown; markX?: unknown };
         const lines = Array.isArray(a.lines) ? a.lines.filter((l): l is string => typeof l === "string" && l.length < 40).slice(0, 3) : [];
@@ -454,17 +561,22 @@ export class MasterjiVoice {
         continue;
       } else if (fc.name === "write_working") {
         const a = (fc.args ?? {}) as { title?: unknown; lines?: unknown };
-        const lines = (Array.isArray(a.lines) ? a.lines : []).filter((l): l is string => typeof l === "string" && !!l.trim()).slice(0, 6);
-        const title = typeof a.title === "string" && a.title.trim() ? a.title.trim() : null;
+        const asked = (Array.isArray(a.lines) ? a.lines : []).filter((l): l is string => typeof l === "string" && !!l.trim()).slice(0, 6);
+        const lines = asked.filter((l) => !this.givesAway(l)); // the method stays, the answer line waits for the child
+        const rawTitle = typeof a.title === "string" && a.title.trim() ? a.title.trim() : null;
+        const title = rawTitle && !this.givesAway(rawTitle) ? rawTitle : null;
         const wkey = `working|${lines.join("|")}`;
         const dupW = this.written.has(wkey) || this.rewritesRecent(lines);
         clientLog("voice.write_working", { title, lines, duplicate: dupW });
+        if (lines.length < asked.length) clientLog("voice.answer_withheld", { tool: fc.name, text: asked.filter((l) => !lines.includes(l)).join(" | "), rungs: [...this.open.values()].map((o) => o.rung) });
         duplicate = dupW;
         if (lines.length && !dupW) {
           this.written.add(wkey);
           this.remember(title ? [title, ...lines] : lines);
           for (const l of title ? [title, ...lines] : lines) bus.emit("writeLine", { text: l.trim().slice(0, 44) });
         }
+        if (lines.length < asked.length)
+          response = !lines.length || dupW ? { ok: false, error: MasterjiVoice.WITHHELD } : { ok: true, written: lines, note: `Only the method lines were written. ${MasterjiVoice.WITHHELD.replace(/^Not written: /, "The answer line was left out: ")}` };
       } else if (fc.name === "set_question") {
         const question = ((fc.args ?? {}) as { question?: string }).question?.trim();
         // Loop guard: a QUESTION SET note made him call set_question again and again (log 17-38-27).
@@ -476,15 +588,20 @@ export class MasterjiVoice {
           this.selfSet = question;
           bus.emit("questionConfirmed", { text: question, kind: kindOf(question) });
         }
+        // The FACTS ride in the response (not a separate note, which cut his turn off: see questionConfirmed).
+        if (question)
+          response = same
+            ? { ok: false, note: "That sum is already on the board; don't set it again." }
+            : { ok: true, onBoard: question, facts: questionFacts(question), note: "It's on the board now; don't set it again. Copy numbers from these facts when you write; keep the final answer to yourself until the child gets there." };
       } else if (fc.name === "write_line") {
-        clientLog("voice.write_line", { text, duplicate });
-        if (text && !duplicate) {
+        clientLog("voice.write_line", { text, duplicate, withheld });
+        if (text && !duplicate && !withheld) {
           this.remember([text]);
           bus.emit("writeLine", { text: text.slice(0, 44) });
         }
       }
       this.session?.sendToolResponse({
-        functionResponses: { id: fc.id, name: fc.name, response: { ok: !duplicate, ...(duplicate ? { note: "already on the board; don't write it again, just refer to it" } : {}) } },
+        functionResponses: { id: fc.id, name: fc.name, response: response ?? { ok: !duplicate, ...(duplicate ? { note: "already on the board; don't write it again, just refer to it" } : {}) } },
       });
     }
   }
