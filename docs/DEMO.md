@@ -24,13 +24,13 @@ Verdict first: this script is written from the features on `main` at `67b2293`. 
 | 1:00 | Hint, then fix | Hold Space: "Nahi pata." Then erase and write `= 11/12`. | Next rung: circles the wrong part, then a guiding question. After the fix: tick, "Shabash!" | He gives the full answer at once: carry on and say "usually he climbs one rung at a time". |
 | 1:20 | Teach the method | Hold Space: "Masterji, LCM kaise nikalte hain?" | Speaks, then writes the working on the board in red (`write_working`): multiples of 4 and 6, LCM 12. | Nothing written: ask again, "board pe likh ke dikhao". Voice stalls: End, Start. |
 | 1:40 | Graph | Type or write `3x + 5 = 20`. Say: "Iska graph dikhao." | Draws two lines in red, circles the crossing, says x = 5. | No graph: skip it. Say "graphs are new tonight". Do not retry live. |
-| 1:55 | Close | Say: "Every mistake he sees can feed a report for the teacher, so the teacher knows where each kid is stuck." Say "in progress" unless the report PR is merged. | Wrap up in one line. | |
+| 1:55 | Close | Say: "Every mistake he sees can feed a report for the teacher, so the teacher knows where each kid is stuck." Then open the report (see the segment below). | Wrap up in one line. | |
 
 Notes on beats: the "wrong step" beat should be rehearsed with the exact handwriting you will use. The 48 benchmark samples were one writer on this board.
 
-## Optional segment: report and homework queue (ONLY IF THE PRs ARE MERGED AND RUN)
+## Segment: report and homework queue (rehearse it once before showing)
 
-Check `git log main` for both PRs before including this. If either is not on `main`, say nothing about it beyond "we are building it".
+Both run on the overnight build (`overnight/preview`, PR #64). Rehearse once with the stylus and voice before you show it, because they have only been tested offline.
 
 | Beat | Do | Fallback |
 |---|---|---|

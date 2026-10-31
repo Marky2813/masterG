@@ -29,12 +29,10 @@ Developers: read [PLAN.md](PLAN.md) (product source of truth) and [AGENTS.md](AG
 3. Ask "kaise?" and Masterji writes the method on the board.
 4. A linear equation: Masterji draws the graph.
 
-### In progress (not merged, not claimed)
+### For the teacher (tested offline; not yet run with the stylus and voice)
 
-- A shareable teacher/parent report of where each child is weak.
-- A "homework from the teacher" queue.
-
-Both are separate open PRs. If they are not on `main`, they are not part of this submission.
+- **Homework from the teacher:** photograph, screenshot or paste a worksheet. Flash splits it into a queue of questions, and Masterji works through that homework instead of inventing sums. On 4 rendered test worksheets, 28/28 questions were read correctly after prompt tuning (`benchmark/worksheets/`).
+- **Teacher / parent report** (`📋 Report`, at `/report`): for each question it shows every step read with its mark, the mistake types, the hints needed and the handwriting remarks. It adds an AI note for the teacher, grounded only in those facts, with suggested next-worksheet questions whose answers come from the checker. Share it as a link (the report is compressed into the URL; no database), on WhatsApp, or print it to PDF.
 
 ## How it works
 

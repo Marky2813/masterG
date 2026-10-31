@@ -36,8 +36,8 @@ Last reconciled: Sun 1 Nov 2026, ~02:30 IST, against `main` at `67b2293` (includ
 | 22 | Kid's speech-to-text is hidden on screen (still logged) | not public | DECISIONS Nov 1 01:15 | 1 Nov | edited |
 | 23 | Session logs stay on local disk, gitignored; no audio stored | README | `src/lib/log/server.ts` (events + step PNGs + transcripts only); `.gitignore` | 1 Nov | edited |
 | 24 | Models in the live path: Flash `gemini-3.5-flash-lite` + Live `gemini-3.1-flash-live-preview`, nothing else | README, form | grep of `src/lib/gemini`, `src/lib/voice`, `src/app/api` | 1 Nov | tested offline (code search) |
-| 25 | **Teacher/parent report** | README (as in progress only) | Separate open PR | 1 Nov | **not merged. Not shipped.** Say "in progress". |
-| 26 | **Homework-from-teacher queue** | README (as in progress only) | Separate open PR | 1 Nov | **not merged. Not shipped.** Say "in progress". |
+| 25 | **Teacher/parent report**: per-question steps, marks, mistake types, hints, handwriting; AI teacher note grounded in those facts; share link, WhatsApp, print | README | PR #61: 2 headless-Chrome runs with mouse strokes and real Flash verdicts (6 steps each), the share link opened in a fresh profile, A4 PDF; re-run on the combined build 1 Nov 03:00 | 1 Nov | tested offline. Not run with stylus + voice. AI note: 3 samples. |
+| 26 | **Homework-from-teacher queue**: worksheet → questions; Masterji follows it | README | PR #62: 4 rendered worksheets, 28/28 questions read (2 runs, same sheets used for tuning); headless UI drive; 3 + 1 live voice probes (he set homework questions in order, kept homework over his own sum, celebrated when done) | 1 Nov | tested offline. Not run on a real phone photo. |
 | 27 | MEKO / YugabyteDB cross-session memory | none | Blocked on access (DECISIONS "Open") | 1 Nov | **not built.** Do not claim. |
 
 ## Measured numbers (one per quantity, reuse everywhere)
@@ -55,7 +55,8 @@ Last reconciled: Sun 1 Nov 2026, ~02:30 IST, against `main` at `67b2293` (includ
 - "Never wrong", "always correct", "zero mistakes". We claim 0 false alarms on 48 samples from one writer, and that the checker re-verifies what it can compute.
 - Any figure about learning gains, grades, or time saved. We have no study. Write `[source needed]` if a number is wanted.
 - Cross-session memory of the child, MEKO, YugabyteDB: not built.
-- The teacher/parent report and the homework queue, unless their PRs are merged and run.
+- The report or homework queue as "used by teachers" or "classroom-tested": nobody outside the team has used them.
+- Worksheet reading accuracy beyond "28/28 on 4 rendered test sheets" (no real phone photos tested).
 - A live deployment. There is none.
 - Reconnect after 10 minutes, 120 % zoom placement, graph tool end-to-end after #59, messy-handwriting flag, counting sticks: not run live.
 - Handwriting recognition accuracy in general. The benchmark is 48 samples, one hand.
