@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Notebook from "@/components/notebook/Notebook";
+import RoughPad from "@/components/notebook/RoughPad";
 import QuestionBox from "@/components/question/QuestionBox";
 import EventLog from "@/components/debug/EventLog";
 import VoiceBar from "@/components/voice/VoiceBar";
@@ -20,6 +21,7 @@ export default function Home() {
   return (
     <main className="text-slate-900">
       <Notebook debug={debug} />
+      <RoughPad />
       <VoiceBar>
         <QuestionBox />
       </VoiceBar>

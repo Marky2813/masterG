@@ -16,7 +16,9 @@ import { bboxOf, hitsStroke, strokePath, type InkStroke } from "@/lib/notebook/s
 
 export const PAGE_W = 1600; // notebook units (landscape whiteboard); the canvas scales to the screen
 export const PAGE_H = 3000; // three screens tall: the page scrolls
-export const ROUGH_X = PAGE_W * 0.8; // rough-work column starts here
+// Rough work lives on its own pull-out sheet (RoughPad), so the whole board is the main area.
+// ROUGH_X is now just the right margin that notes never cross.
+export const ROUGH_X = PAGE_W - 40;
 export const GRID = 40; // grid cell, in notebook units
 const PAUSE_MS = 1500;
 const ERASER_RADIUS = 14;
@@ -294,7 +296,7 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
     if (!cur) return;
     currentRef.current = null;
     cur.bbox = bboxOf(cur.points);
-    cur.rough = cur.bbox.x + cur.bbox.w / 2 >= ROUGH_X && !continuesLine(cur);
+    cur.rough = false; // rough work is on the pull-out RoughPad now
     strokesRef.current.push(cur);
     redraw();
     schedulePause();
@@ -306,18 +308,6 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
     redraw();
     schedulePause();
   };
-
-  // A stroke past the rough-work line still belongs to the main area if it continues a written line
-  // (same row, close to that line's last stroke): long answers run into the column.
-  const continuesLine = (s: InkStroke): boolean =>
-    strokesRef.current.some((m) => {
-      if (m.rough) return false;
-      const top = Math.max(m.bbox.y, s.bbox.y),
-        bottom = Math.min(m.bbox.y + m.bbox.h, s.bbox.y + s.bbox.h);
-      const overlap = Math.max(0, bottom - top) / Math.max(4, Math.min(m.bbox.h, s.bbox.h));
-      const gap = s.bbox.x - (m.bbox.x + m.bbox.w);
-      return overlap >= 0.35 && gap <= 140;
-    });
 
   // Writing near the bottom of the screen scrolls the page up so there's always room.
   const autoScroll = (s: InkStroke) => {
@@ -373,15 +363,6 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
           backgroundSize: `${(100 * GRID) / PAGE_W}% ${(100 * GRID) / PAGE_H}%`,
         }}
       >
-        {/* rough-work column: subtle, never read or marked */}
-        <div
-          className="pointer-events-none absolute inset-y-0 right-0 border-l border-dashed border-slate-300"
-          style={{ left: `${(ROUGH_X / PAGE_W) * 100}%` }}
-        >
-          <div className="sticky top-20 w-full pt-20 text-center text-[11px] font-medium uppercase tracking-widest text-slate-300">
-            Rough work
-          </div>
-        </div>
         <canvas
           ref={inkRef}
           className="absolute inset-0 h-full w-full touch-none"
