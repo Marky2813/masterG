@@ -199,9 +199,8 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
   };
   // "+ Space": one more page below; scroll to it.
   const addSpace = () => {
-    const n = pageHRef.current / SCREEN_H + 1;
-    growTo(n);
-    requestAnimationFrame(() => scrollRef.current?.scrollTo({ top: (n - 1) * screenPx(), behavior: "smooth" }));
+    growTo(pageHRef.current / SCREEN_H + 0.5);
+    requestAnimationFrame(() => scrollRef.current?.scrollBy({ top: screenPx() / 2, behavior: "smooth" }));
   };
   // New question: keep the old work above (read-only), start on a fresh page and scroll to it.
   const newQuestionPage = () => {
@@ -263,7 +262,9 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
       const bottoms = [...clustersRef.current.values()].map((c) => c.bbox.y + c.bbox.h).concat(linesRef.current.map((l) => l.bottom));
       const y = Math.max(questionTopRef.current + 140, ...bottoms) + size + 40;
       if (y > pageHRef.current - 40) growTo(Math.ceil((y + 80) / SCREEN_H));
-      const item = { item: penText(text, 120, y, size).item, start: performance.now() };
+      // Consecutive lines (write_working) are written one after another, like a teacher.
+      const lastEnd = Math.max(0, ...linesRef.current.map((l) => l.item.start + l.item.item.total));
+      const item = { item: penText(text, 120, y, size).item, start: Math.max(performance.now(), lastEnd + 200) };
       linesRef.current.push({ item, bottom: y + 12 });
       animUntilRef.current = Math.max(animUntilRef.current, item.start + item.item.total);
       drawOverlay([...clustersRef.current.values()]);

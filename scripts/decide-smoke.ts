@@ -20,5 +20,6 @@ t("line ending in = is not wrong", decide({ text: "3/4 + 1/6 =", alternatives: [
 t("full wrong line still wrong", decide({ text: "3/4 + 1/6 = 4/10", alternatives: [], modelVerdict: "wrong", question: "3/4 + 1/6" }).status === "wrong");
 t("lcm working line is judged on its own", decide({ text: "lcm(4,6) = 12", alternatives: [], modelVerdict: "correct", question: "3/4 + 1/6" }).status === "correct");
 t("wrong lcm working caught", decide({ text: "lcm(4,6) = 24", alternatives: [], modelVerdict: "correct", question: "3/4 + 1/6" }).status === "wrong");
+t("two-variable equation step is never marked wrong", decide({ text: "y = (20 - 35x) / 5", alternatives: [], modelVerdict: "correct", question: "35x + 5y = 20", kind: "equation" }).status === "correct");
 if (failed) { console.log(`\n${failed} failed`); process.exit(1); }
 console.log("\nall passed");

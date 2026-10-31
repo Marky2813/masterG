@@ -69,6 +69,11 @@ export function decide(input: DecideInput): Decision {
   }
   if (/=$/.test(t)) return { status: "unsure", source: "checker", reason: "incomplete_line", usedAlternatives };
 
+  // Two or more variables (e.g. 35x + 5y = 20): the checker can't judge it; never scold on a guess.
+  const qTokens = normalize(input.question ?? "").replace(/\b(lcm|hcf|gcd)\b/gi, " ").replace(/[^a-z]+/gi, " ").trim().split(/\s+/).filter(Boolean);
+  const qVars = new Set(qTokens.map((t) => t.toLowerCase()));
+  if (input.kind !== "word_problem" && qTokens.every((t) => t.length === 1) && qVars.size > 1) return { status: modelVerdict === "wrong" ? "unsure" : modelVerdict, source: "model", reason: "multi_variable", usedAlternatives };
+
   // LCM/HCF working ("lcm(4,6) = 12") is a side calculation: judge it on its own, not against the question.
   if (/\b(lcm|hcf|gcd)\s*\(/i.test(t)) {
     const side = checkReadings([input.text, ...usedAlternatives], {});

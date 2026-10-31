@@ -29,6 +29,20 @@ export const WRITE_LINE = {
   },
 };
 
+export const WRITE_WORKING = {
+  name: "write_working",
+  description:
+    "Teach a method on the board: write 2-6 short lines one under another, like a teacher working it out, e.g. ['multiples of 4: 4, 8, 12', 'multiples of 6: 6, 12', 'LCM = 12']. Each line max 40 characters. Use the METHOD lines from FACTS.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      title: { type: Type.STRING, description: "Optional heading, e.g. 'LCM kaise nikaalein'" },
+      lines: { type: Type.ARRAY, items: { type: Type.STRING }, description: "2-6 lines, top to bottom" },
+    },
+    required: ["lines"],
+  },
+};
+
 export const SET_QUESTION = {
   name: "set_question",
   description:
@@ -66,6 +80,6 @@ export function liveConfig(language: Language, voice = MASTERJI_VOICE): LiveConn
     // Push-to-talk: the kid holds a key/button to speak (activityStart/End). No voice-activity
     // detection, so Masterji never hears himself through the speakers. PLAN.md §6 "stage mode".
     realtimeInputConfig: { automaticActivityDetection: { disabled: true } },
-    tools: [{ functionDeclarations: [WRITE_NOTE, WRITE_LINE, SET_QUESTION, DRAW_GRAPH] }],
+    tools: [{ functionDeclarations: [WRITE_NOTE, WRITE_LINE, WRITE_WORKING, SET_QUESTION, DRAW_GRAPH] }],
   };
 }
