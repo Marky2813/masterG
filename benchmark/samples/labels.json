@@ -341,8 +341,10 @@
     "file": "word_problem-041.png",
     "topic": "word_problem",
     "question": "5 pens cost Rs 60. What do 8 pens cost?",
-    "expectedText": "60 / 5 = 12",
-    "isCorrect": true
+    "expectedText": "60/15 = 12",
+    "isCorrect": false,
+    "category": "copied_wrong",
+    "note": "Relabelled 2026-10-31: an extra stroke made the 5 a 15, so what is written is 60/15 = 12 (wrong)."
   },
   {
     "id": "word_problem-042",

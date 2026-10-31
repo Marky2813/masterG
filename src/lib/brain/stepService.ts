@@ -5,7 +5,7 @@
 // question and the nearest correct step above it. PLAN.md §5.
 import { bus } from "../bus";
 import { SEED_CATEGORIES } from "../categories";
-import type { BBox, ErrorCategory, MarkType, Verdict } from "../types";
+import type { BBox, ErrorCategory, MarkType, QuestionKind, Verdict } from "../types";
 import type { JudgeResult } from "../gemini/judge";
 
 interface ClusterState {
@@ -24,6 +24,7 @@ export function startStepService(debug: StepServiceDebug = {}): () => void {
   const categories: ErrorCategory[] = [...SEED_CATEGORIES];
   const categoryCounts = new Map<string, number>();
   let question: string | undefined;
+  let kind: QuestionKind | undefined;
 
   // The last step above this one that was judged correct: that's what this line must follow from.
   const previousFor = (bbox: BBox): string | undefined => {
@@ -42,7 +43,7 @@ export function startStepService(debug: StepServiceDebug = {}): () => void {
       const res = await fetch("/api/step", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ imagePng, question, previous: previousFor(c.bbox), categories }),
+        body: JSON.stringify({ imagePng, question, kind, previous: previousFor(c.bbox), categories }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
@@ -90,8 +91,9 @@ export function startStepService(debug: StepServiceDebug = {}): () => void {
   };
 
   const offs = [
-    bus.on("questionConfirmed", ({ text }) => {
-      question = text;
+    bus.on("questionConfirmed", (q) => {
+      question = q.text;
+      kind = q.kind;
     }),
     bus.on("clusterUpdated", ({ id, bbox, imagePng }) => {
       const c = clusters.get(id) ?? { id, bbox, version: 0 };

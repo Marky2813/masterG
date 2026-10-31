@@ -2,8 +2,8 @@
 // then the deterministic checker overrides wherever it can compute (config "A+guard",
 // PLAN.md §7). Never import this from client code: it uses GEMINI_API_KEY.
 import { GoogleGenAI, ThinkingLevel, type ThinkingConfig } from "@google/genai";
-import { checkReadings } from "../checker";
-import type { ErrorCategory, VerdictStatus } from "../types";
+import { decide } from "../brain/decide";
+import type { ErrorCategory, QuestionKind, VerdictStatus } from "../types";
 import { buildStepPrompt, stepResponseSchema, type StepResponse } from "./stepPrompt";
 
 export const FLASH_MODEL = process.env.GEMINI_FLASH_MODEL || "gemini-3.5-flash-lite"; // probe 2026-10-31: 1.8 s; flash-latest 62-122 s
@@ -23,6 +23,7 @@ export interface JudgeInput {
   imagePng: string; // data URL or bare base64
   question?: string;
   previous?: string;
+  kind?: QuestionKind;
   categories?: ErrorCategory[];
 }
 
@@ -84,18 +85,13 @@ export async function judgeStep(input: JudgeInput): Promise<JudgeResult> {
   };
   if (!base.legible || !base.text) return { ...base, status: "unsure", source: "model" };
 
-  // The guard: the checker wins whenever it can compute (benefit of the doubt across readings).
-  const check = checkReadings([base.text, ...base.alternatives], { question: input.question, previous: input.previous });
-  if (check.status !== "unknown") {
-    const status = check.status;
-    return {
-      ...base,
-      status,
-      source: "checker",
-      checkerReason: check.reason,
-      // A category only makes sense on a wrong step.
-      ...(status === "correct" ? { category: undefined, newCategoryLabel: undefined, explanation: undefined } : {}),
-    };
-  }
-  return { ...base, status: r.verdict ?? "unsure", source: "model" };
+  const d = decide({ text: base.text, alternatives: base.alternatives, modelVerdict: r.verdict, question: input.question, previous: input.previous, kind: input.kind });
+  return {
+    ...base,
+    status: d.status,
+    source: d.source,
+    checkerReason: d.reason,
+    // A category only makes sense on a wrong step.
+    ...(d.status === "correct" ? { category: undefined, newCategoryLabel: undefined, explanation: undefined } : {}),
+  };
 }
