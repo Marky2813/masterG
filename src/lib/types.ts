@@ -57,6 +57,7 @@ export interface Verdict {
   text: string; // what we read, in mathjs syntax
   category?: string; // ErrorCategory.id
   categoryIsNew?: boolean;
+  categoryLabel?: string; // ErrorCategory.label for `category`, so listeners (the report) needn't keep the list (added 2026-11-01)
   repeatCount: number; // how many times this category has happened this session (1 = first time)
   hintRung: HintRung;
   hint?: string; // what Masterji should get across at this rung (Voice phrases it)
@@ -65,11 +66,20 @@ export interface Verdict {
   handwritingNote?: string; // e.g. "the 6 looks like a 0"
 }
 
+// Which homework a question belongs to (a worksheet the teacher gave, read by /api/worksheet).
+// Reports group questions by `id`. Added 2026-11-01, additive.
+export interface HomeworkRef {
+  id: string; // one per loaded worksheet
+  index: number; // 0-based position in the homework; show index + 1
+  total: number;
+  title?: string; // e.g. "Exercise 7.6"
+}
+
 export interface MasterGEvents {
   clusterUpdated: { id: string; bbox: BBox; imagePng: string; strokeIds: string[] };
   clusterRemoved: { id: string };
   questionSubmitted: { source: "handwritten" | "photo" | "typed"; imagePng?: string; text?: string };
-  questionConfirmed: { text: string; kind: QuestionKind };
+  questionConfirmed: { text: string; kind: QuestionKind; homework?: HomeworkRef }; // homework: set when the question comes from the teacher's homework (added 2026-11-01)
   verdict: Verdict;
   writeNote: { clusterId: string; text: string };
   writeLine: { text: string };

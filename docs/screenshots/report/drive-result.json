@@ -1,0 +1,49 @@
+{
+  "ranAt": "2026-10-31T21:05:15.256Z",
+  "steps": [
+    {
+      "status": "wrong",
+      "text": "3/4 + 1/6 = 4/10",
+      "category": "add_across",
+      "source": "checker",
+      "ms": 1511
+    },
+    {
+      "status": "correct",
+      "text": "9/12 + 2/12",
+      "source": "checker",
+      "ms": 1290
+    },
+    {
+      "status": "correct",
+      "text": "= 11/12",
+      "source": "checker",
+      "ms": 1458
+    },
+    {
+      "status": "correct",
+      "text": "3x = 15",
+      "source": "checker",
+      "ms": 1485
+    },
+    {
+      "status": "correct",
+      "text": "x = 5",
+      "source": "checker",
+      "ms": 1672
+    },
+    {
+      "status": "wrong",
+      "text": "3/8",
+      "category": "copied_wrong",
+      "source": "checker",
+      "ms": 1725
+    }
+  ],
+  "link": "http://localhost:3002/report#r=hVPbbuMgEP2V0byWxMbGN6Q87B_sQ99WVUUxiVFsaADXjar8-wrn0rhbdd8Azcw5c87hA9-QU4IhRU6rJmd1WrKqTHOCgd6eqpRRygiaATn-Ek68IUHZI8cSCR488j8feECOecLgAWgSn_fIUXZCG_wyvs5otRhfVnVR1QR9mAeF-0GwAZbQFAl65DghwSPyvCoICuR1w3KC07yBRI6ibZ-FdNZ7JBjpmXFQTgTrQIwOWmXsoM18b62xINoW9sJBq48KCTrk9ETOBJqEZvAAWUKzC7Y8Y7OGzdi0Lml6rd4Apf9UljSfK7OySvPTU6ydNXqHByhgA1l6UUkdRhG0_SrURZV7oZqyYdlSqHfYAC2WyDRP0xm6bDJ25RgLv9Yx2pyXYWXNPilmSTGrn_9gY6TyfUoWNtZL57Irs4pW9N46aV-1ap8nZ83uYt5hVD7KAjvRiwBjEMKJq01PpyeCQiP_wF7IvTY75PjYaQ-T8CDAd9YF8Mp7bc0aHjsFstN9C4NoFYTJwqB9EHvlQZsYBG12YB348SU4IUO8bueDNZ6DNVLBy_Fa-GJDB7dweRCmvU-XJ_PLtUna12PsCp2C21LaSOuckqE_rpGgUe9RsN8zpFdXoDjmW0ow6dBBq7db5ZQJC_S5Sxk_OgUXkE_c4ITx0unXeFsvvy9NspvvU3c8_6gFLM7mYZGUeMvzJSzsf020SrIUPzOWw2rR9u2eN0CaYbR8sK2K4dipQRu9ytfFatsL3616HRSeTn8B",
+  "linkLength": 795,
+  "sharedLinkShowsName": true,
+  "sharedLinkHasAiSummary": true,
+  "whatsappHref": "https://wa.me/?text=%F0%9F%93%8B%20Aarav%27s%20practice%20report%20(Class%206)%3A%202%20of%203%20sums%20solved%2C%201%20first%20try.%20To%20work%20on%3A%20numerator%20aur%20denominator%20dono%20add%20kar%20diye.%20http%3A%2F%2Flocalhost%3A3002%2Freport%23r%3DhVPbbuMgEP2V0byWxMbGN6Q87B_sQ99WVUUxiVFsaADXjar8-wrn0rhbdd8Azcw5c87hA9-QU4IhRU6rJmd1WrKqTHOCgd6eqpRRygiaATn-Ek68IUHZI8cSCR488j8feECOecLgAWgSn",
+  "reportText": "Master G\nyour maths teacher's assistant at home\n\nHOME PRACTICE REPORT\n\nAarav's report card\n\nSun, 1 Nov, 2026 · 2:34 am–2:35 am · 57 s\n\nName\nClass\n\n2/3\n\nSUMS SOLVED\n\nFIRST TRY\n33%\n1 of 3 checked\nSTEPS CHECKED\n6\n4 right · 2 with a mistake\nSAID “NAHI AATA”\n0\nnever stuck\nMETHOD TAUGHT\n0\nquestions\nMistakes to work on\ngaltiyan\n\nnumerator aur denominator dono add kar diye\n\n×1\nput right later · in 3/4 + 1/6\n\nquestion galat utaara\n\n×1\nnot put right yet · in 2/5 + 1/3\nStrong at\nshabaash\nLinear equations\n· 1 first try\nFor the teacher\nAI SUMMARY\n\nWritten by Gemini Flash from the facts on this page only. Answers to the practice questions are worked out by Master G's maths checker, not the AI.\n\nWhere the child is lacking\n\nThis was a short session. The child made two mistakes in adding or subtracting fractions: once by adding both numerators and denominators, and once by copying the question incorrectly.\n\nPractise next\n\nPractise adding and subtracting fractions with different denominators and ensure correct question transcription.\n\nFor the next worksheet\n1.\n\n1/2 + 1/3\n\nadding fractions\n\nAnswer\n5/6\n2.\n\n3/5 + 1/4\n\nadding fractions\n\nAnswer\n17/20\n3.\n\n2/3 - 1/4\n\nsubtracting fractions\n\nAnswer\n5/12\n\nModel: gemini-3.5-flash-lite\n\nEvery question\nsawaal by sawaal\n\nEach line is what Masterji read on the notebook, with his mark: ✓ right, ✗ mistake, ? couldn't check.\n\n1\n\nADDING / SUBTRACTING FRACTIONS\n\n3/4 + 1/6\n\nFIXED IT\n\n3/4 + 1/6 = 4/10\n\n↳ numerator aur denominator dono add kar diye\n\n9/12 + 2/12\n\n= 11/12\n\n⏱ 30 s\nHint 1/4 · pointed at the step\n2\n\nLINEAR EQUATIONS\n\n3x + 5 = 20\n\nFIRST TRY\n\n3x = 15\n\nx = 5\n\n⏱ 18 s\n3\n\nADDING / SUBTRACTING FRACTIONS\n\n2/5 + 1/3\n\nNOT FINISHED\n\n3/8\n\n↳ question galat utaara\n\n⏱ 7 s\nHint 1/4 · pointed at the step\n\nAarav's report is made from the session itself: every step, mark and count above happened. Only the yellow note is written by AI.\n\nCopy link\nWhatsApp\nPrint / PDF"
+}

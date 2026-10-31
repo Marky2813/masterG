@@ -1,0 +1,334 @@
+{
+  "at": "2026-10-31T20:54:28.846Z",
+  "base": "http://localhost:3003",
+  "results": {
+    "class2-addition": {
+      "score": "6/6",
+      "returned": 6,
+      "extra": [],
+      "ms": 2149,
+      "title": "Class 2 Mathematics - Worksheet 4",
+      "skipped": 1,
+      "questions": [
+        {
+          "text": "47 + 38",
+          "kind": "vertical",
+          "label": "1"
+        },
+        {
+          "text": "26 + 59",
+          "kind": "vertical",
+          "label": "2"
+        },
+        {
+          "text": "63 + 18",
+          "kind": "vertical",
+          "label": "3"
+        },
+        {
+          "text": "35 + 46",
+          "kind": "vertical",
+          "label": "4"
+        },
+        {
+          "text": "14 + 9",
+          "kind": "chain",
+          "label": "5"
+        },
+        {
+          "text": "52 + 29",
+          "kind": "chain",
+          "label": "6"
+        }
+      ],
+      "perItem": [
+        {
+          "expected": "47 + 38",
+          "read": "47 + 38",
+          "ok": true
+        },
+        {
+          "expected": "26 + 59",
+          "read": "26 + 59",
+          "ok": true
+        },
+        {
+          "expected": "63 + 18",
+          "read": "63 + 18",
+          "ok": true
+        },
+        {
+          "expected": "35 + 46",
+          "read": "35 + 46",
+          "ok": true
+        },
+        {
+          "expected": "14 + 9",
+          "read": "14 + 9",
+          "ok": true
+        },
+        {
+          "expected": "52 + 29",
+          "read": "52 + 29",
+          "ok": true
+        }
+      ]
+    },
+    "class6-fractions": {
+      "score": "7/7",
+      "returned": 7,
+      "extra": [],
+      "ms": 1821,
+      "title": "EXERCISE 7.6",
+      "skipped": 2,
+      "questions": [
+        {
+          "text": "2/3 + 1/7",
+          "kind": "chain",
+          "label": "1(a)"
+        },
+        {
+          "text": "3/10 + 7/15",
+          "kind": "chain",
+          "label": "1(b)"
+        },
+        {
+          "text": "4/9 + 2/7",
+          "kind": "chain",
+          "label": "1(c)"
+        },
+        {
+          "text": "5/7 + 1/3",
+          "kind": "chain",
+          "label": "1(d)"
+        },
+        {
+          "text": "(2+1/5) + (3+1/6)",
+          "kind": "chain",
+          "label": "1(e)"
+        },
+        {
+          "text": "5/6 - 2/9",
+          "kind": "chain",
+          "label": "1(f)"
+        },
+        {
+          "text": "lcm(12, 18)",
+          "kind": "chain",
+          "label": "3"
+        }
+      ],
+      "perItem": [
+        {
+          "expected": "2/3 + 1/7",
+          "read": "2/3 + 1/7",
+          "ok": true
+        },
+        {
+          "expected": "3/10 + 7/15",
+          "read": "3/10 + 7/15",
+          "ok": true
+        },
+        {
+          "expected": "4/9 + 2/7",
+          "read": "4/9 + 2/7",
+          "ok": true
+        },
+        {
+          "expected": "5/7 + 1/3",
+          "read": "5/7 + 1/3",
+          "ok": true
+        },
+        {
+          "expected": "(2+1/5) + (3+1/6)",
+          "read": "(2+1/5) + (3+1/6)",
+          "ok": true
+        },
+        {
+          "expected": "5/6 - 2/9",
+          "read": "5/6 - 2/9",
+          "ok": true
+        },
+        {
+          "expected": "lcm(12, 18)",
+          "read": "lcm(12, 18)",
+          "ok": true
+        }
+      ]
+    },
+    "class7-equations": {
+      "score": "8/8",
+      "returned": 8,
+      "extra": [],
+      "ms": 1837,
+      "title": "Exercise 4.2",
+      "skipped": 1,
+      "questions": [
+        {
+          "text": "x - 1 = 0",
+          "kind": "equation",
+          "label": "1(a)"
+        },
+        {
+          "text": "x + 1 = 0",
+          "kind": "equation",
+          "label": "1(b)"
+        },
+        {
+          "text": "x - 1 = 5",
+          "kind": "equation",
+          "label": "1(c)"
+        },
+        {
+          "text": "x + 6 = 2",
+          "kind": "equation",
+          "label": "1(d)"
+        },
+        {
+          "text": "3n - 2 = 46",
+          "kind": "equation",
+          "label": "2(a)"
+        },
+        {
+          "text": "5m + 7 = 17",
+          "kind": "equation",
+          "label": "2(b)"
+        },
+        {
+          "text": "2y + 5 = 21",
+          "kind": "equation",
+          "label": "2(c)"
+        },
+        {
+          "text": "4(p - 2) = 8",
+          "kind": "equation",
+          "label": "2(d)"
+        }
+      ],
+      "perItem": [
+        {
+          "expected": "x - 1 = 0",
+          "read": "x - 1 = 0",
+          "ok": true
+        },
+        {
+          "expected": "x + 1 = 0",
+          "read": "x + 1 = 0",
+          "ok": true
+        },
+        {
+          "expected": "x - 1 = 5",
+          "read": "x - 1 = 5",
+          "ok": true
+        },
+        {
+          "expected": "x + 6 = 2",
+          "read": "x + 6 = 2",
+          "ok": true
+        },
+        {
+          "expected": "3n - 2 = 46",
+          "read": "3n - 2 = 46",
+          "ok": true
+        },
+        {
+          "expected": "5m + 7 = 17",
+          "read": "5m + 7 = 17",
+          "ok": true
+        },
+        {
+          "expected": "2y + 5 = 21",
+          "read": "2y + 5 = 21",
+          "ok": true
+        },
+        {
+          "expected": "4*(p - 2) = 8",
+          "read": "4(p - 2) = 8",
+          "ok": true
+        }
+      ]
+    },
+    "class5-mixed-word": {
+      "score": "7/7",
+      "returned": 7,
+      "extra": [],
+      "ms": 1886,
+      "title": "Holiday Homework - Maths (Class 5)",
+      "skipped": 2,
+      "questions": [
+        {
+          "text": "Riya had 245 stickers. She gave 78 stickers to her brother. How many stickers are left with her?",
+          "kind": "word_problem",
+          "label": "1"
+        },
+        {
+          "text": "A box has 24 pencils. How many pencils are there in 15 such boxes?",
+          "kind": "word_problem",
+          "label": "2"
+        },
+        {
+          "text": "368 * 7",
+          "kind": "chain",
+          "label": "3"
+        },
+        {
+          "text": "945 / 9",
+          "kind": "chain",
+          "label": "4"
+        },
+        {
+          "text": "18 - 6 / 3 + 2 * 4",
+          "kind": "chain",
+          "label": "5"
+        },
+        {
+          "text": "Aman bought 3 notebooks for Rs 45 each and a pen for Rs 20. How much did he pay in all?",
+          "kind": "word_problem",
+          "label": "7"
+        },
+        {
+          "text": "2.5 + 3.75",
+          "kind": "chain",
+          "label": "9"
+        }
+      ],
+      "perItem": [
+        {
+          "expected": "word problem with 245, 78",
+          "read": "Riya had 245 stickers. She gave 78 stickers to her brother. How many stickers are left with her?",
+          "ok": true
+        },
+        {
+          "expected": "word problem with 24, 15",
+          "read": "A box has 24 pencils. How many pencils are there in 15 such boxes?",
+          "ok": true
+        },
+        {
+          "expected": "368 * 7",
+          "read": "368 * 7",
+          "ok": true
+        },
+        {
+          "expected": "945 / 9",
+          "read": "945 / 9",
+          "ok": true
+        },
+        {
+          "expected": "18 - 6/3 + 2*4",
+          "read": "18 - 6 / 3 + 2 * 4",
+          "ok": true
+        },
+        {
+          "expected": "word problem with 3, 45, 20",
+          "read": "Aman bought 3 notebooks for Rs 45 each and a pen for Rs 20. How much did he pay in all?",
+          "ok": true
+        },
+        {
+          "expected": "2.5 + 3.75",
+          "read": "2.5 + 3.75",
+          "ok": true
+        }
+      ]
+    }
+  }
+}
