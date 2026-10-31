@@ -4,6 +4,9 @@ Every scope, product, workflow and access decision, on the day it's made. Newest
 
 | Date (IST) | Decision | Who decided | Why | Replaces |
 |---|---|---|---|---|
+| Oct 31 18:35 | Step judging = **A+guard** on `gemini-3.5-flash-lite` + shared rule (`decide.ts`): checker wins; alternatives only via confusable characters; uncomputable chain/equation steps → unsure; word problems keep the model's setup verdict. | Claude, proposed; **latency exception needs Akash** | Benchmark run 3: 97.9 % verdict, 0 false alarms; p95 2.5 s vs the 2 s rule. | PLAN.md §7 rule (≤ 2 s p95) |
+| Oct 31 18:25 | Gemini key upgraded to paid. | Akash | Free tier hit 429 after ~15 calls/min: a demo risk. | free tier |
+| Oct 31 18:20 | Live voice model = `gemini-2.5-flash-native-audio-latest`. | Claude | Answers text notes in ~3.5 s; preview-09-2025 ignored realtime text. | — |
 | Oct 31 17:00 | **Relay model:** no owners, no pre-assignment. Whoever has agent usage takes the top ready item in #32; hand off via an issue comment when usage runs out. | Akash | Usage limits run out at different times; one person continues where another stopped. | Oct 31 16:40 lane owners |
 | Oct 31 17:00 | **Target: tonight, Sun 1 Nov 00:00 IST.** Freeze Sat 22:30 IST. | Akash | Team goal. | Oct 31 16:40 inferred Sun 12:00 deadline |
 | Oct 31 17:00 | **Tracks:** EdTech, MLH Best Use of Gemini API, Yugabyte (MEKO required). Taken as given; no source check. | Akash | Team knowledge from the event. | Oct 31 16:40 (Social Innovation, AI Agent track) |
