@@ -29,7 +29,7 @@ The red-pen engine (wobbly marks + single-stroke font) moved from Notebook to Sa
 
 ## Where work is tracked
 
-- **GitHub issues are the tracker.** Every piece of work is an issue with a lane label and a milestone. **The pinned "Checklist" issue is the source of truth for what is left.** Update it when an issue changes state.
+- **GitHub issues are the tracker.** Every piece of work is an issue with a lane label and a milestone. **The pinned Checklist issue (#32) is the source of truth for what is left.** Update it when an issue changes state.
 - Milestones are **dependency phases, not clock hours**. The build is agent-driven, so a phase closes when its gate is met. The only clock items are the feature freeze and the deadline (below).
 - Pick up work: assign yourself, comment "starting", and open a draft PR early so others can see it.
 
