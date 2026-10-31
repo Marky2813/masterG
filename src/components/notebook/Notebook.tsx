@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { bus } from "@/lib/bus";
-import type { Point } from "@/lib/types";
+import type { MarkType, Point } from "@/lib/types";
 import { assignIds, clusterStrokes, type ClusterGroup } from "@/lib/notebook/cluster";
 import { cropCluster } from "@/lib/notebook/crop";
 import { bboxOf, hitsStroke, strokePath, type InkStroke } from "@/lib/notebook/strokes";
@@ -35,6 +35,7 @@ export default function Notebook({ debug = false }: { debug?: boolean }) {
   const signaturesRef = useRef<Map<string, string>>(new Map());
   const idCounter = useRef(0);
   const strokeCounter = useRef(0);
+  const marksRef = useRef<Map<string, MarkType>>(new Map()); // verdict marks per cluster
 
   const [tool, setTool] = useState<Tool>("pen");
   const [clusters, setClusters] = useState<NotebookCluster[]>([]);
@@ -61,8 +62,30 @@ export default function Notebook({ debug = false }: { debug?: boolean }) {
       const s = canvas.width / PAGE_W;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (!debug) return;
       ctx.setTransform(s, 0, 0, s, 0, 0);
+      // Verdict marks in red pen. Plain shapes for now; the animated red-pen engine replaces this (#11, #16).
+      ctx.strokeStyle = "#dc2626";
+      ctx.lineWidth = 3.5;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      for (const c of list) {
+        const mark = marksRef.current.get(c.id);
+        const b = c.bbox;
+        if (mark === "tick") {
+          const x = Math.min(b.x + b.w + 24, ROUGH_X - 40),
+            y = b.y + b.h / 2;
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + 10, y + 12);
+          ctx.lineTo(x + 30, y - 16);
+          ctx.stroke();
+        } else if (mark === "circle" || mark === "cross") {
+          ctx.beginPath();
+          ctx.ellipse(b.x + b.w / 2, b.y + b.h / 2, b.w / 2 + 18, b.h / 2 + 14, -0.03, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+      if (!debug) return;
       ctx.strokeStyle = "rgba(37, 99, 235, 0.6)";
       ctx.fillStyle = "rgba(37, 99, 235, 0.9)";
       ctx.lineWidth = 1.5;
@@ -113,6 +136,7 @@ export default function Notebook({ debug = false }: { debug?: boolean }) {
     for (const id of clustersRef.current.keys()) {
       if (!nextClusters.has(id)) {
         signaturesRef.current.delete(id);
+        marksRef.current.delete(id);
         bus.emit("clusterRemoved", { id });
       }
     }
@@ -121,6 +145,7 @@ export default function Notebook({ debug = false }: { debug?: boolean }) {
       const sig = c.strokeIds.join(",");
       if (signaturesRef.current.get(c.id) === sig) continue;
       signaturesRef.current.set(c.id, sig);
+      marksRef.current.delete(c.id); // erase/overwrite: that cluster's marks vanish until it's re-checked
       const imagePng = cropCluster(
         c.strokeIds.map((id) => byId.get(id)!),
         c.bbox,
@@ -145,6 +170,17 @@ export default function Notebook({ debug = false }: { debug?: boolean }) {
   };
 
   useEffect(() => () => cancelPause(), []);
+
+  // Verdicts from the Brain → marks on the cluster's bbox.
+  useEffect(
+    () =>
+      bus.on("verdict", (v) => {
+        if (!clustersRef.current.has(v.clusterId)) return;
+        marksRef.current.set(v.clusterId, v.mark);
+        drawOverlay([...clustersRef.current.values()]);
+      }),
+    [drawOverlay],
+  );
 
   // ---------- pointer input ----------
   const toPoint = (e: React.PointerEvent<HTMLCanvasElement>): Point => {
@@ -229,6 +265,7 @@ export default function Notebook({ debug = false }: { debug?: boolean }) {
 
   const clearAll = () => {
     strokesRef.current = [];
+    marksRef.current.clear();
     redraw();
     cancelPause();
     recluster();
