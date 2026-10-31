@@ -4,6 +4,7 @@ Every scope, product, workflow and access decision, on the day it's made. Newest
 
 | Date (IST) | Decision | Who decided | Why | Replaces |
 |---|---|---|---|---|
+| Nov 1 01:50 | Small + and − (Classes 1–3) are taught with counting sticks drawn and counted by code (`show_counting`). Only maths goes on the board; explanations are spoken. | Akash | Log 20-06-47: "Line 1: 1, 2 / Line 2: 1, 2, 3" and "Line banayi taaki hum count kar sake" written as text meant nothing to a Class 1 child. | text counting |
 | Nov 1 01:15 | Target users widened from Classes 5–8 to Classes 1–8 (NCERT). Masterji asks the class and pitches sums to it; never refuses an easy sum. | Team, after the mentor session | Mentor: 5–8 alone looks thin to judges; the checker already handles Class 1–4 arithmetic. | Classes 5–8 |
 | Nov 1 01:15 | The kid's speech-to-text is no longer shown on screen (still logged). | Akash | It flipped between Hindi and English scripts and misheard digits ("6" → "sex"). | "You · …" caption |
 | Nov 1 01:15 | Flash rates handwriting (neat/ok/messy) on every step; Masterji mentions messy writing at most once a minute. It never changes the verdict. | Akash, mentor's point | He only got text, so he couldn't know a digit was scrawled. | — |

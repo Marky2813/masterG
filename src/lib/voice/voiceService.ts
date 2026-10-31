@@ -17,6 +17,7 @@ import { clientLog, getSessionId } from "../log/client";
 import { Mic, Player } from "./audio";
 import { liveConfig } from "./liveConfig";
 import { planGraph } from "../redpen/graph";
+import { validCounting } from "../redpen/counting";
 
 export type VoiceStatus = "idle" | "connecting" | "live" | "error" | "closed";
 
@@ -225,6 +226,7 @@ export class MasterjiVoice {
     this.offs.push(
       bus.on("verdict", (v) => this.onVerdict(v)),
       bus.on("questionConfirmed", ({ text }) => {
+        this.recentWrites = []; // a new sum: earlier board writes are not repeats
         if (this.selfSet === text) {
           this.selfSet = null;
           const facts = questionFacts(text);
@@ -266,7 +268,10 @@ export class MasterjiVoice {
     const recent = this.recentWrites.filter((w) => performance.now() - w.t < 90_000 && w.nums);
     const numbered = lines.map((l) => (l.match(/\d+/g) ?? []).join(",")).filter(Boolean);
     if (!numbered.length || !recent.length) return false;
-    const same = numbered.filter((n) => recent.some((w) => w.nums.startsWith(n) || n.startsWith(w.nums)));
+    // Same number sequence, or one a prefix of the other when both are long (4+ numbers).
+    // A loose prefix rule blocked the "3 + 4" working because "1,2" looked like "1,2,3" (log 20-06-47).
+    const long = (x: string) => x.split(",").length >= 4;
+    const same = numbered.filter((n) => recent.some((w) => w.nums === n || (long(n) && long(w.nums) && (w.nums.startsWith(n) || n.startsWith(w.nums)))));
     return same.length / numbered.length >= 0.6;
   }
 
@@ -421,6 +426,29 @@ export class MasterjiVoice {
               : dup
                 ? { ok: false, note: "already on the board; don't draw it again" }
                 : { ok: true, drawn: plan.lines.map((l) => l.label), crossesAt: plan.markX ?? "they don't cross in view", note: "Say the crossing exactly as given here." },
+          },
+        });
+        continue;
+      } else if (fc.name === "show_counting") {
+        const a = (fc.args ?? {}) as { a?: unknown; b?: unknown; op?: unknown };
+        const spec = validCounting(a.a, a.b, a.op);
+        const ckey = spec ? `count|${spec.a}${spec.op}${spec.b}` : "";
+        const dupC = !!spec && this.written.has(ckey);
+        clientLog("voice.show_counting", { args: a, valid: !!spec, duplicate: dupC });
+        if (spec && !dupC) {
+          this.written.add(ckey);
+          bus.emit("drawCounting", spec);
+        }
+        const result = spec ? (spec.op === "+" ? spec.a + spec.b : spec.a - spec.b) : null;
+        this.session?.sendToolResponse({
+          functionResponses: {
+            id: fc.id,
+            name: fc.name,
+            response: !spec
+              ? { ok: false, error: "Nothing drawn: use whole numbers 0-10 (and for '-' the first must be bigger). Don't say it's on the board." }
+              : dupC
+                ? { ok: false, note: "already on the board; point at it instead" }
+                : { ok: true, drawn: `${spec.a} ${spec.op} ${spec.b} as sticks, counted one by one`, answer: result },
           },
         });
         continue;

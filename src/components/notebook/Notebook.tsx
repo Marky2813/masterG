@@ -6,6 +6,7 @@ import type { Point } from "@/lib/types";
 import { mark as penMark, text as penText } from "@/lib/redpen";
 import { drawPenItems, type PlacedItem } from "@/lib/redpen/draw";
 import { graph as penGraph } from "@/lib/redpen/graph";
+import { counting as penCounting } from "@/lib/redpen/counting";
 import { markPen } from "@/lib/notebook/penState";
 import { assignIds, clusterStrokes, type ClusterGroup } from "@/lib/notebook/cluster";
 import { cropCluster } from "@/lib/notebook/crop";
@@ -326,7 +327,20 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
         console.warn("[notebook] graph failed", e);
       }
     });
+    // drawCounting from Voice → counting sticks (Classes 1-2) under the current working.
+    const offCount = bus.on("drawCounting", (spec) => {
+      const bottoms = [...clustersRef.current.values()].map((c) => c.bbox.y + c.bbox.h).concat(linesRef.current.map((l) => l.bottom));
+      const top = Math.max(questionTopRef.current + safeTopUnits(), ...bottoms) + 40;
+      const item = penCounting(spec, { x: 120, y: top });
+      if (top + item.height + 60 > pageHRef.current) growTo(Math.ceil((top + item.height + 100) / SCREEN_H));
+      const placed = { item, start: performance.now() };
+      linesRef.current.push({ item: placed, bottom: top + item.height });
+      animUntilRef.current = Math.max(animUntilRef.current, placed.start + item.total);
+      drawOverlay([...clustersRef.current.values()]);
+      reveal(top - 10, top + item.height + 10);
+    });
     return () => {
+      offCount();
       offVerdict();
       offNote();
       offLine();

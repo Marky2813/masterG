@@ -68,6 +68,21 @@ export const DRAW_GRAPH = {
   },
 };
 
+export const SHOW_COUNTING = {
+  name: "show_counting",
+  description:
+    "For small additions and subtractions (Classes 1-3, numbers up to 10): draw counting sticks on the board, e.g. 2 + 3 as | |  +  | | |, then each stick gets counted 1, 2, 3, 4, 5 and the answer is circled. Subtraction crosses out the sticks taken away. Count out loud with it: 'ek, do, teen, chaar, paanch!'",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      a: { type: Type.NUMBER, description: "first number, 0-10" },
+      b: { type: Type.NUMBER, description: "second number, 0-10" },
+      op: { type: Type.STRING, enum: ["+", "-"], description: "+ or -" },
+    },
+    required: ["a", "b", "op"],
+  },
+};
+
 // The one Live config. The token route locks it server-side (so voice + persona are
 // guaranteed applied) and the client connects with the same object.
 export function liveConfig(language: Language, voice = MASTERJI_VOICE): LiveConnectConfig {
@@ -80,6 +95,6 @@ export function liveConfig(language: Language, voice = MASTERJI_VOICE): LiveConn
     // Push-to-talk: the kid holds a key/button to speak (activityStart/End). No voice-activity
     // detection, so Masterji never hears himself through the speakers. PLAN.md §6 "stage mode".
     realtimeInputConfig: { automaticActivityDetection: { disabled: true } },
-    tools: [{ functionDeclarations: [WRITE_NOTE, WRITE_LINE, WRITE_WORKING, SET_QUESTION, DRAW_GRAPH] }],
+    tools: [{ functionDeclarations: [WRITE_NOTE, WRITE_LINE, WRITE_WORKING, SET_QUESTION, DRAW_GRAPH, SHOW_COUNTING] }],
   };
 }

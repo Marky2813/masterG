@@ -26,6 +26,10 @@ export function questionFacts(question: string): string[] {
     }
   }
   facts.push(...methodFacts(question));
+  // Small + / - (Classes 1-2): teach by counting sticks on the board.
+  const sm = q.match(/^(\d{1,2})([+-])(\d{1,2})$/);
+  if (sm && Number(sm[1]) <= 10 && Number(sm[3]) <= 10 && (sm[2] === "+" || Number(sm[1]) >= Number(sm[3])))
+    facts.push(`counting: if they're stuck, draw sticks with the counting tool (a ${sm[1]}, b ${sm[3]}, op ${sm[2]}) and count aloud with it`);
   // Linear equation: the usual first move.
   const eqm = q.match(/^(\d*)([a-z])([+-])(\d+)=(\d+)$/);
   if (eqm) {
