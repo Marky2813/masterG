@@ -8,7 +8,9 @@ const lcm = (a: number, b: number) => (a * b) / gcd(a, b);
 export function questionFacts(question: string): string[] {
   const facts: string[] = [];
   const ans = referenceAnswer(question);
-  if (ans) facts.push(ans.kind === "value" ? `final answer: ${question} = ${ans.text}` : `solution: ${ans.text}`);
+  // Labelled secret: he had it in FACTS and wrote "2 + 3 = 5" on the board at rung 2 (log 20-06-47).
+  const secret = "(secret until the child writes it or rung 4)";
+  if (ans) facts.push(ans.kind === "value" ? `final answer ${secret}: ${question} = ${ans.text}` : `solution ${secret}: ${ans.text}`);
 
   // Sum/difference of simple fractions: LCM and the equivalent fractions (the usual working).
   const q = normalize(question).replace(/\s+/g, "");
@@ -68,6 +70,40 @@ export function reachesFinalAnswer(question: string, line: string): boolean {
   const [an, ad = "1"] = ans.text.replace("-", "").split("/");
   const neg = last.startsWith("-") !== ans.text.startsWith("-");
   return !neg && Number(n) * Number(ad) === Number(an) * Number(d);
+}
+
+// ---------- answer guard: Masterji must not hand over the answer before the child gets there ----------
+
+const num = (s: string): number | null => {
+  const m = s.replace(/\s+/g, "").match(/^(-?\d+(?:\.\d+)?)(?:\/(\d+))?$/);
+  return m ? Number(m[1]) / (m[2] ? Number(m[2]) : 1) : null;
+};
+
+// The final answer as a number: "11/12" for 3/4 + 1/6, 5 for 3x + 5 = 20. Null when there's no single one.
+function answerValue(question: string): number | null {
+  const ans = referenceAnswer(question);
+  if (!ans) return null;
+  return num(ans.kind === "value" ? ans.text : (ans.text.split("=")[1] ?? ""));
+}
+
+// True when a board line (or a hint) states the question's final answer: "2 + 3 = 5", "x = 15/3 = 5",
+// "9/12 + 2/12 = 11/12", "Final answer = 7", "Total 7 lines!", "2 plus 3 is 5". Method lines that only
+// pass through other numbers ("LCM(4, 6) = 12", "3/4 = 9/12", "3x = 20 - 5 = 15") don't.
+export function revealsAnswer(question: string, text: string): boolean {
+  const a = answerValue(question);
+  if (a === null) return false;
+  const same = (s: string) => {
+    const n = num(s.replace(/^[\s(]+|[\s).!?,;:]+$/g, ""));
+    return n !== null && Math.abs(n - a) < 1e-9;
+  };
+  // The question itself on the board isn't a give-away ("2x - 5 = 5" has answer 5 on its right side).
+  const q = normalize(question).replace(/\s+/g, "").split("").map((c) => c.replace(/[.*+?^${}()|[\]\\/]/, "\\$&")).join("\\s*");
+  let t = normalize(text).replace(new RegExp(q, "g"), " ");
+  t = t.replace(/\b(is|equals|hai|hota hai|hoga|should be|comes to)\b/gi, "=");
+  const segs = t.split("=").slice(1).map((s) => s.split(/[,;]|\s(?:and|aur|not|nahi)\s/i)[0]);
+  if (segs.some(same)) return true;
+  for (const m of t.matchAll(/\b(?:answer|ans|total|jawab|uttar|result)\b[^\d-]{0,14}(-?\d+(?:\/\d+)?)/gi)) if (same(m[1])) return true;
+  return false;
 }
 
 // "44/42" isn't in lowest terms; "22/21" and "5" are.
