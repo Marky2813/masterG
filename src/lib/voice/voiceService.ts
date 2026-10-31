@@ -3,10 +3,10 @@
 // Masterji's voice: a Gemini Live session (native audio) that only ever speaks
 // from verdicts we send it as hidden notes. PLAN.md §5, §6.
 //
-// Echo: on laptop speakers the model hears itself and answers its own words
-// ("I just asked you that"). So the mic is half-duplex: nothing is sent while
-// Masterji is audible (+600 ms tail). The kid interrupts with the spacebar or
-// the Ruko button, which stops him instantly and opens the mic.
+// Push-to-talk: the kid holds space (or the mic button) to talk. Mic audio is sent
+// only while held, so Masterji never hears himself through the speakers. Pressing
+// while he talks stops him mid-word. Hidden notes go as client-content turns
+// (realtime text is ignored when voice-activity detection is off).
 import { GoogleGenAI, type LiveServerMessage, type Session } from "@google/genai";
 import { bus } from "../bus";
 import type { Language, Verdict } from "../types";
@@ -33,6 +33,8 @@ export class MasterjiVoice {
   private speakingTimer?: ReturnType<typeof setInterval>;
   private wasAudible = false;
   private pending: string[] = []; // notes held until Masterji finishes his sentence
+  private talking = false; // push-to-talk held
+  private waitingSince = 0; // when we last asked for a reply (note sent / button released), for latency logs
   language: Language;
 
   constructor(
@@ -71,9 +73,7 @@ export class MasterjiVoice {
     });
 
     await this.mic.start((data) => {
-      // Half-duplex: drop mic audio while Masterji is audible, so he never hears himself.
-      if (this.player?.isAudible()) return;
-      this.session?.sendRealtimeInput({ audio: { data, mimeType: "audio/pcm;rate=16000" } });
+      if (this.talking) this.session?.sendRealtimeInput({ audio: { data, mimeType: "audio/pcm;rate=16000" } });
     });
     this.speakingTimer = setInterval(() => {
       this.flushNotes();
@@ -97,33 +97,54 @@ export class MasterjiVoice {
     this.status("closed");
   }
 
-  // The kid wants to talk: stop Masterji mid-word and open the mic now.
-  interrupt(): void {
-    if (!this.player?.speaking) return;
-    this.player.flush();
-    if (this.masterjiLine) this.cb.onCaption?.("masterji", this.masterjiLine + " —", true);
-    clientLog("voice.interrupt", { by: "kid", masterjiSaid: this.masterjiLine });
-    this.masterjiLine = "";
+  // Push-to-talk pressed: stop Masterji mid-word if he's talking, start sending the mic.
+  async startTalking(): Promise<void> {
+    if (this.talking || !this.session) return;
+    this.talking = true;
+    await this.mic.resume();
+    if (this.player?.speaking) {
+      this.player.flush();
+      if (this.masterjiLine) this.cb.onCaption?.("masterji", this.masterjiLine + " —", true);
+      clientLog("voice.interrupt", { by: "kid", masterjiSaid: this.masterjiLine });
+      this.masterjiLine = "";
+    }
+    this.kidLine = "";
+    this.cb.onCaption?.("kid", "…", false);
+    this.session.sendRealtimeInput({ activityStart: {} });
+    clientLog("voice.ptt_down", {});
+  }
+
+  // Push-to-talk released: Masterji answers.
+  stopTalking(): void {
+    if (!this.talking) return;
+    this.talking = false;
+    this.session?.sendRealtimeInput({ activityEnd: {} });
+    this.waitingSince = performance.now();
+    clientLog("voice.ptt_up", {});
   }
 
   // Hidden system note to Masterji (the child never sees these). A note sent mid-sentence
   // cuts him off, so notes wait until he's quiet (checked every 100 ms by the speaking timer).
   note(text: string): void {
-    if (this.player?.isAudible(300)) {
+    if (this.talking || this.player?.isAudible(300)) {
       clientLog("voice.note_queued", { text });
       this.pending.push(text);
       return;
     }
-    clientLog("voice.note", { text });
-    this.session?.sendRealtimeInput({ text });
+    this.sendNote(text);
+  }
+
+  private sendNote(text: string, queued = false): void {
+    clientLog("voice.note", { text, queued });
+    this.waitingSince = performance.now();
+    this.session?.sendClientContent({ turns: [{ role: "user", parts: [{ text }] }], turnComplete: true });
   }
 
   private flushNotes(): void {
-    if (this.pending.length === 0 || this.player?.isAudible(300)) return;
+    if (this.pending.length === 0 || this.talking || this.player?.isAudible(300)) return;
     const text = this.pending.join("\n");
     this.pending = [];
-    clientLog("voice.note", { text, queued: true });
-    this.session?.sendRealtimeInput({ text });
+    this.sendNote(text, true);
   }
 
   private status(s: VoiceStatus, detail?: string): void {
@@ -169,7 +190,13 @@ export class MasterjiVoice {
       this.masterjiLine = "";
     }
     for (const part of sc?.modelTurn?.parts ?? []) {
-      if (part.inlineData?.data && part.inlineData.mimeType?.startsWith("audio/")) this.player?.enqueue(part.inlineData.data);
+      if (part.inlineData?.data && part.inlineData.mimeType?.startsWith("audio/")) {
+        if (this.waitingSince) {
+          clientLog("voice.first_audio", { ms: Math.round(performance.now() - this.waitingSince) });
+          this.waitingSince = 0;
+        }
+        this.player?.enqueue(part.inlineData.data);
+      }
     }
     if (sc?.outputTranscription?.text) {
       this.masterjiLine += sc.outputTranscription.text;
