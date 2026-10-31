@@ -7,14 +7,25 @@ export const MASTERJI_VOICE = process.env.NEXT_PUBLIC_MASTERJI_VOICE || "Charon"
 export const WRITE_NOTE = {
   name: "write_note",
   description:
-    "Write a short red-pen margin note (max 12 characters) next to one step on the child's notebook, e.g. 'LCM?', 'carry 1', '9/12'.",
+    "Write a short red-pen note (max 24 characters) right next to one of the child's steps, e.g. 'LCM(4, 6) = 12', '3/4 = 9/12', 'sign badlo!'.",
   parameters: {
     type: Type.OBJECT,
     properties: {
       clusterId: { type: Type.STRING, description: "The step id from the latest note, e.g. c3" },
-      text: { type: Type.STRING, description: "The note, max 12 characters" },
+      text: { type: Type.STRING, description: "The note, max 24 characters" },
     },
     required: ["clusterId", "text"],
+  },
+};
+
+export const WRITE_LINE = {
+  name: "write_line",
+  description:
+    "Write one full line of working in red pen on the board, under the child's work, like a teacher showing a step: e.g. '3/4 + 1/6 = 9/12 + 2/12', 'LCM(4, 6) = 12'. Max 40 characters. Use only numbers from the FACTS notes.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: { text: { type: Type.STRING, description: "The line to write, max 40 characters" } },
+    required: ["text"],
   },
 };
 
@@ -30,6 +41,6 @@ export function liveConfig(language: Language, voice = MASTERJI_VOICE): LiveConn
     // Push-to-talk: the kid holds a key/button to speak (activityStart/End). No voice-activity
     // detection, so Masterji never hears himself through the speakers. PLAN.md §6 "stage mode".
     realtimeInputConfig: { automaticActivityDetection: { disabled: true } },
-    tools: [{ functionDeclarations: [WRITE_NOTE] }],
+    tools: [{ functionDeclarations: [WRITE_NOTE, WRITE_LINE] }],
   };
 }

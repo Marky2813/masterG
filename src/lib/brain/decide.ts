@@ -58,6 +58,9 @@ export function decide(input: DecideInput): Decision {
   const usedAlternatives = plausibleAlternatives(input.text, input.alternatives);
   if (!input.text) return { status: "unsure", source: "model", reason: "nothing_read", usedAlternatives };
 
+  // Words with no digits ("LCM", a name) aren't a maths step: no mark.
+  if (![input.text, ...usedAlternatives].some((r) => /\d/.test(r))) return { status: "unsure", source: "checker", reason: "no_digits", usedAlternatives };
+
   // A half-written line ("3/4" of "3/4 + 1/6", or ending in an operator) is not a mistake yet.
   const t = normalize(input.text).replace(/\s+/g, "");
   const q = normalize(input.question ?? "").replace(/\s+/g, "");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { bus } from "@/lib/bus";
 import type { Point } from "@/lib/types";
 import { mark as penMark, text as penText } from "@/lib/redpen";
@@ -14,10 +14,10 @@ import { bboxOf, hitsStroke, strokePath, type InkStroke } from "@/lib/notebook/s
 // page and a rough-work column. On every ~1.5 s pen pause it re-clusters the
 // main area and emits clusterUpdated / clusterRemoved on the bus. PLAN.md §4.
 
-export const PAGE_W = 1200; // notebook units; the canvas scales to its container
-export const PAGE_H = 1500;
-export const ROUGH_X = PAGE_W * 0.75; // rough-work column starts here
-export const LINE_GAP = 60;
+export const PAGE_W = 1600; // notebook units (landscape whiteboard); the canvas scales to the screen
+export const PAGE_H = 1000;
+export const ROUGH_X = PAGE_W * 0.8; // rough-work column starts here
+export const GRID = 40; // grid cell, in notebook units
 const PAUSE_MS = 1500;
 const ERASER_RADIUS = 14;
 
@@ -27,7 +27,7 @@ export interface NotebookCluster extends ClusterGroup {
   id: string;
 }
 
-export default function Notebook({ debug = false }: { debug?: boolean }) {
+export default function Notebook({ debug = false, toolbarExtra }: { debug?: boolean; toolbarExtra?: ReactNode }) {
   const inkRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const strokesRef = useRef<InkStroke[]>([]);
@@ -40,7 +40,8 @@ export default function Notebook({ debug = false }: { debug?: boolean }) {
   const strokeCounter = useRef(0);
   // Red-pen ink per cluster: the verdict mark plus any margin notes. Erasing the cluster removes it.
   const penRef = useRef<Map<string, { mark?: PlacedItem; notes: PlacedItem[] }>>(new Map());
-  const animUntilRef = useRef(0); // keep redrawing the overlay until the last pen stroke is done
+  const animUntilRef = useRef(0);
+  const linesRef = useRef<{ item: PlacedItem; bottom: number }[]>([]); // Masterji's full lines of working (write_line) // keep redrawing the overlay until the last pen stroke is done
 
   const [tool, setTool] = useState<Tool>("pen");
   const [clusters, setClusters] = useState<NotebookCluster[]>([]);
@@ -74,6 +75,7 @@ export default function Notebook({ debug = false }: { debug?: boolean }) {
         if (ink.mark) placed.push(ink.mark);
         placed.push(...ink.notes);
       }
+      placed.push(...linesRef.current.map((l) => l.item));
       drawPenItems(ctx, placed, performance.now());
       if (!debug) return;
       ctx.strokeStyle = "rgba(37, 99, 235, 0.6)";
@@ -203,9 +205,20 @@ export default function Notebook({ debug = false }: { debug?: boolean }) {
       penRef.current.set(clusterId, ink);
       drawOverlay([...clustersRef.current.values()]);
     });
+    // writeLine from Voice → a full handwritten line of working under everything on the page.
+    const offLine = bus.on("writeLine", ({ text }) => {
+      const size = 30;
+      const bottoms = [...clustersRef.current.values()].map((c) => c.bbox.y + c.bbox.h).concat(linesRef.current.map((l) => l.bottom));
+      const y = Math.min(PAGE_H - 40, Math.max(140, ...bottoms) + size + 40);
+      const item = { item: penText(text, 120, y, size).item, start: performance.now() };
+      linesRef.current.push({ item, bottom: y + 12 });
+      animUntilRef.current = Math.max(animUntilRef.current, item.start + item.item.total);
+      drawOverlay([...clustersRef.current.values()]);
+    });
     return () => {
       offVerdict();
       offNote();
+      offLine();
     };
   }, [drawOverlay]);
 
@@ -295,6 +308,7 @@ export default function Notebook({ debug = false }: { debug?: boolean }) {
   const clearAll = () => {
     strokesRef.current = [];
     penRef.current.clear();
+    linesRef.current = [];
     redraw();
     cancelPause();
     recluster();
@@ -306,44 +320,30 @@ export default function Notebook({ debug = false }: { debug?: boolean }) {
       ? "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><circle cx='12' cy='12' r='10' fill='none' stroke='%23475569' stroke-width='1.5'/></svg>\") 12 12, cell"
       : "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='8'><circle cx='4' cy='4' r='3' fill='%231e293b'/></svg>\") 4 4, crosshair";
 
+  const btn = (active: boolean) =>
+    `flex h-9 min-w-9 items-center justify-center rounded-lg px-2 text-sm transition ${active ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`;
+
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2 text-sm">
-        <button
-          className={`rounded px-3 py-1 ${tool === "pen" ? "bg-slate-800 text-white" : "bg-slate-200"}`}
-          onClick={() => setTool("pen")}
-        >
-          Pen
-        </button>
-        <button
-          className={`rounded px-3 py-1 ${tool === "eraser" ? "bg-slate-800 text-white" : "bg-slate-200"}`}
-          onClick={() => setTool("eraser")}
-        >
-          Eraser
-        </button>
-        <button className="rounded bg-slate-200 px-3 py-1" onClick={undo}>
-          Undo
-        </button>
-        <button className="rounded bg-slate-200 px-3 py-1" onClick={clearAll}>
-          Clear page
-        </button>
-        {debug && <span className="ml-auto font-mono text-xs text-slate-500">{clusters.length} clusters</span>}
-      </div>
+    <div className="fixed inset-0 flex items-center justify-center bg-white">
       <div
-        className="relative w-full overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm"
+        className="relative max-h-full max-w-full"
         style={{
+          width: `min(100vw, ${(100 * PAGE_W) / PAGE_H}vh)`,
           aspectRatio: `${PAGE_W} / ${PAGE_H}`,
-          backgroundImage: `repeating-linear-gradient(to bottom, transparent 0, transparent calc(${(LINE_GAP / PAGE_H) * 100}% - 1px), #dbe7f3 calc(${(LINE_GAP / PAGE_H) * 100}% - 1px), #dbe7f3 ${(LINE_GAP / PAGE_H) * 100}%)`,
+          backgroundColor: "#fdfdfc",
+          backgroundImage:
+            "linear-gradient(to right, #e7ebf0 1px, transparent 1px), linear-gradient(to bottom, #e7ebf0 1px, transparent 1px)",
+          backgroundSize: `${(100 * GRID) / PAGE_W}% ${(100 * GRID) / PAGE_H}%`,
         }}
       >
-        {/* left margin line */}
-        <div className="pointer-events-none absolute inset-y-0 w-px bg-rose-200" style={{ left: `${(70 / PAGE_W) * 100}%` }} />
-        {/* rough-work column */}
+        {/* rough-work column: subtle, never read or marked */}
         <div
-          className="pointer-events-none absolute inset-y-0 right-0 border-l-2 border-dashed border-slate-300 bg-slate-50/60"
+          className="pointer-events-none absolute inset-y-0 right-0 border-l border-dashed border-slate-300"
           style={{ left: `${(ROUGH_X / PAGE_W) * 100}%` }}
         >
-          <div className="p-2 text-center text-xs font-medium uppercase tracking-wide text-slate-400">Rough Work</div>
+          <div className="absolute bottom-3 w-full text-center text-[11px] font-medium uppercase tracking-widest text-slate-300">
+            Rough work
+          </div>
         </div>
         <canvas
           ref={inkRef}
@@ -356,6 +356,24 @@ export default function Notebook({ debug = false }: { debug?: boolean }) {
           onContextMenu={(e) => e.preventDefault()}
         />
         <canvas ref={overlayRef} className="pointer-events-none absolute inset-0 h-full w-full" />
+      </div>
+
+      {/* floating toolbar, top right */}
+      <div className="fixed right-4 top-4 flex items-center gap-1 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-sm backdrop-blur">
+        <button className={btn(tool === "pen")} onClick={() => setTool("pen")} title="Pen">
+          ✏️
+        </button>
+        <button className={btn(tool === "eraser")} onClick={() => setTool("eraser")} title="Eraser">
+          🧽
+        </button>
+        <button className={btn(false)} onClick={undo} title="Undo">
+          ↶
+        </button>
+        <button className={btn(false)} onClick={clearAll} title="Clear page">
+          Clear
+        </button>
+        {toolbarExtra}
+        {debug && <span className="px-2 font-mono text-xs text-slate-400">{clusters.length} clusters</span>}
       </div>
     </div>
   );

@@ -25,31 +25,20 @@ export default function QuestionBox() {
   };
 
   return (
-    <form onSubmit={submit} className="flex items-center gap-2 rounded-lg border border-slate-300 bg-amber-50 p-3">
-      <span className="text-sm font-semibold text-slate-700">Sawaal:</span>
+    <form onSubmit={submit} className="flex items-center gap-2 self-start rounded-lg border border-slate-200 bg-white/95 px-3 py-1.5 shadow-sm backdrop-blur">
       {confirmed ? (
-        <>
-          <span className="font-mono text-lg">{confirmed}</span>
-          <button
-            type="button"
-            className="ml-auto rounded bg-slate-200 px-3 py-1 text-sm"
-            onClick={() => {
-              setConfirmed(null);
-              setDraft(confirmed);
-            }}
-          >
-            Change
-          </button>
-        </>
+        <button type="button" className="font-mono text-base text-slate-800" title="Change the question" onClick={() => { setConfirmed(null); setDraft(confirmed); }}>
+          {confirmed}
+        </button>
       ) : (
         <>
           <input
-            className="flex-1 rounded border border-slate-300 bg-white px-2 py-1 font-mono"
+            className="w-56 bg-transparent font-mono text-sm outline-none placeholder:text-slate-400"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="3/4 + 1/6   or   3x + 5 = 20"
+            placeholder="Sawaal likho: 3/4 + 1/6"
           />
-          <button className="rounded bg-slate-800 px-3 py-1 text-sm text-white">Set</button>
+          <button className="rounded-md bg-slate-900 px-2 py-0.5 text-xs text-white">Set</button>
         </>
       )}
     </form>
