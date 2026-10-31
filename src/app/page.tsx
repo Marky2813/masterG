@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Notebook from "@/components/notebook/Notebook";
 import QuestionBox from "@/components/question/QuestionBox";
 import EventLog from "@/components/debug/EventLog";
+import VoiceBar from "@/components/voice/VoiceBar";
 import { startStepService } from "@/lib/brain/stepService";
 
 // Main screen. The full app shell (start screen, captions, toggles) comes in #12.
@@ -21,6 +22,9 @@ export default function Home() {
         <h1 className="text-xl font-semibold">Master G</h1>
         <QuestionBox />
         <Notebook debug={debug} />
+        <div className="sticky bottom-2">
+          <VoiceBar />
+        </div>
       </div>
       {debug && (
         <div className="w-80 shrink-0">
