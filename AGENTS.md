@@ -26,7 +26,7 @@ The code is split into areas that only talk through the shared contract, so two 
 | **Voice** | `src/lib/voice/`, `src/components/voice/`, `src/app/api/live-token/` | `lane:voice` |
 | **Brain** | `src/lib/checker.ts`, `src/lib/gemini/`, `src/lib/brain/`, `src/lib/memory/` (MEKO), `benchmark/` | `lane:brain` |
 | **Red-pen engine** | `src/lib/redpen/`: pure module `(bbox, mark \| text) → animated strokes`; Notebook only renders it | `lane:brain` |
-| Shared | `src/lib/types.ts`, `src/lib/bus.ts`, `src/lib/fakes.ts`, `/dev` | `lane:shared` |
+| Shared | `src/lib/types.ts`, `src/lib/bus.ts`, `src/components/debug/` (read-only event log at `/?debug=1`) | `lane:shared` |
 
 Issues labelled `needs-hardware` need the stylus board, the demo laptop or the speakers: whoever has them takes those.
 
@@ -65,9 +65,9 @@ Issues labelled `needs-hardware` need the stylus board, the demo laptop or the s
 
 ## Honesty rules (status words mean exact things)
 
-- **Status words:** "edited" < "tested offline" (unit test / mock / fake events) < "verified in browser" (Chrome on the demo laptop, real stylus, real mic) < "accepted" (a teammate saw it). Use "works" or "fixed" only for the last two.
+- **Status words:** "edited" < "tested offline" (unit test, or headless Chrome with mouse input) < "verified in browser" (Chrome on the demo laptop, real stylus, real mic) < "accepted" (a teammate saw it). Use "works" or "fixed" only for the last two.
 - Every claim carries its evidence: what ran, where, how many samples, and what wasn't checked. One Gemini call is one sample, not proof.
-- **Mocks and fake events never appear in the demo.** Each paid or rate-limited service has a free fake path for development.
+- **No fake events or mocked AI anywhere.** Build the real pipeline in order; test each part against the real part before it.
 - Public text (README, Devfolio form, video, pitch) claims only what is in `docs/CLAIMS.md` with evidence.
 
 ## Secrets and cost
