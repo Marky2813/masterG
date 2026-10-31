@@ -1,9 +1,8 @@
 # Submission checklist
 
-Deadline: Sun 1 Nov ~12:00 IST (inferred, to confirm). Freeze: Sun 06:00 IST.
+Team target: Sun 1 Nov 00:00 IST (tonight midnight). Freeze: Sat 22:30 IST.
 
-- [ ] Deadline and platform confirmed with the organisers (record in DECISIONS)
-- [ ] Prize tracks chosen: main, Best Social Innovation, MLH Best Use of Gemini API, AI Agent track (if eligible)
+- [ ] Tracks: EdTech, MLH Best Use of Gemini API, Yugabyte MEKO (MEKO use shown in the demo and README)
 - [ ] README for judges: what it does, how it works (diagram), how to run, models used, what is not done
 - [ ] Every public claim reconciled against `docs/CLAIMS.md`
 - [ ] Demo video recorded (length limit: ?), uploaded, link works logged out

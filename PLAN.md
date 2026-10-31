@@ -204,7 +204,7 @@ All three parts talk **only** through `src/lib/types.ts` + the event bus in `src
 
 ## 9. Team split (3 people)
 
-> **Updated 2026-10-31:** owners are Notebook = Harjeet, Voice = Akash, Brain + red-pen engine = Sarthak. See `AGENTS.md` and `docs/DECISIONS.md`.
+> **Updated 2026-10-31:** no fixed owners. The team works as a relay from the queue in issue #32. See `AGENTS.md` → Relay. Yugabyte MEKO added as a required track (#33–#35).
 
 ### P1 — Notebook
 Canvas + pen pressure + eraser · ruled background + rough-work column · stroke clustering · cluster crops with numbered boxes · red-pen engine (wobbly marks + animated single-stroke font) · question box (handwrite / photo / type) · erase → re-check. **Also owns `/capture` page polish for benchmark samples.**
@@ -219,7 +219,7 @@ Flash read/judge prompt + JSON schema · mathjs checker (chain, linear equation,
 
 ## 10. Timeline (hackathon clock)
 
-> **Superseded 2026-10-31:** hackCBS is a 24 h sprint and the build is agent-driven, so work runs by dependency milestones (M0–M4 on GitHub). Freeze is Sun 1 Nov 06:00 IST. See `docs/DECISIONS.md`.
+> **Superseded 2026-10-31:** hackCBS is a 24 h sprint and the build is agent-driven, so work runs by dependency milestones (M0–M4 on GitHub). Team target is tonight, Sun 1 Nov 00:00 IST; freeze Sat 22:30 IST. See `docs/DECISIONS.md`.
 
 | Hours | Work |
 |---|---|

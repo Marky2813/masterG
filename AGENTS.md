@@ -14,45 +14,53 @@ AI math tuition teacher ("Masterji") for NCERT Classes 5–8. A kid writes on a 
 
 **`PLAN.md` is the product source of truth.** Read it before any non-trivial work. This file holds the *working rules*. If the two conflict, stop and ask in team chat.
 
-## Team and lanes
+## Team and areas
 
-The plan splits the app into three lanes that only talk through the shared contract, so all three can be built in parallel against fake events.
+Team: Akash (`adot-7`), Sarthak (`Marky2813`), Harjeet (`HARJEET-SINGH-dev`). **Nobody owns an area and nobody is pre-assigned.** We work as a relay: whoever has agent usage left takes the next ready issue, and hands off when their usage runs out (see *Relay* below). Several people can be active at once, each on a different issue.
 
-| Lane | Owner (GitHub) | Owns | Label |
-|---|---|---|---|
-| **Notebook** (P1) | Harjeet (`HARJEET-SINGH-dev`) | `src/components/notebook/`, `src/lib/notebook/`, `src/app/page.tsx` layout, `/capture` | `lane:notebook` |
-| **Voice** (P2) | Akash (`adot-7`) | `src/lib/voice/`, `src/components/voice/`, `src/app/api/live-token/` | `lane:voice` |
-| **Brain** (P3) + red-pen engine | Sarthak (`Marky2813`) | `src/lib/checker.ts`, `src/lib/gemini/`, `src/lib/brain/`, `src/lib/redpen/`, `benchmark/` | `lane:brain` |
-| Shared | everyone | `src/lib/types.ts`, `src/lib/bus.ts`, `src/lib/fakes.ts`, `/dev` | `lane:shared` |
+The code is split into areas that only talk through the shared contract, so two active people rarely touch the same files:
 
-The red-pen engine (wobbly marks + single-stroke font) moved from Notebook to Sarthak (decided 2026-10-31) to even out the load. It's a pure module: `(bbox, mark | text) → animated strokes`. Notebook only renders what it returns. `coderguneet` is a repo collaborator but not on the build team.
+| Area | Folders | Label |
+|---|---|---|
+| **Notebook** | `src/components/notebook/`, `src/lib/notebook/`, `src/app/page.tsx` layout, `/capture` | `lane:notebook` |
+| **Voice** | `src/lib/voice/`, `src/components/voice/`, `src/app/api/live-token/` | `lane:voice` |
+| **Brain** | `src/lib/checker.ts`, `src/lib/gemini/`, `src/lib/brain/`, `src/lib/memory/` (MEKO), `benchmark/` | `lane:brain` |
+| **Red-pen engine** | `src/lib/redpen/`: pure module `(bbox, mark \| text) → animated strokes`; Notebook only renders it | `lane:brain` |
+| Shared | `src/lib/types.ts`, `src/lib/bus.ts`, `src/lib/fakes.ts`, `/dev` | `lane:shared` |
+
+Issues labelled `needs-hardware` need the stylus board, the demo laptop or the speakers: whoever has them takes those.
 
 ## Where work is tracked
 
-- **GitHub issues are the tracker.** Every piece of work is an issue with a lane label and a milestone. **The pinned Checklist issue (#32) is the source of truth for what is left.** Update it when an issue changes state.
-- Milestones are **dependency phases, not clock hours**. The build is agent-driven, so a phase closes when its gate is met. The only clock items are the feature freeze and the deadline (below).
-- Pick up work: assign yourself, comment "starting", and open a draft PR early so others can see it.
+- **GitHub issues are the tracker.** **The pinned Checklist issue (#32) is the source of truth**: an ordered queue of what's next, plus a *Baton* line saying who is active right now. Update it when you start, stop, or close something.
+- Milestones are dependency phases (M0–M4). The only clock items are the freeze and the target below.
+
+## Relay: picking up and handing off
+
+1. **Start:** pull `main`, put your name in #32's Baton line, take the **top unclaimed item** in #32, and **assign yourself** to it. Assignment means "I'm on it right now" (a lock), nothing more.
+2. **Continue someone's work:** read the latest **Handoff** comment on the issue and check out its branch.
+3. **Merge small and often** (as soon as `npm run check` is green) so the next person starts from a fresh `main`.
+4. **Usage running out:** commit (WIP is fine), push, keep a draft PR, post the Handoff comment (template in #32), **unassign yourself**, update the Baton line, tell the team in chat. A handoff must say the very next step and how to check what's done.
 
 ## Clock
 
-- hackCBS 9.0 (MLH member event). "Hackathon Begins" Sat 31 Oct 12:00 PM IST, "The 24-hour sprint" (`drafts/rules/hackcbs-home-2026-10-31.txt` L138–140, fetched 2026-10-31).
-- **Deadline: Sun 1 Nov ~12:00 IST, inferred** from those lines. Day 2 of the schedule wasn't on the page. Confirm with the organisers and record the answer in `docs/DECISIONS.md`.
-- **Feature freeze: Sun 1 Nov 06:00 IST.** After it, only bug fixes on the golden path, rehearsal, video and submission.
+- hackCBS 9.0. **Team target: tonight, Sun 1 Nov 00:00 IST.** Decided by the team on 2026-10-31.
+- **Feature freeze: Sat 31 Oct 22:30 IST.** After it, only golden-path bug fixes, rehearsal, video and submission.
 
-## Prizes we're aiming at (from the event page, 2026-10-31)
+## Tracks we're entering (given by the team, 2026-10-31)
 
-- Main prizes and **Best Social Innovation** (an education tool for kids).
-- **MLH "Best Use of Gemini API"**: the whole pipeline is Gemini (Flash for vision, Live API for voice). Say exactly which models and APIs, and only the ones in the live path.
-- **"Outstanding AI Agent Innovation"** (sponsored, ₹50,000): the problem statement isn't on the page yet. Fetch it before claiming fit.
+- **EdTech**: math tutor for NCERT Classes 5–8.
+- **MLH Best Use of Gemini API**: Flash (vision read/judge) and the Live API (voice). Name exactly the models and APIs in the live path, nothing else.
+- **Yugabyte: MEKO is required.** MEKO is Yugabyte's shared memory/context layer for multi-agent systems on YugabyteDB. Our use: the judging agent writes each mistake and fix to MEKO, Masterji (voice agent) recalls the kid's past mistakes across sessions, and optionally a parent-report agent reads the same memory (#33, #34, #35). MEKO calls are async and never sit in the ≤ 2 s verdict path.
 
 ## Workflow (every agent, every time)
 
 1. **Always pull before you start and before you push:** `git switch main && git pull --rebase`. Start each task from a fresh `main`.
-2. **Branch per issue:** `<name>/<issue#>-<topic>`, e.g. `harjeet/7-clustering`. Never commit straight to `main`.
+2. **Branch per issue:** `<issue#>-<topic>`, e.g. `9-clustering`, so anyone can pick it up. Never commit straight to `main`.
 3. **Gate on exit codes:** `npm run check` (typecheck + lint + checker smoke test) must exit 0 before any push. Don't pipe it through `grep` or `tail` to decide. Use `scripts/gate --tail 20 npm run check` if you want short output.
 4. **PR** with `Closes #N`, a summary, and a test plan. Unchecked boxes say what was *not* run. **Self-merge when `npm run check` is green** (squash). Then pull `main` again.
-5. **Contract changes** (`src/lib/types.ts`, `src/lib/bus.ts`) need approval from one other lane owner on the PR. Tag them and say what changed. Additive fields are preferred over renames.
-6. Stay in your lane's folders. If you need something from another lane, open an issue or comment on theirs. Don't edit their internals.
+5. **Contract changes** (`src/lib/types.ts`, `src/lib/bus.ts`) need approval from one other teammate on the PR. If nobody else is active, merge only additive changes and flag them in #32 and in chat. Additive fields are preferred over renames.
+6. Stay inside the folders of the issue you hold. If someone else is active in an area you need, coordinate in chat first.
 7. Small commits, explicit `git add <paths>` (no `git add -A`). Rebase on `main` before merging if it moved.
 
 ## Honesty rules (status words mean exact things)
@@ -64,7 +72,7 @@ The red-pen engine (wobbly marks + single-stroke font) moved from Notebook to Sa
 
 ## Secrets and cost
 
-- `GEMINI_API_KEY` lives only in `.env.local` (gitignored) and on the server. **Never ship it to the browser.** Live API sessions use ephemeral tokens from a Next.js route.
+- `GEMINI_API_KEY` and the MEKO credentials live only in `.env.local` (gitignored) and on the server. **Never ship it to the browser.** Live API sessions use ephemeral tokens from a Next.js route.
 - Never print, log, commit or paste keys. Compare by hash if you must.
 - Each person uses their own key unless decided otherwise. Before a big run (the full benchmark, rehearsals), check the quota or balance in Google AI Studio. Log benchmark and other bulk runs in the ledger in `docs/SPIKES.md`.
 
