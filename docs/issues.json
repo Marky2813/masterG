@@ -1,0 +1,423 @@
+{
+  "labels": [
+    {
+      "name": "lane:notebook",
+      "color": "1d76db",
+      "description": "P1 Notebook: canvas, clustering, question box (Harjeet)"
+    },
+    {
+      "name": "lane:voice",
+      "color": "5319e7",
+      "description": "P2 Voice: Live API, persona, captions, modes (Akash)"
+    },
+    {
+      "name": "lane:brain",
+      "color": "0e8a16",
+      "description": "P3 Brain: Flash, checker, memory, red-pen engine (Sarthak)"
+    },
+    {
+      "name": "lane:shared",
+      "color": "c5def5",
+      "description": "Cross-lane: fakes, integration, demo, submission"
+    },
+    {
+      "name": "spike",
+      "color": "fbca04",
+      "description": "Probe with a numeric pass line; results in docs/SPIKES.md"
+    },
+    {
+      "name": "api-cost",
+      "color": "d93f0b",
+      "description": "Makes Gemini calls: check quota first, log bulk runs in the ledger"
+    },
+    {
+      "name": "contract",
+      "color": "b60205",
+      "description": "Touches src/lib/types.ts or bus.ts: needs another owner's approval"
+    },
+    {
+      "name": "documentation",
+      "color": "0075ca",
+      "description": "Improvements or additions to documentation"
+    },
+    {
+      "name": "cut-first",
+      "color": "bfbfbf",
+      "description": "Drop first if the golden path is at risk"
+    }
+  ],
+  "milestones": [
+    {
+      "title": "M0 Foundation: benchmark, spikes, fakes",
+      "description": "Every risky assumption answered; fakes let each lane build alone. Gate: benchmark decision + spikes recorded in docs/SPIKES.md."
+    },
+    {
+      "title": "M1 Lanes: build against fake events",
+      "description": "Each lane complete against fake events from /dev. Gate: each lane's issues closed with evidence."
+    },
+    {
+      "title": "M2 Integration: fraction golden path",
+      "description": "Fraction golden path end to end on the demo laptop, 3/3 runs."
+    },
+    {
+      "title": "M3 Breadth (feature freeze Sun 06:00 IST)",
+      "description": "Equations, modes, PTT, reconnection, deploy. Feature freeze Sun 1 Nov 06:00 IST.",
+      "due_on": "2026-11-01T00:30:00Z"
+    },
+    {
+      "title": "M4 Rehearse and submit",
+      "description": "Rehearse, record backup, submit. Deadline Sun 1 Nov ~12:00 IST (to confirm).",
+      "due_on": "2026-11-01T06:30:00Z"
+    }
+  ],
+  "issues": [
+    {
+      "title": "Fake event harness: src/lib/fakes.ts + /dev page",
+      "labels": [
+        "lane:shared"
+      ],
+      "milestone": "M0 Foundation: benchmark, spikes, fakes",
+      "assignees": [
+        "Marky2813"
+      ],
+      "body": "## Goal\nEach lane can build and demo its part alone, by firing the other lanes' events from a dev page. This unblocks all of M1.\n\nPlan ref: PLAN.md §8 (\"Build against fake events until integration\")\n\n## Steps\n- `src/lib/fakes.ts`: one builder per event in `MasterGEvents` with realistic payloads (cluster PNGs from `benchmark/samples/`, a verdict of each status/mark/hint rung, writeNote, userUtterance, questionConfirmed of each kind).\n- `/dev` page: a button per fake, a scripted sequence button (the fraction golden path as a timed event list), and a live log of every bus event.\n- Dev-only: return 404 in production like `/api/samples`.\n\n## Acceptance criteria\n- [ ] Every event in `src/lib/types.ts` can be fired from `/dev` (checked by clicking each in Chrome).\n- [ ] The golden-path sequence plays the PLAN.md §11 fraction story as events, visible in the log.\n- [ ] `npm run check` exits 0. No change to `types.ts`/`bus.ts`, or if needed, approved by another owner.\n\n## Notes\n- Assigned to Sarthak because the benchmark waits on samples anyway. Do this while Harjeet captures them.\n- Cut rule: the scripted sequence can come after the single buttons.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Capture ~48 labelled benchmark samples on the stylus board",
+      "labels": [
+        "lane:notebook"
+      ],
+      "milestone": "M0 Foundation: benchmark, spikes, fakes",
+      "assignees": [
+        "HARJEET-SINGH-dev"
+      ],
+      "body": "## Goal\nA shared, labelled set of real stylus handwriting so the benchmark decides the pipeline from data.\n\nPlan ref: PLAN.md §7 Samples\n\n## Steps\n- Whoever has the stylus board: `npm run dev` → http://localhost:3000/capture.\n- Write 10 fractions, 10 linear equations, 10 BODMAS/decimals, 10 LCM/HCF, 8 word-problem steps. About half with a typical mistake. Include deliberately messy digits (1/7, 4/9, 5/S).\n- Label each: expected text (mathjs syntax), correct/wrong, category.\n- Commit `benchmark/samples/` on a branch and open a PR.\n\n## Acceptance criteria\n- [ ] `benchmark/samples/labels.json` has ≥ 48 entries, each with a PNG that exists.\n- [ ] ≥ 20 samples are wrong steps and ≥ 20 are correct; ≥ 6 have deliberately ambiguous digits.\n- [ ] Merged to `main` so Sarthak's benchmark run uses it.\n\n## Notes\n- Blocks: the benchmark spike. Do this first.\n- Polish `/capture` only if it slows you down.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Spike: run the pipeline benchmark and call the winner",
+      "labels": [
+        "lane:brain",
+        "spike",
+        "api-cost"
+      ],
+      "milestone": "M0 Foundation: benchmark, spikes, fakes",
+      "assignees": [
+        "Marky2813"
+      ],
+      "body": "## Goal\nPick the step-judging pipeline (A / A+guard / B / C / C+guard / D) by the rule agreed before seeing results.\n\nPlan ref: PLAN.md §7\n\n## Steps\n- `npm run bench:models`, then set `GEMINI_FLASH_MODEL` / `GEMINI_PRO_MODEL` in `.env.local` if the defaults aren't listed.\n- Smoke run: `npm run bench -- --limit 5`, then the full run: `npm run bench -- --repeat 2`.\n- Fill the table in `docs/SPIKES.md` → *Spike: pipeline benchmark*; link the report in `benchmark/results/`.\n- Eyeball the diagnosis quality (categories) in the report.\n\n## Acceptance criteria\n- [ ] Decision rule applied as written: the fastest config with **0 false alarms, ≥ 95 % verdict accuracy, ≤ 2 s p95**, or a documented fallback if none qualifies.\n- [ ] Results table and decision in `docs/SPIKES.md`, decision row in `docs/DECISIONS.md`.\n- [ ] n ≥ 48 samples × 2 repeats. Number of calls logged in the ledger.\n\n## Notes\n- Depends on: the sample capture issue.\n- If nothing passes: pick the config with 0 false alarms and the best accuracy, and widen benefit-of-the-doubt. Record it as an accepted risk.\n\n> **API cost:** this makes Gemini calls. Check your quota in AI Studio first and log bulk runs in the ledger in `docs/SPIKES.md`.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Spike: echo test + Masterji voice audition",
+      "labels": [
+        "lane:voice",
+        "spike",
+        "api-cost"
+      ],
+      "milestone": "M0 Foundation: benchmark, spikes, fakes",
+      "assignees": [
+        "adot-7"
+      ],
+      "body": "## Goal\nDecide hands-free vs stage mode (push-to-talk) and pick Masterji's voice, on the real laptop speakers.\n\nPlan ref: PLAN.md §2 Voice, §6 Echo\n\n## Steps\n- Minimal Live API page: mic with `echoCancellation: true`, speaker output.\n- Audition 3–4 male, older-sounding prebuilt voices with the same Hinglish lines (\"Arre beta, line 2 dobara dekho\").\n- Echo test: Masterji speaks through the speakers in a noisy room. Does he hear himself and stop or reply to himself?\n\n## Acceptance criteria\n- [ ] Voice picked from ≥ 3 auditioned, recorded in `docs/DECISIONS.md` with the model name.\n- [ ] Echo result: 5 tries hands-free on speakers. Pass = 0 self-interruptions, else stage mode becomes the demo default. Written in `docs/SPIKES.md`.\n- [ ] Model name and API version recorded (needed for the Gemini prize write-up).\n\n> **API cost:** this makes Gemini calls. Check your quota in AI Studio first and log bulk runs in the ledger in `docs/SPIKES.md`.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Spike: stroke clustering on real stylus input",
+      "labels": [
+        "lane:notebook",
+        "spike"
+      ],
+      "milestone": "M0 Foundation: benchmark, spikes, fakes",
+      "assignees": [
+        "HARJEET-SINGH-dev"
+      ],
+      "body": "## Goal\nProve strokes group into one cluster per written step (space + time), because every AI mark lands on a cluster bbox.\n\nPlan ref: PLAN.md §4 Stroke clusters\n\n## Steps\n- On the canvas (or a throwaway page), group strokes by bbox proximity + time gap. Draw each cluster's bbox.\n- Write a 4-line fraction chain and a 4-line equation, at normal and messy spacing.\n\n## Acceptance criteria\n- [ ] 10/10 lines → exactly one cluster each, with no merges across lines, on the real stylus board in Chrome.\n- [ ] Thresholds and screenshots in `docs/SPIKES.md` → *Spike: clustering*.\n\n## Notes\n- If line-merging fails: fall back to y-band clustering on the ruled lines.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Rules: confirm deadline, submission platform and the AI Agent track statement",
+      "labels": [
+        "lane:shared",
+        "documentation"
+      ],
+      "milestone": "M0 Foundation: benchmark, spikes, fakes",
+      "assignees": [
+        "adot-7"
+      ],
+      "body": "## Goal\nKnow exactly when and where we submit, and which prize tracks we're eligible for, quoted from the organisers.\n\n## Steps\n- Ask the organisers (desk, Discord or WhatsApp): the exact submission deadline (IST), the platform (Devfolio?), and video or README requirements.\n- Fetch the \"Outstanding AI Agent Innovation\" problem statement and MLH \"Best Use of Gemini API\" criteria. Save copies in `drafts/rules/` with the date.\n- Update the deadline in `AGENTS.md` → Clock, plus `docs/SUBMISSION.md` and `docs/DECISIONS.md`.\n\n## Acceptance criteria\n- [ ] Deadline confirmed in writing (quote and source in DECISIONS).\n- [ ] Each prize track marked enter / skip with a one-line reason.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Notebook canvas: perfect-freehand, pressure, eraser, ruled page, rough-work column",
+      "labels": [
+        "lane:notebook"
+      ],
+      "milestone": "M1 Lanes: build against fake events",
+      "assignees": [
+        "HARJEET-SINGH-dev"
+      ],
+      "body": "## Goal\nA notebook the kid can actually write in with the stylus. This is the surface everything else draws on.\n\nPlan ref: PLAN.md §4\n\n## Steps\n- Custom canvas on `perfect-freehand` (no Excalidraw/tldraw). Keep stroke data as `Stroke[]` from `types.ts`.\n- Pen pressure, eraser (stylus eraser end + toggle), visible pen cursor dot.\n- Cosmetic ruled lines. Rough-work column on the right (~25 %, dashed divider, labelled \"Rough Work\").\n- Separate layer for AI red-pen strokes (never erasable by the kid's eraser).\n\n## Acceptance criteria\n- [ ] Writing in Chrome with the stylus board shows pressure variation, and the eraser removes strokes.\n- [ ] Strokes in the rough-work column are flagged so they're never clustered.\n- [ ] No dropped strokes or visible lag while writing a 4-line chain (checked by eye on the demo laptop).\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Clustering + crops: emit clusterUpdated / clusterRemoved on pen pause",
+      "labels": [
+        "lane:notebook"
+      ],
+      "milestone": "M1 Lanes: build against fake events",
+      "assignees": [
+        "HARJEET-SINGH-dev"
+      ],
+      "body": "## Goal\nTurn writing into the events the Brain consumes: one cluster per step, with a crop image.\n\nPlan ref: PLAN.md §4 Stroke clusters, §5 (crop with numbered boxes)\n\n## Steps\n- Use the clustering from the spike. Debounce: emit after ~1.5 s pen pause in the main area only.\n- `imagePng`: crop of the active area with faint numbered boxes per cluster (set-of-mark), as in the benchmark.\n- Erase or overwrite → `clusterRemoved` and/or a fresh `clusterUpdated` for the changed cluster.\n\n## Acceptance criteria\n- [ ] In `/dev`'s event log: writing one step emits exactly one `clusterUpdated` after the pause, not mid-stroke.\n- [ ] Crops look like the benchmark sample images (same framing and boxes): screenshot in the PR.\n- [ ] Rough-work strokes never emit events.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Question box: handwrite / photo-paste / type → questionSubmitted",
+      "labels": [
+        "lane:notebook"
+      ],
+      "milestone": "M1 Lanes: build against fake events",
+      "assignees": [
+        "HARJEET-SINGH-dev"
+      ],
+      "body": "## Goal\nThe kid gets the sum onto the page in three ways. Brain extracts it and Masterji reads it back.\n\nPlan ref: PLAN.md §4 Question box\n\n## Steps\n- Box at the top with three inputs: handwrite area, upload or paste an image (Ctrl+V), type.\n- Emit `questionSubmitted`. Show the confirmed question text when `questionConfirmed` arrives.\n\n## Acceptance criteria\n- [ ] All three inputs emit `questionSubmitted` with the right `source` (seen in the `/dev` log).\n- [ ] A fake `questionConfirmed` from `/dev` renders the question text.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Render verdict marks and margin notes with the red-pen engine",
+      "labels": [
+        "lane:notebook"
+      ],
+      "milestone": "M1 Lanes: build against fake events",
+      "assignees": [
+        "HARJEET-SINGH-dev"
+      ],
+      "body": "## Goal\nVerdicts show up as animated red-pen marks on the right cluster, and `writeNote` text appears in the margin.\n\nPlan ref: PLAN.md §4 AI handwriting, §6 Interruption\n\n## Steps\n- On `verdict`: draw `mark` on the cluster bbox via `src/lib/redpen/` (Sarthak's engine; use a stub until it lands).\n- On `writeNote`: animate the text next to the cluster, never in the rough-work column.\n- Erase or overwrite a cluster → its marks and notes vanish.\n- Expose `cancelQueuedNotes()` for interruption: an in-progress mark finishes, queued notes are dropped, verdict marks stay.\n\n## Acceptance criteria\n- [ ] Fake verdicts of every mark type from `/dev` land on the right bbox, animated.\n- [ ] Erasing a marked line removes its marks (checked in Chrome).\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "App shell: start screen, layout, language picker, mode toggle, captions slot",
+      "labels": [
+        "lane:notebook"
+      ],
+      "milestone": "M1 Lanes: build against fake events",
+      "assignees": [
+        "HARJEET-SINGH-dev"
+      ],
+      "body": "## Goal\nReplace the create-next-app page with the Master G screen that every lane plugs into.\n\nPlan ref: PLAN.md §2 Language, §6 Captions/Modes\n\n## Steps\n- Start screen: pick English / Hinglish (default Hinglish) → `languageChanged`. Start button (the mic needs a user gesture).\n- Main layout: question box, notebook, rough work, two-line caption bar at the bottom (slot for Voice), corner toggles for mode + language, and a \"Check karo\" button.\n- Toggles emit `modeChanged` / `languageChanged`.\n\n## Acceptance criteria\n- [ ] `/` shows the real layout at the demo laptop's resolution (screenshot in the PR).\n- [ ] Toggles emit the right events (seen in the `/dev` log).\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Step judging: /api/step + brain service (cluster → Flash → checker → verdict)",
+      "labels": [
+        "lane:brain",
+        "api-cost"
+      ],
+      "milestone": "M1 Lanes: build against fake events",
+      "assignees": [
+        "Marky2813"
+      ],
+      "body": "## Goal\nThe core loop: each `clusterUpdated` becomes a `verdict` within ~2 s, and never calls a correct step wrong.\n\nPlan ref: PLAN.md §5\n\n## Steps\n- Server route `/api/step` (key stays server-side) runs the benchmark's winning config with `stepPrompt.ts`.\n- Client brain service: listens to `clusterUpdated`, orders clusters top-to-bottom, passes `previous` + `question` context to `checkReadings` (benefit of the doubt).\n- Checker wins whenever it can compute. Emits `verdict` with `source`.\n- Drop stale responses (cluster changed or removed while in flight).\n\n## Acceptance criteria\n- [ ] Replay all benchmark samples through the service offline: 0 false alarms (script output in the PR).\n- [ ] Pen pause → verdict p95 ≤ 2 s measured on 20 real calls, numbers in the PR.\n- [ ] Works with Voice and Notebook absent (driven from `/dev`).\n\n> **API cost:** this makes Gemini calls. Check your quota in AI Studio first and log bulk runs in the ledger in `docs/SPIKES.md`.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Question extraction + classification (questionSubmitted → confirm → questionConfirmed)",
+      "labels": [
+        "lane:brain",
+        "api-cost"
+      ],
+      "milestone": "M1 Lanes: build against fake events",
+      "assignees": [
+        "Marky2813"
+      ],
+      "body": "## Goal\nRead the question from handwriting, a photo or text, classify its kind, and hand it to Masterji to read back.\n\nPlan ref: PLAN.md §4 Question box\n\n## Steps\n- `/api/question`: Flash extracts mathjs text + `QuestionKind` (`unsupported` for graphs or \"explain why\").\n- Agree with Akash how the read-back confirmation flows. The contract has no \"question extracted, awaiting confirmation\" event yet. If one is needed, open a contract PR (`contract` label) approved by another owner.\n- Ambiguous digit in the question → ask, don't guess.\n\n## Acceptance criteria\n- [ ] Typed, handwritten and photo inputs of `3/4 + 1/6` and `3x + 5 = 20` produce the right text and kind.\n- [ ] An unsupported question (a bar graph photo) is classified `unsupported`.\n\n> **API cost:** this makes Gemini calls. Check your quota in AI Studio first and log bulk runs in the ledger in `docs/SPIKES.md`.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Mistake memory: growing categories, repeatCount, hint-rung state",
+      "labels": [
+        "lane:brain"
+      ],
+      "milestone": "M1 Lanes: build against fake events",
+      "assignees": [
+        "Marky2813"
+      ],
+      "body": "## Goal\nMasterji remembers mistakes within the session. \"Phir se wahi galti!\" fires deterministically and hints climb the ladder.\n\nPlan ref: PLAN.md §2 Hint ladder, §5 Mistake memory\n\n## Steps\n- Session store: seed categories + ones created mid-session (id + Hinglish label). Pass the list to Flash every call and require reuse.\n- `repeatCount` per category. `hintRung` per open mistake: +1 per failed retry or \"nahi pata\" (via `userUtterance`), reset on fix.\n- Fixed cluster → verdict `correct` (Voice praises the effort).\n\n## Acceptance criteria\n- [ ] Unit test: the same category twice → `repeatCount` 2; four failed retries → rungs 1, 2, 3, 4.\n- [ ] Category list is in every Flash call (logged in dev).\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Red-pen engine: wobbly marks + animated single-stroke font",
+      "labels": [
+        "lane:brain"
+      ],
+      "milestone": "M1 Lanes: build against fake events",
+      "assignees": [
+        "Marky2813"
+      ],
+      "body": "## Goal\nMasterji's handwriting looks hand-drawn: randomised marks and Hershey-style text, animated stroke by stroke.\n\nPlan ref: PLAN.md §4 AI handwriting\n\n## Steps\n- `src/lib/redpen/`: pure functions. `mark(type, bbox, seed?) → AnimatedStroke[]` for tick, cross, circle, underline, arrow; `text(str, origin, size) → AnimatedStroke[]` with jitter + slant (Roman script).\n- Single-stroke font data (Hershey simplex, public domain), digits, a–z, `/ = + - × ? !`.\n- Agree the `AnimatedStroke` shape with Harjeet early (or put it in `types.ts` via a contract PR).\n\n## Acceptance criteria\n- [ ] A demo route or story shows every mark and \"LCM?\", \"carry 1\", \"9/12\" animated, looking different on each render.\n- [ ] No dependency on the canvas: unit-testable pure output.\n\n## Notes\n- Moved from Notebook to Brain on 2026-10-31 for load balance (`docs/DECISIONS.md`).\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Live API session: ephemeral token route, mic, audio playback",
+      "labels": [
+        "lane:voice",
+        "api-cost"
+      ],
+      "milestone": "M1 Lanes: build against fake events",
+      "assignees": [
+        "adot-7"
+      ],
+      "body": "## Goal\nMasterji can hear and speak in the browser without the API key ever reaching the client.\n\nPlan ref: PLAN.md §5 Speak, §6\n\n## Steps\n- `/api/live-token`: mints a short-lived Live API token server-side.\n- Client session: mic with `echoCancellation: true`, audio output queue, input/output transcription on.\n- Voice from the audition spike. Lower VAD sensitivity.\n\n## Acceptance criteria\n- [ ] The key is not in the client bundle (`grep` the `.next/static` build output for it, masked).\n- [ ] A 2-minute conversation in Chrome on the demo laptop with no dropouts.\n\n> **API cost:** this makes Gemini calls. Check your quota in AI Studio first and log bulk runs in the ledger in `docs/SPIKES.md`.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Masterji persona prompt: guardrails, hint ladder, Hinglish/English, verdict turns",
+      "labels": [
+        "lane:voice"
+      ],
+      "milestone": "M1 Lanes: build against fake events",
+      "assignees": [
+        "adot-7"
+      ],
+      "body": "## Goal\nMasterji sounds like a strict, funny, caring tuition teacher and only ever speaks from verdicts. He never judges math himself.\n\nPlan ref: PLAN.md §2 (persona, guardrails, hint ladder), §5 (\"Only ever receives verdicts as hidden text\")\n\n## Steps\n- System prompt: persona, signature lines, the 4 guardrails (one dramatic line max, banned words, praise effort, soften after 3+ mistakes), and rung phrasing.\n- On `verdict` (wrong) → send a hidden text turn like `[cluster 3 WRONG, add_across, rung 1, repeat 2]`. Correct → silent.\n- Greeting asks the kid's name and uses it. Read back the question for confirmation.\n- Language switch changes the speaking language mid-session.\n\n## Acceptance criteria\n- [ ] 10 fake wrong verdicts from `/dev`: 0 banned words, ≤ 1 dramatic line each, rung phrasing matches PLAN §2 (transcript in the PR).\n- [ ] repeatCount ≥ 2 → \"Phir se wahi galti\" or equivalent in 5/5 tries.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Captions + interruption handling",
+      "labels": [
+        "lane:voice"
+      ],
+      "milestone": "M1 Lanes: build against fake events",
+      "assignees": [
+        "adot-7"
+      ],
+      "body": "## Goal\nTwo-line live captions, and the kid can cut Masterji off mid-word.\n\nPlan ref: PLAN.md §6 Interruption, Captions\n\n## Steps\n- Caption bar: Masterji's current line + the kid's current line from transcription.\n- On `interrupted`: flush the audio queue immediately, freeze his caption with \"—\", call Notebook's `cancelQueuedNotes()`.\n\n## Acceptance criteria\n- [ ] Talking over Masterji stops his audio within ~300 ms (by ear, 5/5 tries on speakers or in stage mode).\n- [ ] Verdict marks stay after an interruption.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "write_note tool → writeNote event",
+      "labels": [
+        "lane:voice"
+      ],
+      "milestone": "M1 Lanes: build against fake events",
+      "assignees": [
+        "adot-7"
+      ],
+      "body": "## Goal\nMasterji writes margin notes in sync with what he says (\"LCM?\", \"9/12\").\n\nPlan ref: PLAN.md §4 Who decides what\n\n## Steps\n- Declare a `write_note(clusterId, text)` tool in the Live session. On call, emit `writeNote` and return ok.\n- Prompt: use it at rung 2–4; keep notes ≤ 12 chars.\n\n## Acceptance criteria\n- [ ] In a fake rung-4 verdict run, the note appears while he says it (seen in Chrome).\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Integration #1: fraction golden path end to end",
+      "labels": [
+        "lane:shared"
+      ],
+      "milestone": "M2 Integration: fraction golden path",
+      "assignees": [
+        "Marky2813",
+        "adot-7",
+        "HARJEET-SINGH-dev"
+      ],
+      "body": "## Goal\nThe first real demo: `3/4 + 1/6`, the kid adds across, Masterji catches it, circles it, hints, the kid fixes it, ticks, \"Shabash!\"\n\nPlan ref: PLAN.md §11 Golden path 1\n\n## Steps\n- All three lanes merged on `main`; remove fakes from the main page.\n- Run the PLAN §11 step 1 story on the demo laptop with the stylus board and speakers, 3 times.\n- Log every glitch as an issue (lane label, M2 milestone).\n\n## Acceptance criteria\n- [ ] 3/3 runs complete the story without a reload, verified in browser on the demo laptop.\n- [ ] Pen pause → circle + speech start ≤ 2.5 s (measured, numbers in the comment).\n- [ ] 0 false alarms across the 3 runs.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Linear equations end to end + \"Phir se wahi galti\" (golden path 2)",
+      "labels": [
+        "lane:brain"
+      ],
+      "milestone": "M3 Breadth (feature freeze Sun 06:00 IST)",
+      "assignees": [
+        "Marky2813"
+      ],
+      "body": "## Goal\n`3x + 5 = 20`: the sign-transpose mistake, its fix, then the same mistake again → deterministic \"phir se\".\n\nPlan ref: PLAN.md §11 Golden path 2\n\n## Steps\n- Equation chain context in the brain service (same solution as the previous line).\n- Run PLAN §11 step 2 three times on the demo laptop.\n\n## Acceptance criteria\n- [ ] 3/3 runs: catch, fix, repeat → \"phir se\", with 0 false alarms.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Modes: proactive / reactive, \"Check karo\", stuck nudge, voice commands",
+      "labels": [
+        "lane:voice"
+      ],
+      "milestone": "M3 Breadth (feature freeze Sun 06:00 IST)",
+      "assignees": [
+        "adot-7"
+      ],
+      "body": "## Goal\nMasterji can be quiet when asked, and nudges when the kid is stuck.\n\nPlan ref: PLAN.md §6 Modes\n\n## Steps\n- Reactive: checks and ticks still run; he speaks only on \"Masterji, sahi hai?\" or the \"Check karo\" button.\n- Proactive: ~25 s of no writing → \"Kya hua? Atak gaye?\"\n- Voice commands: \"Masterji, abhi chup raho\" → reactive.\n\n## Acceptance criteria\n- [ ] Each mode behaves as written in 3/3 tries in Chrome.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Stage mode push-to-talk (spacebar / pen barrel button) + mid-session language switch",
+      "labels": [
+        "lane:voice"
+      ],
+      "milestone": "M3 Breadth (feature freeze Sun 06:00 IST)",
+      "assignees": [
+        "adot-7"
+      ],
+      "body": "## Goal\nA demo that survives a noisy hall: push-to-talk, and pressing it while Masterji talks stops him.\n\nPlan ref: PLAN.md §6 Echo layer 3\n\n## Steps\n- Live API manual activity start/end on spacebar and the pen barrel button (check which key the driver sends).\n- The language toggle switches his language without restarting the session.\n\n## Acceptance criteria\n- [ ] Push-to-talk works with both spacebar and the pen button on the demo laptop.\n- [ ] Switching language mid-session: his next line is in the new language (3/3).\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Live reconnection: marks and checker keep working without voice",
+      "labels": [
+        "lane:voice"
+      ],
+      "milestone": "M3 Breadth (feature freeze Sun 06:00 IST)",
+      "assignees": [
+        "adot-7"
+      ],
+      "body": "## Goal\nIf the Live session drops on stage, the notebook keeps ticking and voice comes back on its own.\n\nPlan ref: PLAN.md §11 Safety net\n\n## Steps\n- Detect close or error → reconnect with backoff, new token, resend the persona + session memory summary.\n- Kill the network for 10 s mid-session to test.\n\n## Acceptance criteria\n- [ ] After a 10 s network drop: voice is back within 15 s and marks kept appearing during the drop (3/3).\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Word-problem hybrid: Flash judges setup, checker verifies arithmetic",
+      "labels": [
+        "lane:brain",
+        "cut-first",
+        "api-cost"
+      ],
+      "milestone": "M3 Breadth (feature freeze Sun 06:00 IST)",
+      "assignees": [
+        "Marky2813"
+      ],
+      "body": "## Goal\nWord problems (proportion, percent, money, time) get judged: setup by Flash, arithmetic lines by the checker.\n\nPlan ref: PLAN.md §1 In scope\n\n## Steps\n- Prompt branch for `word_problem` kind; the checker runs on the arithmetic lines it can parse.\n\n## Acceptance criteria\n- [ ] The 8 word-problem benchmark samples: 0 false alarms.\n\n## Notes\n- Cut first if M2 slips.\n\n> **API cost:** this makes Gemini calls. Check your quota in AI Studio first and log bulk runs in the ledger in `docs/SPIKES.md`.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Long division / vertical layouts",
+      "labels": [
+        "lane:brain",
+        "cut-first",
+        "api-cost"
+      ],
+      "milestone": "M3 Breadth (feature freeze Sun 06:00 IST)",
+      "assignees": [
+        "Marky2813"
+      ],
+      "body": "## Goal\n`12 ) 4536 ( 378`: Flash reads the block and the checker re-runs the algorithm.\n\nPlan ref: PLAN.md §1, §11 step 3 (optional)\n\n## Steps\n- Read the vertical block as structured steps; re-run long division in code and compare each partial.\n\n## Acceptance criteria\n- [ ] 5/5 handwritten long divisions judged correctly, 0 false alarms.\n\n## Notes\n- In the demo only if rock solid at freeze. Cut first.\n\n> **API cost:** this makes Gemini calls. Check your quota in AI Studio first and log bulk runs in the ledger in `docs/SPIKES.md`.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Deploy: Vercel + production build on the demo laptop",
+      "labels": [
+        "lane:notebook"
+      ],
+      "milestone": "M3 Breadth (feature freeze Sun 06:00 IST)",
+      "assignees": [
+        "HARJEET-SINGH-dev"
+      ],
+      "body": "## Goal\nA judges' link that works, and a local production build as the stage fallback.\n\nPlan ref: PLAN.md §11 Safety net\n\n## Steps\n- Vercel project from `main` with `GEMINI_API_KEY` set in Vercel env (never in the repo).\n- On the demo laptop: `npm run build && npm start`; test the full path on the phone hotspot too.\n\n## Acceptance criteria\n- [ ] Vercel URL loads and judges a step in a fresh incognito window.\n- [ ] The local production build runs the golden path once.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Golden-path rehearsal + latency tuning on the demo laptop",
+      "labels": [
+        "lane:shared"
+      ],
+      "milestone": "M4 Rehearse and submit",
+      "assignees": [
+        "Marky2813",
+        "adot-7",
+        "HARJEET-SINGH-dev"
+      ],
+      "body": "## Goal\nThe demo runs the same way every time, on the exact laptop, board and speakers used on stage.\n\nPlan ref: PLAN.md §11, `docs/DEMO.md`\n\n## Steps\n- 5 full rehearsals of the golden path (production build). Record timings and every failure in `docs/DEMO.md`.\n- Decide hands-free vs stage mode for the hall.\n\n## Acceptance criteria\n- [ ] 5/5 rehearsals complete, verified in browser on the demo laptop.\n- [ ] Tested lines and fallbacks filled in `docs/DEMO.md`.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "Record backup demo video",
+      "labels": [
+        "lane:shared"
+      ],
+      "milestone": "M4 Rehearse and submit",
+      "assignees": [
+        "HARJEET-SINGH-dev"
+      ],
+      "body": "## Goal\nIf anything fails live, the recording shows the real product working.\n\n## Steps\n- Screen + audio recording of the golden path from the production build, no fakes.\n- Save the master in the repo's `media/` (gitignored if large) or the team drive, never /tmp.\n\n## Acceptance criteria\n- [ ] A video of the full golden path, no cuts that hide failures; link in `docs/DEMO.md`.\n- [ ] Meets the length limit from the rules issue.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    },
+    {
+      "title": "README for judges + claims reconciliation + submission",
+      "labels": [
+        "lane:shared",
+        "documentation"
+      ],
+      "milestone": "M4 Rehearse and submit",
+      "assignees": [
+        "adot-7"
+      ],
+      "body": "## Goal\nSubmit on time, and claim only what we showed working.\n\n## Steps\n- README: what it does, the pipeline diagram, which Gemini models and APIs are in the live path, how to run, what is out of scope.\n- Reconcile every line of README, form and video against `docs/CLAIMS.md`.\n- Submit the form (and prize tracks); tick `docs/SUBMISSION.md`; tag `submission`.\n\n## Acceptance criteria\n- [ ] Submitted before the confirmed deadline; confirmation screenshot saved.\n- [ ] Every public claim has an evidence row in `docs/CLAIMS.md`.\n\n---\nContext: `PLAN.md` (product), `AGENTS.md` (workflow, lanes, honesty rules). Branch `<name>/<issue#>-<topic>`, PR with `Closes #N`, self-merge when `npm run check` is green."
+    }
+  ]
+}

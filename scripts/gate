@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# gate: run a check and pass its real exit status through, even when you want
+# to see only the tail of its output. Use it in front of anything that commits,
+# builds or deploys.
+#
+#   scripts/gate npm test && git commit -m "..."
+#   scripts/gate --tail 20 npm run ui:check && ./build.sh
+#
+# Why: `npm test | grep "# pass"` and `check | tail -2 && build` gate on grep
+# and tail, not on the check. Both shipped failures in a past project.
+set -uo pipefail
+
+tail_n=0
+if [ "${1:-}" = "--tail" ]; then
+  tail_n="${2:?--tail needs a number}"
+  shift 2
+fi
+if [ $# -eq 0 ]; then
+  echo "usage: gate [--tail N] <command> [args...]" >&2
+  exit 64
+fi
+
+if [ "$tail_n" -gt 0 ]; then
+  log="$(mktemp)"
+  "$@" >"$log" 2>&1
+  rc=$?
+  tail -n "$tail_n" "$log"
+  rm -f "$log"
+else
+  "$@"
+  rc=$?
+fi
+
+if [ "$rc" -eq 0 ]; then
+  echo "gate: PASS ($*)" >&2
+else
+  echo "gate: FAIL, exit $rc ($*)" >&2
+fi
+exit "$rc"
