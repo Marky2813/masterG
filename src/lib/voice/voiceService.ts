@@ -10,7 +10,7 @@
 import { GoogleGenAI, type LiveServerMessage, type Session } from "@google/genai";
 import { bus } from "../bus";
 import type { Language, Verdict } from "../types";
-import { questionFacts } from "../brain/facts";
+import { questionFacts, reachesFinalAnswer } from "../brain/facts";
 import { sessionState } from "../sessionState";
 import { clientLog, getSessionId } from "../log/client";
 import { Mic, Player } from "./audio";
@@ -39,7 +39,8 @@ export class MasterjiVoice {
   private generating = false; // server is mid-reply (audio arrived, no turnComplete yet)
   private discardStale = false; // kid interrupted: drop the old reply's leftover audio until the server ends it
   private waitingSince = 0;
-  private written = new Set<string>(); // board writes already made (dedupe repeated tool calls) // when we last asked for a reply (note sent / button released), for latency logs
+  private written = new Set<string>();
+  private everWrong = false; // board writes already made (dedupe repeated tool calls) // when we last asked for a reply (note sent / button released), for latency logs
   language: Language;
 
   constructor(
@@ -172,6 +173,21 @@ export class MasterjiVoice {
     );
   }
 
+  // Safety net: sometimes the model SAYS a tool call ('write_note("c1", "LCM(4, 6) = 12")') instead
+  // of making it, so nothing gets written. Execute any complete spoken call once.
+  private runSpokenTools(said: string): void {
+    const re = /write_(note|line)\s*\(\s*(?:["']?(c\d+)["']?\s*,\s*)?["']([^"']{1,44})["']\s*\)/gi;
+    for (const m of said.matchAll(re)) {
+      const [, kind, clusterId, text] = m;
+      const key = `spoken|${kind}|${clusterId ?? ""}|${text}`;
+      if (this.written.has(key)) continue;
+      this.written.add(key);
+      clientLog("voice.spoken_tool_executed", { kind, clusterId, text });
+      if (kind.toLowerCase() === "note" && clusterId) bus.emit("writeNote", { clusterId, text: text.slice(0, 28) });
+      else bus.emit("writeLine", { text: text.slice(0, 44) });
+    }
+  }
+
   private questionNote(text: string): string {
     const facts = questionFacts(text);
     return `[QUESTION SET: ${text}]${facts.length ? `\n[FACTS (computed, correct; copy these when writing): ${facts.join(" ; ")}]` : ""}`;
@@ -191,13 +207,25 @@ export class MasterjiVoice {
         `rung ${v.hintRung}`,
         `repeat ${v.repeatCount}`,
         v.hint ? `hint: ${v.hint}` : null,
-        v.hintRung >= 4 ? "ACTION: call write_line with the correct step from FACTS, then ask the child to do the next line" : null,
-        v.hintRung === 3 ? "ACTION: write_note the one fact they need (from FACTS)" : null,
+        v.hintRung >= 4 ? "ACTION (silent): write the correct step from FACTS with the line tool, then ask the child to do the next line" : null,
+        v.hintRung === 3 ? "ACTION (silent): note the one fact they need (from FACTS) with the note tool" : null,
       ].filter(Boolean);
       this.note(`[${parts.join(" | ")}]`);
-    } else if (v.status === "correct" && this.wrong.delete(v.clusterId)) {
-      this.note(`[STEP ${v.clusterId} FIXED | now reads: ${v.text}]`);
+    } else if (v.status === "correct") {
+      const q = sessionState.question?.text;
+      const final = !!q && reachesFinalAnswer(q, v.text);
+      const fixed = this.wrong.delete(v.clusterId);
+      const hadMistake = this.wrong.size > 0 || fixed || this.everWrong;
+      if (final) {
+        this.wrong.clear();
+        this.note(`[FINAL ANSWER CORRECT | child wrote: ${v.text} | ${hadMistake ? "after fixing a mistake: praise the effort" : "first try"}] Praise warmly in one or two sentences, then ask if they want the next sum.`);
+      } else if (fixed || this.wrong.size > 0) {
+        // Corrected on the same line, or a right step on a new line after a mistake.
+        this.note(`[STEP ${v.clusterId} CORRECT NOW | child wrote: ${v.text}] Short praise, then let them continue.`);
+        this.wrong.clear();
+      }
     }
+    if (v.status === "wrong") this.everWrong = true;
   }
 
   private onMessage(m: LiveServerMessage): void {
@@ -223,7 +251,15 @@ export class MasterjiVoice {
     }
     if (sc?.outputTranscription?.text && !this.discardStale) {
       this.masterjiLine += sc.outputTranscription.text;
-      this.cb.onCaption?.("masterji", this.masterjiLine, false);
+      // The model sometimes echoes a hidden note ("[STEP c3 ...]"): never show it to the child.
+      this.runSpokenTools(this.masterjiLine);
+      const shown = this.masterjiLine
+        .replace(/\[[^\]]*\]?/g, "")
+        .replace(/write_(note|line)\s*\([^)]*\)?/gi, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (/\[|write_(note|line)/i.test(this.masterjiLine)) clientLog("voice.echoed_text_hidden", { raw: this.masterjiLine });
+      this.cb.onCaption?.("masterji", shown, false);
     }
     if (sc?.inputTranscription?.text) {
       this.kidLine += sc.inputTranscription.text;
@@ -233,7 +269,8 @@ export class MasterjiVoice {
       const wasStale = this.discardStale;
       this.discardStale = false;
       this.generating = false;
-      clientLog("voice.turn", { masterji: this.masterjiLine.trim(), kid: this.kidLine.trim(), underruns: this.player?.underruns ?? 0, staleDropped: wasStale });
+      clientLog("voice.turn", { masterji: this.masterjiLine.trim(), kid: this.kidLine.trim(), underruns: this.player?.takeUnderruns() ?? 0, staleDropped: wasStale });
+      this.player?.endTurn();
       if (this.kidLine.trim()) bus.emit("userUtterance", { text: this.kidLine.trim() });
       this.masterjiLine = "";
       this.kidLine = "";
