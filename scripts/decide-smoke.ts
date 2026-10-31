@@ -13,5 +13,7 @@ t("checker beats a model false alarm", decide({ text: "3/4 + 1/6 = 11/12", alter
 t("word problem: wrong setup stays wrong", decide({ text: "60 * 5 = 300", alternatives: [], modelVerdict: "wrong", question: "5 pens cost Rs 60. What do 8 pens cost?", kind: "word_problem" }).status === "wrong");
 t("word problem: bad arithmetic caught", decide({ text: "500 - 235 = 335", alternatives: [], modelVerdict: "correct", kind: "word_problem" }).status === "wrong");
 t("word problem: right step stays right", decide({ text: "60 / 5 = 12", alternatives: [], modelVerdict: "correct", kind: "word_problem" }).status === "correct");
+t("garbled read (y = y) is unsure, not wrong", decide({ text: "y = y", alternatives: [], modelVerdict: "wrong", question: "7y - 9 = 19", previous: "7y = 28" }).status === "unsure");
+t("4 read as y: alternative accepted", decide({ text: "y = y", alternatives: ["y = 4"], modelVerdict: "wrong", question: "7y - 9 = 19", previous: "7y = 28" }).status === "correct");
 if (failed) { console.log(`\n${failed} failed`); process.exit(1); }
 console.log("\nall passed");

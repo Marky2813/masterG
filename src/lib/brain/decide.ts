@@ -12,7 +12,7 @@ import type { QuestionKind, VerdictStatus } from "../types";
 // This stops the model from smuggling a *corrected* step in as an alternative.
 const CONFUSABLE: string[][] = [
   ["1", "7", "l", "i", "/"],
-  ["4", "9"],
+  ["4", "9", "y"],
   ["5", "s", "S"],
   ["0", "6", "o", "O"],
   ["3", "8"],
@@ -62,7 +62,14 @@ export function decide(input: DecideInput): Decision {
   const ctx = input.kind === "word_problem" ? { previous: input.previous } : { question: input.question, previous: input.previous };
   const check = checkReadings([input.text, ...usedAlternatives], ctx);
 
-  if (check.status === "unknown") return { status: modelVerdict, source: "model", reason: `checker_${check.reason}`, usedAlternatives };
+  if (check.status === "unknown") {
+    // Chains and equations are always computable when read right, so "can't compute" means a
+    // garbled reading (e.g. a messy 4 read as "y = y"). Never scold on that: stay unsure.
+    // Word problems and other kinds fall back to the model's judgement.
+    const computable = input.kind === undefined || input.kind === "chain" || input.kind === "equation";
+    if (computable && modelVerdict === "wrong") return { status: "unsure", source: "model", reason: `checker_${check.reason}_model_wrong`, usedAlternatives };
+    return { status: modelVerdict, source: "model", reason: `checker_${check.reason}`, usedAlternatives };
+  }
   if (input.kind === "word_problem" && check.status === "correct" && modelVerdict === "wrong") {
     return { status: "wrong", source: "model", reason: "setup_wrong_arithmetic_ok", usedAlternatives };
   }
