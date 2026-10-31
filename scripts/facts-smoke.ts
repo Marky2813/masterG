@@ -24,3 +24,7 @@ f("3/4 + 1/6", "9/12 + 2/12 = 11/12", true);
 f("3/4 + 1/6", "22/24", true);
 f("3/4 + 1/6", "9/12 + 2/12", false);
 f("3/4 + 1/6", "3/4 + 1/6 = 9/12 + 2/12", false);
+import { isSimplified, simplestAnswer } from "../src/lib/brain/facts";
+const s = (line: string, want: boolean) => { const ok = isSimplified(line) === want; console.log(`${ok ? "PASS" : "FAIL"}  simplified? ${line} -> ${isSimplified(line)}`); if (!ok) process.exitCode = 1; };
+s("44/42", false); s("= 22/21", true); s("14/42 + 30/42 = 44/42", false); s("5", true);
+console.log(simplestAnswer("2/6 + 5/7") === "22/21" ? "PASS  simplest 2/6 + 5/7 = 22/21" : (process.exitCode = 1, "FAIL simplest"));

@@ -47,3 +47,15 @@ export function reachesFinalAnswer(question: string, line: string): boolean {
   const neg = last.startsWith("-") !== ans.text.startsWith("-");
   return !neg && Number(n) * Number(ad) === Number(an) * Number(d);
 }
+
+// "44/42" isn't in lowest terms; "22/21" and "5" are.
+export function isSimplified(line: string): boolean {
+  const last = normalize(line).split("=").pop()?.replace(/\s+/g, "") ?? "";
+  const m = last.match(/^-?(\d+)\/(\d+)$/);
+  return !m || gcd(Number(m[1]), Number(m[2])) === 1;
+}
+
+export function simplestAnswer(question: string): string | null {
+  const ans = referenceAnswer(question);
+  return ans?.kind === "value" ? ans.text : null;
+}
