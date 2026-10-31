@@ -1,1 +1,404 @@
-[]
+[
+  {
+    "id": "fractions-001",
+    "file": "fractions-001.png",
+    "topic": "fractions",
+    "question": "3/4 + 1/6",
+    "expectedText": "3/4 + 1/6 = 4/10",
+    "isCorrect": false,
+    "category": "add_across"
+  },
+  {
+    "id": "fractions-002",
+    "file": "fractions-002.png",
+    "topic": "fractions",
+    "question": "3/4 + 1/6",
+    "expectedText": "3/4 + 1/6 = 9/12 + 2/12",
+    "isCorrect": true
+  },
+  {
+    "id": "fractions-003",
+    "file": "fractions-003.png",
+    "topic": "fractions",
+    "question": "3/4 + 1/6",
+    "previous": "= 9/12 + 2/12",
+    "expectedText": "= 11/12",
+    "isCorrect": true
+  },
+  {
+    "id": "fractions-004",
+    "file": "fractions-004.png",
+    "topic": "fractions",
+    "question": "2/3 + 1/5",
+    "expectedText": "2/3 + 1/5 = 3/8",
+    "isCorrect": false,
+    "category": "add_across"
+  },
+  {
+    "id": "fractions-005",
+    "file": "fractions-005.png",
+    "topic": "fractions",
+    "question": "2/3 + 1/5",
+    "expectedText": "2/3 + 1/5 = 10/15 + 3/15 = 13/15",
+    "isCorrect": true
+  },
+  {
+    "id": "fractions-006",
+    "file": "fractions-006.png",
+    "topic": "fractions",
+    "question": "5/6 - 1/4",
+    "expectedText": "5/6 - 1/4 = 10/12 - 3/12 = 7/12",
+    "isCorrect": true
+  },
+  {
+    "id": "fractions-007",
+    "file": "fractions-007.png",
+    "topic": "fractions",
+    "question": "5/6 - 1/4",
+    "expectedText": "5/6 - 1/4 = 4/2",
+    "isCorrect": false,
+    "category": "add_across"
+  },
+  {
+    "id": "fractions-008",
+    "file": "fractions-008.png",
+    "topic": "fractions",
+    "question": "(1+1/2) + (2+1/3)",
+    "expectedText": "(1+1/2) + (2+1/3) = (3+5/6)",
+    "isCorrect": true
+  },
+  {
+    "id": "fractions-009",
+    "file": "fractions-009.png",
+    "topic": "fractions",
+    "question": "4/9 * 3/8",
+    "expectedText": "4/9 * 3/8 = 12/72 = 1/6",
+    "isCorrect": true
+  },
+  {
+    "id": "fractions-010",
+    "file": "fractions-010.png",
+    "topic": "fractions",
+    "question": "7/10 + 1/5",
+    "expectedText": "7/10 + 1/5 = 7/10 + 2/10 = 8/10",
+    "isCorrect": false,
+    "category": "table_slip"
+  },
+  {
+    "id": "linear-011",
+    "file": "linear-011.png",
+    "topic": "linear",
+    "question": "3x + 5 = 20",
+    "expectedText": "3x = 20 + 5",
+    "isCorrect": false,
+    "category": "sign_transpose"
+  },
+  {
+    "id": "linear-012",
+    "file": "linear-012.png",
+    "topic": "linear",
+    "question": "3x + 5 = 20",
+    "expectedText": "3x = 20 - 5",
+    "isCorrect": true
+  },
+  {
+    "id": "linear-013",
+    "file": "linear-013.png",
+    "topic": "linear",
+    "question": "3x + 5 = 20",
+    "previous": "3x = 15",
+    "expectedText": "x = 5",
+    "isCorrect": true
+  },
+  {
+    "id": "linear-014",
+    "file": "linear-014.png",
+    "topic": "linear",
+    "question": "4(m + 6) - 8 = 2m - 4",
+    "expectedText": "4m + 6 - 8 = 2m - 4",
+    "isCorrect": false,
+    "category": "distribute_partial"
+  },
+  {
+    "id": "linear-015",
+    "file": "linear-015.png",
+    "topic": "linear",
+    "question": "4(m + 6) - 8 = 2m - 4",
+    "expectedText": "4m + 24 - 8 = 2m - 4",
+    "isCorrect": true
+  },
+  {
+    "id": "linear-016",
+    "file": "linear-016.png",
+    "topic": "linear",
+    "question": "4(m + 6) - 8 = 2m - 4",
+    "previous": "4m + 16 = 2m - 4",
+    "expectedText": "2m = -20",
+    "isCorrect": true
+  },
+  {
+    "id": "linear-017",
+    "file": "linear-017.png",
+    "topic": "linear",
+    "question": "4(m + 6) - 8 = 2m - 4",
+    "previous": "2m = -20",
+    "expectedText": "m = 10",
+    "isCorrect": false
+  },
+  {
+    "id": "linear-018",
+    "file": "linear-018.png",
+    "topic": "linear",
+    "question": "7y - 9 = 19",
+    "expectedText": "7y = 28",
+    "isCorrect": true
+  },
+  {
+    "id": "linear-019",
+    "file": "linear-019.png",
+    "topic": "linear",
+    "question": "7y - 9 = 19",
+    "previous": "7y = 28",
+    "expectedText": "y = 4",
+    "isCorrect": true
+  },
+  {
+    "id": "linear-020",
+    "file": "linear-020.png",
+    "topic": "linear",
+    "question": "5a + 3 = 2a + 12",
+    "expectedText": "5a + 2a = 12 - 3",
+    "isCorrect": false,
+    "category": "sign_transpose"
+  },
+  {
+    "id": "bodmas_decimals-021",
+    "file": "bodmas_decimals-021.png",
+    "topic": "bodmas_decimals",
+    "question": "2 + 3 * 4",
+    "expectedText": "2 + 3 * 4 = 20",
+    "isCorrect": false,
+    "category": "bodmas_order"
+  },
+  {
+    "id": "bodmas_decimals-022",
+    "file": "bodmas_decimals-022.png",
+    "topic": "bodmas_decimals",
+    "question": "2 + 3 * 4",
+    "expectedText": "2 + 3 * 4 = 14",
+    "isCorrect": true
+  },
+  {
+    "id": "bodmas_decimals-023",
+    "file": "bodmas_decimals-023.png",
+    "topic": "bodmas_decimals",
+    "question": "18 / 3 * 2",
+    "expectedText": "18 / 3 * 2 = 3",
+    "isCorrect": false,
+    "category": "bodmas_order"
+  },
+  {
+    "id": "bodmas_decimals-024",
+    "file": "bodmas_decimals-024.png",
+    "topic": "bodmas_decimals",
+    "question": "18 / 3 * 2",
+    "expectedText": "= 6 * 2 = 12",
+    "isCorrect": true
+  },
+  {
+    "id": "bodmas_decimals-025",
+    "file": "bodmas_decimals-025.png",
+    "topic": "bodmas_decimals",
+    "question": "0.5 + 0.25",
+    "expectedText": "0.5 + 0.25 = 0.30",
+    "isCorrect": false,
+    "category": "decimal_misaligned"
+  },
+  {
+    "id": "bodmas_decimals-026",
+    "file": "bodmas_decimals-026.png",
+    "topic": "bodmas_decimals",
+    "question": "4.5 + 2.35",
+    "expectedText": "4.5 + 2.35 = 2.80",
+    "isCorrect": false,
+    "category": "decimal_misaligned"
+  },
+  {
+    "id": "bodmas_decimals-027",
+    "file": "bodmas_decimals-027.png",
+    "topic": "bodmas_decimals",
+    "question": "4.5 + 2.35",
+    "expectedText": "4.5 + 2.35 = 6.85",
+    "isCorrect": true
+  },
+  {
+    "id": "bodmas_decimals-028",
+    "file": "bodmas_decimals-028.png",
+    "topic": "bodmas_decimals",
+    "question": "7.2 - 1.9",
+    "expectedText": "7.2 - 1.9 = 5.3",
+    "isCorrect": true
+  },
+  {
+    "id": "bodmas_decimals-029",
+    "file": "bodmas_decimals-029.png",
+    "topic": "bodmas_decimals",
+    "question": "(6 + 4) * 3 - 5",
+    "expectedText": "(6 + 4) * 3 - 5 = 25",
+    "isCorrect": true
+  },
+  {
+    "id": "bodmas_decimals-030",
+    "file": "bodmas_decimals-030.png",
+    "topic": "bodmas_decimals",
+    "question": "3.6 * 2",
+    "expectedText": "3.6 * 2 = 6.12",
+    "isCorrect": false,
+    "category": "carry_forgot"
+  },
+  {
+    "id": "lcm_hcf-031",
+    "file": "lcm_hcf-031.png",
+    "topic": "lcm_hcf",
+    "question": "lcm(4, 6)",
+    "expectedText": "lcm(4, 6) = 12",
+    "isCorrect": true
+  },
+  {
+    "id": "lcm_hcf-032",
+    "file": "lcm_hcf-032.png",
+    "topic": "lcm_hcf",
+    "question": "lcm(4, 6)",
+    "expectedText": "lcm(4, 6) = 24",
+    "isCorrect": false
+  },
+  {
+    "id": "lcm_hcf-033",
+    "file": "lcm_hcf-033.png",
+    "topic": "lcm_hcf",
+    "question": "hcf(12, 18)",
+    "expectedText": "hcf(12, 18) = 6",
+    "isCorrect": true
+  },
+  {
+    "id": "lcm_hcf-034",
+    "file": "lcm_hcf-034.png",
+    "topic": "lcm_hcf",
+    "question": "hcf(12, 18)",
+    "expectedText": "hcf(12, 18) = 3",
+    "isCorrect": false
+  },
+  {
+    "id": "lcm_hcf-035",
+    "file": "lcm_hcf-035.png",
+    "topic": "lcm_hcf",
+    "question": "lcm(8, 12)",
+    "expectedText": "lcm(8, 12) = 96",
+    "isCorrect": false
+  },
+  {
+    "id": "lcm_hcf-036",
+    "file": "lcm_hcf-036.png",
+    "topic": "lcm_hcf",
+    "question": "hcf(24, 36)",
+    "expectedText": "hcf(24, 36) = 12",
+    "isCorrect": true
+  },
+  {
+    "id": "lcm_hcf-037",
+    "file": "lcm_hcf-037.png",
+    "topic": "lcm_hcf",
+    "question": "lcm(9, 15)",
+    "expectedText": "lcm(9, 15) = 45",
+    "isCorrect": true
+  },
+  {
+    "id": "lcm_hcf-038",
+    "file": "lcm_hcf-038.png",
+    "topic": "lcm_hcf",
+    "question": "hcf(14, 21)",
+    "expectedText": "hcf(14, 21) = 7",
+    "isCorrect": true
+  },
+  {
+    "id": "lcm_hcf-039",
+    "file": "lcm_hcf-039.png",
+    "topic": "lcm_hcf",
+    "question": "lcm(6, 8)",
+    "expectedText": "lcm(6, 8) = 48",
+    "isCorrect": false
+  },
+  {
+    "id": "lcm_hcf-040",
+    "file": "lcm_hcf-040.png",
+    "topic": "lcm_hcf",
+    "question": "prime factors of 24",
+    "expectedText": "24 = 2 * 2 * 2 * 3",
+    "isCorrect": true
+  },
+  {
+    "id": "word_problem-041",
+    "file": "word_problem-041.png",
+    "topic": "word_problem",
+    "question": "5 pens cost Rs 60. What do 8 pens cost?",
+    "expectedText": "60 / 5 = 12",
+    "isCorrect": true
+  },
+  {
+    "id": "word_problem-042",
+    "file": "word_problem-042.png",
+    "topic": "word_problem",
+    "question": "5 pens cost Rs 60. What do 8 pens cost?",
+    "expectedText": "12 * 8 = 96",
+    "isCorrect": true
+  },
+  {
+    "id": "word_problem-043",
+    "file": "word_problem-043.png",
+    "topic": "word_problem",
+    "question": "5 pens cost Rs 60. What do 8 pens cost?",
+    "expectedText": "60 * 5 = 300",
+    "isCorrect": false
+  },
+  {
+    "id": "word_problem-044",
+    "file": "word_problem-044.png",
+    "topic": "word_problem",
+    "question": "Find 20% of Rs 450",
+    "expectedText": "20/100 * 450 = 90",
+    "isCorrect": true
+  },
+  {
+    "id": "word_problem-045",
+    "file": "word_problem-045.png",
+    "topic": "word_problem",
+    "question": "Find 20% of Rs 450",
+    "expectedText": "20/100 * 450 = 9",
+    "isCorrect": false
+  },
+  {
+    "id": "word_problem-046",
+    "file": "word_problem-046.png",
+    "topic": "word_problem",
+    "question": "Riya had Rs 500 and spent Rs 235. How much is left?",
+    "expectedText": "500 - 235 = 335",
+    "isCorrect": false,
+    "category": "borrow_error"
+  },
+  {
+    "id": "word_problem-047",
+    "file": "word_problem-047.png",
+    "topic": "word_problem",
+    "question": "Riya had Rs 500 and spent Rs 235. How much is left?",
+    "expectedText": "500 - 235 = 265",
+    "isCorrect": true
+  },
+  {
+    "id": "word_problem-048",
+    "file": "word_problem-048.png",
+    "topic": "word_problem",
+    "question": "A car goes 60 km in 1 hour. How far in 3.5 hours?",
+    "expectedText": "60 * 3.5 = 210",
+    "isCorrect": true
+  }
+]
