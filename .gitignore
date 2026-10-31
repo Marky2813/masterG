@@ -41,3 +41,11 @@ yarn-error.log*
 next-env.d.ts
 
 !.env.example
+
+# team / agents
+drafts/
+reference/
+.claude/worktrees/
+.claude/settings.local.json
+*.swp
+*~
