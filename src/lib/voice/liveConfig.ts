@@ -29,6 +29,17 @@ export const WRITE_LINE = {
   },
 };
 
+export const SET_QUESTION = {
+  name: "set_question",
+  description:
+    "Put the NEXT sum on the board when the child has finished one and wants another. Clears the page. Use plain maths text like '2/3 + 1/5' or '4x - 7 = 9'.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: { question: { type: Type.STRING, description: "The new sum, e.g. 2/3 + 1/5" } },
+    required: ["question"],
+  },
+};
+
 // The one Live config. The token route locks it server-side (so voice + persona are
 // guaranteed applied) and the client connects with the same object.
 export function liveConfig(language: Language, voice = MASTERJI_VOICE): LiveConnectConfig {
@@ -41,6 +52,6 @@ export function liveConfig(language: Language, voice = MASTERJI_VOICE): LiveConn
     // Push-to-talk: the kid holds a key/button to speak (activityStart/End). No voice-activity
     // detection, so Masterji never hears himself through the speakers. PLAN.md §6 "stage mode".
     realtimeInputConfig: { automaticActivityDetection: { disabled: true } },
-    tools: [{ functionDeclarations: [WRITE_NOTE, WRITE_LINE] }],
+    tools: [{ functionDeclarations: [WRITE_NOTE, WRITE_LINE, SET_QUESTION] }],
   };
 }

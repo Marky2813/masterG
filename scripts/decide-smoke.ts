@@ -18,5 +18,7 @@ t("4 read as y: alternative accepted", decide({ text: "y = y", alternatives: ["y
 t("half-written 3/4 is not wrong", decide({ text: "3/4", alternatives: [], modelVerdict: "wrong", question: "3/4 + 1/6" }).status === "unsure");
 t("line ending in = is not wrong", decide({ text: "3/4 + 1/6 =", alternatives: [], modelVerdict: "wrong", question: "3/4 + 1/6" }).status === "unsure");
 t("full wrong line still wrong", decide({ text: "3/4 + 1/6 = 4/10", alternatives: [], modelVerdict: "wrong", question: "3/4 + 1/6" }).status === "wrong");
+t("lcm working line is judged on its own", decide({ text: "lcm(4,6) = 12", alternatives: [], modelVerdict: "correct", question: "3/4 + 1/6" }).status === "correct");
+t("wrong lcm working caught", decide({ text: "lcm(4,6) = 24", alternatives: [], modelVerdict: "correct", question: "3/4 + 1/6" }).status === "wrong");
 if (failed) { console.log(`\n${failed} failed`); process.exit(1); }
 console.log("\nall passed");
