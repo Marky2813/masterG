@@ -64,7 +64,7 @@ function timed(strokes: Pt[][], speed: number, r: () => number, start = 0): PenI
   for (const points of strokes) {
     const duration = Math.max(60, lengthOf(points) / speed);
     out.push({ points, delay: t, duration });
-    t += duration + between(r, 50, 110);
+    t += duration + between(r, 120, 220);
   }
   return { strokes: out, total: t };
 }
@@ -89,7 +89,7 @@ export function mark(type: MarkType, b: BBox, seed?: number): PenItem {
         [x + s * 0.55 + j(2), y - s * 0.05],
         [x + s * 0.95 + j(3), y - s * 0.55 + j(3)],
       ];
-      return timed([smooth(pts, 5)], 0.9, r);
+      return timed([smooth(pts, 5)], 0.45, r);
     }
     case "cross": {
       const x = right + j(4),
@@ -100,7 +100,7 @@ export function mark(type: MarkType, b: BBox, seed?: number): PenItem {
           smooth([[x, y + j(2)], [x + s * 0.5 + j(2), y + s * 0.5], [x + s + j(2), y + s + j(2)]], 4),
           smooth([[x + s + j(2), y + j(2)], [x + s * 0.5 + j(2), y + s * 0.5], [x + j(2), y + s + j(2)]], 4),
         ],
-        0.8,
+        0.4,
         r,
       );
     }
@@ -125,7 +125,7 @@ export function mark(type: MarkType, b: BBox, seed?: number): PenItem {
           ey = ry * grow * wob * Math.sin(a);
         pts.push([cx + ex * Math.cos(tilt) - ey * Math.sin(tilt), cy + ex * Math.sin(tilt) + ey * Math.cos(tilt)]);
       }
-      return timed([pts], 1.6, r);
+      return timed([pts], 0.8, r);
     }
     case "underline": {
       const y = b.y + b.h + 10;
@@ -133,7 +133,7 @@ export function mark(type: MarkType, b: BBox, seed?: number): PenItem {
       const phase = between(r, 0, Math.PI * 2);
       const pts: Pt[] = [];
       for (let i = 0; i <= n; i++) pts.push([b.x - 4 + ((b.w + 8) * i) / n, y + 2.5 * Math.sin(phase + i * 0.9) + j(1)]);
-      return timed([smooth(pts, 3)], 1.3, r);
+      return timed([smooth(pts, 3)], 0.65, r);
     }
     case "arrow": {
       // From below-left, pointing at the start of the step.
@@ -142,7 +142,7 @@ export function mark(type: MarkType, b: BBox, seed?: number): PenItem {
       const mid: Pt = [(tip[0] + tail[0]) / 2 + j(6), (tip[1] + tail[1]) / 2 + j(6)];
       const ang = Math.atan2(tip[1] - mid[1], tip[0] - mid[0]);
       const head = (d: number): Pt => [tip[0] - 14 * Math.cos(ang + d), tip[1] - 14 * Math.sin(ang + d)];
-      return timed([smooth([tail, mid, tip], 6), [head(0.5), tip, head(-0.5)]], 1.0, r);
+      return timed([smooth([tail, mid, tip], 6), [head(0.5), tip, head(-0.5)]], 0.5, r);
     }
     default:
       return { strokes: [], total: 0 };
@@ -185,7 +185,7 @@ export function text(str: string, x: number, y: number, size = 26, seed?: number
     }
     pen += g.w * scale + LETTER_GAP;
   }
-  return { item: timed(strokes, 0.45, r), width: pen * u };
+  return { item: timed(strokes, 0.2, r), width: pen * u };
 }
 
 // How much of an item to draw at time t: each stroke's points up to its progress.
