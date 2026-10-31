@@ -173,6 +173,21 @@ export class MasterjiVoice {
     );
   }
 
+  // Safety net: sometimes the model SAYS a tool call ('write_note("c1", "LCM(4, 6) = 12")') instead
+  // of making it, so nothing gets written. Execute any complete spoken call once.
+  private runSpokenTools(said: string): void {
+    const re = /write_(note|line)\s*\(\s*(?:["']?(c\d+)["']?\s*,\s*)?["']([^"']{1,44})["']\s*\)/gi;
+    for (const m of said.matchAll(re)) {
+      const [, kind, clusterId, text] = m;
+      const key = `spoken|${kind}|${clusterId ?? ""}|${text}`;
+      if (this.written.has(key)) continue;
+      this.written.add(key);
+      clientLog("voice.spoken_tool_executed", { kind, clusterId, text });
+      if (kind.toLowerCase() === "note" && clusterId) bus.emit("writeNote", { clusterId, text: text.slice(0, 28) });
+      else bus.emit("writeLine", { text: text.slice(0, 44) });
+    }
+  }
+
   private questionNote(text: string): string {
     const facts = questionFacts(text);
     return `[QUESTION SET: ${text}]${facts.length ? `\n[FACTS (computed, correct; copy these when writing): ${facts.join(" ; ")}]` : ""}`;
@@ -192,8 +207,8 @@ export class MasterjiVoice {
         `rung ${v.hintRung}`,
         `repeat ${v.repeatCount}`,
         v.hint ? `hint: ${v.hint}` : null,
-        v.hintRung >= 4 ? "ACTION: call write_line with the correct step from FACTS, then ask the child to do the next line" : null,
-        v.hintRung === 3 ? "ACTION: write_note the one fact they need (from FACTS)" : null,
+        v.hintRung >= 4 ? "ACTION (silent): write the correct step from FACTS with the line tool, then ask the child to do the next line" : null,
+        v.hintRung === 3 ? "ACTION (silent): note the one fact they need (from FACTS) with the note tool" : null,
       ].filter(Boolean);
       this.note(`[${parts.join(" | ")}]`);
     } else if (v.status === "correct") {
@@ -237,8 +252,13 @@ export class MasterjiVoice {
     if (sc?.outputTranscription?.text && !this.discardStale) {
       this.masterjiLine += sc.outputTranscription.text;
       // The model sometimes echoes a hidden note ("[STEP c3 ...]"): never show it to the child.
-      const shown = this.masterjiLine.replace(/\[[^\]]*\]?/g, "").replace(/\s+/g, " ").trim();
-      if (shown !== this.masterjiLine.trim()) clientLog("voice.echoed_note_hidden", { raw: this.masterjiLine });
+      this.runSpokenTools(this.masterjiLine);
+      const shown = this.masterjiLine
+        .replace(/\[[^\]]*\]?/g, "")
+        .replace(/write_(note|line)\s*\([^)]*\)?/gi, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (/\[|write_(note|line)/i.test(this.masterjiLine)) clientLog("voice.echoed_text_hidden", { raw: this.masterjiLine });
       this.cb.onCaption?.("masterji", shown, false);
     }
     if (sc?.inputTranscription?.text) {
