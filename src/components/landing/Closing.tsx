@@ -1,20 +1,47 @@
-import CtaButton from "./CtaButton";
-import RoleLinks from "./RoleLinks";
+import Link from "next/link";
+import { BrandMark } from "./Brand";
 
-// The closing call to action. The same button as the hero (open the app at /learn),
-// with the teacher / join-a-class links under it.
+// "Open your notebook." The two lines trade weight and width as the section scrolls in (CSS
+// scroll timeline, see landing.css), then the footer.
+const big = { textDecoration: "none", color: "var(--color-kohl)", border: "3px solid var(--color-kohl)", boxShadow: "5px 5px 0 var(--color-kohl)", borderRadius: "16px", padding: "18px 28px", fontWeight: 800, fontSize: "19px" } as const;
+const foot = { color: "#4A463F", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: "3px" } as const;
+
 export default function Closing() {
   return (
-    <section className="py-24 md:py-32">
-      <div className="mx-auto max-w-[1360px] px-4 md:px-10">
-        <h2 className="landing-reveal font-display text-[clamp(52px,8.4vw,120px)] leading-[0.9] font-black text-balance [font-stretch:125%]">
-          Notebook kholo. Masterji ready hain.
+    <section id="start" className="grid-bg" style={{ padding: "112px 24px 40px" }}>
+      <div style={{ maxWidth: "1360px", margin: "0 auto" }}>
+        <h2 className="wt-scroll" style={{ margin: 0, color: "var(--color-kohl)", fontWeight: 800, fontSize: "clamp(44px, 8.4vw, 128px)", lineHeight: 0.88, letterSpacing: "-0.03em" }}>
+          <span className="cta-a" style={{ display: "block" }}>
+            Open your notebook.
+          </span>
+          <span className="cta-b" style={{ display: "block" }}>
+            Master G is ready.
+          </span>
         </h2>
-        <div className="landing-reveal mt-12 flex flex-wrap items-center gap-x-6 gap-y-4">
-          <CtaButton />
-          <p className="max-w-xs text-sm leading-snug text-muted">Stylus ke saath best. Voice ke liye mic chahiye.</p>
-            <RoleLinks />
+        <div className="reveal" style={{ marginTop: "40px", display: "flex", flexWrap: "wrap", gap: "14px", alignItems: "center" }}>
+          <Link className="btn-hard" href="/learn" style={{ ...big, backgroundColor: "var(--color-peela)" }}>
+            Start a class
+          </Link>
+          <Link className="btn-hard" href="/join" prefetch={false} style={{ ...big, backgroundColor: "#FFFFFF" }}>
+            Join my class
+          </Link>
+          <span style={{ color: "#4A463F", fontSize: "16px" }}>Works with a stylus, a tablet pen, or a finger.</span>
         </div>
+        <footer style={{ marginTop: "96px", paddingTop: "24px", borderTop: "1.5px solid rgba(22,21,19,.3)", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "16px", color: "#4A463F", fontSize: "14px" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "10px", fontWeight: 800, color: "var(--color-kohl)", fontSize: "18px" }}>
+            <BrandMark className="size-7" />
+            Master G
+          </span>
+          <nav aria-label="Footer" style={{ display: "flex", flexWrap: "wrap", gap: "18px" }}>
+            <Link href="/teacher" prefetch={false} style={foot}>
+              I&apos;m a teacher
+            </Link>
+            <Link href="/join" prefetch={false} style={foot}>
+              Join my class
+            </Link>
+          </nav>
+          <span>© 2026 Master G</span>
+        </footer>
       </div>
     </section>
   );

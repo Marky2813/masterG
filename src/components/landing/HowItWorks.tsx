@@ -1,112 +1,80 @@
-import { Gola, Note, Tick } from "./Marks";
-
-// Three steps a class goes through. Each card has a small picture of the real
-// app: the question box, a line being checked, a circled mistake.
+// "How a class works": three cards, from the question to the red circle.
 export default function HowItWorks() {
   return (
-    <section className="relative rounded-t-[40px] bg-white pt-20 pb-24 md:pt-28 md:pb-32">
-      <div className="mx-auto max-w-[1360px] px-4 md:px-10">
-        <div className="landing-reveal grid gap-6 md:grid-cols-[1fr_minmax(0,24rem)] md:items-end">
-          <h2 className="font-display text-[clamp(40px,5.4vw,72px)] leading-[0.95] font-black text-balance [font-stretch:125%]">
-            Ek class aise chalti hai
-          </h2>
-          <p className="text-base leading-[1.6] text-muted md:text-lg">
-            Just like tuition at Masterji’s house. A notebook, a pencil, and a teacher who sees every line you write.
-          </p>
+    <section id="how" style={{ backgroundColor: "#FFFFFF", borderRadius: "48px 48px 0 0", padding: "96px 24px 104px" }}>
+      <div style={{ maxWidth: "1360px", margin: "0 auto" }}>
+        <div className="reveal" style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-end", gap: "24px" }}>
+          <h2 className="wt-scroll" style={{ margin: "0", fontWeight: 800, fontSize: "clamp(34px, 4.6vw, 68px)", lineHeight: 0.95, letterSpacing: "-0.02em", maxWidth: "14ch" }}>How a class works</h2>
+          <p style={{ margin: "0", maxWidth: "40ch", fontSize: "18px", lineHeight: 1.5, color: "var(--color-muted)" }}>Just like evening tuition: a notebook, a pencil, and Master G watching every line you write.</p>
         </div>
-
-        <ol className="mt-14 grid gap-6 md:grid-cols-3">
-          <li className="landing-reveal flex min-w-0 flex-col rounded-tile border-[2.5px] border-kohl bg-mist p-7 md:p-8">
-            <StepNumber n={1} />
-            <h3 className="mt-6 font-display text-[26px] leading-[1.1] font-black [font-stretch:112%]">Sawaal likho</h3>
-            <p className="mt-3 text-base leading-[1.55] text-muted">
-              Type the sum in the question box. Masterji reads it back to check before you start.
-            </p>
-            <div className="mt-auto pt-9">
-              <div className="relative">
-                <span aria-hidden="true" className="absolute -top-3 left-1/2 h-4 w-16 -translate-x-1/2 -rotate-2 bg-rabar" />
-                <div className="flex items-center gap-2 rounded-control border-[2.5px] border-kohl bg-white py-2.5 pr-2.5 pl-3 shadow-hard-sm">
-                  <span className="flex-1 truncate text-[15px] text-muted">Sawaal likho: 3/4 + 1/6</span>
-                  <span className="rounded-md bg-kohl px-3 py-1 text-xs font-bold text-paper">Set</span>
-                </div>
-                <p className="mt-4 text-sm leading-snug">
-                  <span className="font-display font-black text-red-pen">Masterji · </span>
-                  Toh sawaal hai 3/4 + 1/6. Theek hai?
-                </p>
+        <ol style={{ listStyle: "none", margin: "56px 0 0", padding: "0", display: "flex", flexWrap: "wrap", gap: "24px" }}>
+          {/* step 1 */}
+          <li className="lift-soft reveal" style={{ flex: "1 1 320px", minWidth: "0", backgroundColor: "var(--color-mist)", borderRadius: "28px", padding: "32px", display: "flex", flexDirection: "column", gap: "16px" }}>
+            <span className="num" style={{ width: "48px", height: "48px", borderRadius: "50%", backgroundColor: "var(--color-peela)", border: "2.5px solid var(--color-kohl)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "20px" }}>1</span>
+            <h3 style={{ margin: "0", fontWeight: 800, fontSize: "26px", lineHeight: 1.1 }}>Write the question or snap it</h3>
+            <p style={{ margin: "0", fontSize: "16px", lineHeight: 1.55, color: "var(--color-muted)" }}>Write the question by hand, or snap the textbook page. Master G reads it either way.</p>
+            <div style={{ marginTop: "auto", paddingTop: "18px", display: "flex", alignItems: "flex-end", gap: "14px", flexWrap: "wrap" }}>
+              <div className="float-slow" style={{ position: "relative", backgroundColor: "#FFFFFF", border: "2.5px solid var(--color-kohl)", borderRadius: "10px", padding: "18px 18px 16px", transform: "rotate(-3deg)", boxShadow: "5px 5px 0 var(--color-kohl)", width: "210px" }}>
+                <span style={{ position: "absolute", top: "-12px", left: "70px", width: "70px", height: "22px", backgroundColor: "rgba(245,179,193,.9)", border: "1.5px solid var(--color-kohl)", transform: "rotate(4deg)" }} />
+                <div style={{ fontSize: "12px", fontWeight: 800, color: "var(--color-muted)" }}>Exercise 2.3</div>
+                <div style={{ marginTop: "6px", fontSize: "16px", fontWeight: 700 }}>4. Add: 2/3 + 1/4</div>
+                <div style={{ marginTop: "10px", height: "6px", width: "80%", backgroundColor: "#EAE5DA", borderRadius: "3px" }} />
+                <div style={{ marginTop: "6px", height: "6px", width: "55%", backgroundColor: "#EAE5DA", borderRadius: "3px" }} />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", backgroundColor: "var(--color-kohl)", color: "#FFFFFF", borderRadius: "999px", padding: "8px 14px", fontSize: "13px", fontWeight: 700 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFE36E" strokeWidth="2.2" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
+                    <circle cx="12" cy="13" r="3.5" />
+                  </svg>Snap a photo
+                </span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", backgroundColor: "#FFFFFF", border: "2px solid var(--color-kohl)", borderRadius: "999px", padding: "6px 14px", fontSize: "13px", fontWeight: 700 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3A3530" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M4 20l4-1 11-11-3-3L5 16z" />
+                  </svg>Or write it
+                </span>
               </div>
             </div>
           </li>
-
-          <li className="landing-reveal flex min-w-0 flex-col rounded-tile border-[2.5px] border-kohl bg-mist p-7 md:p-8">
-            <StepNumber n={2} />
-            <h3 className="mt-6 font-display text-[26px] leading-[1.1] font-black [font-stretch:112%]">
-              Notebook mein solve karo
-            </h3>
-            <p className="mt-3 text-base leading-[1.55] text-muted">
-              Write each line with the stylus. Pause after a line and Masterji checks it. A right step gets a red tick
-              and a short word of praise.
-            </p>
-            <div className="mt-auto pt-9">
-              <div className="landing-sheet relative rounded-control border-[2.5px] border-kohl px-4 pt-1 pb-3">
-                <p className="font-hand text-[28px] leading-[44px] text-pencil">
-                  LCM (3, 4) = 12
-                  <span aria-hidden="true" className="ml-1 inline-block h-[26px] w-[2px] align-middle bg-pencil motion-safe:animate-pulse" />
-                </p>
-                <Tick className="absolute top-2 right-3 size-8" draw="view" />
+          {/* step 2 */}
+          <li className="lift-soft reveal" style={{ flex: "1 1 320px", minWidth: "0", backgroundColor: "var(--color-mist)", borderRadius: "28px", padding: "32px", display: "flex", flexDirection: "column", gap: "16px" }}>
+            <span className="num" style={{ width: "48px", height: "48px", borderRadius: "50%", backgroundColor: "var(--color-peela)", border: "2.5px solid var(--color-kohl)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "20px" }}>2</span>
+            <h3 style={{ margin: "0", fontWeight: 800, fontSize: "26px", lineHeight: 1.1 }}>Solve it in the notebook</h3>
+            <p style={{ margin: "0", fontSize: "16px", lineHeight: 1.55, color: "var(--color-muted)" }}>Master G follows each line as it&apos;s written. When it&apos;s going right, he stays quiet.</p>
+            <div style={{ marginTop: "auto", paddingTop: "18px" }}>
+              <div style={{ backgroundColor: "var(--color-paper)", backgroundImage: "repeating-linear-gradient(180deg, transparent 0, transparent 39px, #E4DED2 39px, #E4DED2 40px)", border: "2.5px solid var(--color-kohl)", borderRadius: "10px", height: "84px", padding: "14px 18px", fontFamily: "var(--font-hand)", fontSize: "28px", lineHeight: 1, color: "var(--color-pencil)", display: "flex", alignItems: "flex-start", gap: "4px" }}>LCM (3, 4) = 12
+                <span className="blink" style={{ width: "3px", height: "28px", backgroundColor: "var(--color-pencil)", marginLeft: "2px" }} />
               </div>
-              <span className="mt-4 inline-flex items-center gap-2 rounded-full border-2 border-kohl bg-white px-3 py-1 text-xs font-semibold">
-                <svg viewBox="0 0 24 24" aria-hidden="true" className="size-3.5">
-                  <path d="M4 12.5l5 5L20 6.5" fill="none" stroke="#C83A22" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                Sahi step
-              </span>
+              <div style={{ marginTop: "12px", display: "inline-flex", alignItems: "center", gap: "8px", backgroundColor: "#FFFFFF", border: "2px solid var(--color-kohl)", borderRadius: "999px", padding: "7px 14px", fontSize: "13px", fontWeight: 700 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#161513" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>{" "}Master G: quiet, all correct
+              </div>
             </div>
           </li>
-
-          <li className="landing-reveal flex min-w-0 flex-col rounded-tile border-[2.5px] border-kohl bg-mist p-7 md:p-8">
-            <StepNumber n={3} />
-            <h3 className="mt-6 font-display text-[26px] leading-[1.1] font-black [font-stretch:112%]">
-              Galti pakdi, phir se try
-            </h3>
-            <p className="mt-3 text-base leading-[1.55] text-muted">
-              A red circle on the wrong step. Masterji points first, then asks, and writes the correct step only as the
-              last hint.
-            </p>
-            <div className="mt-auto pt-9">
-              <div className="landing-sheet relative rounded-control border-[2.5px] border-kohl px-4 pt-1 pb-3">
-                <p className="font-hand text-[28px] leading-[44px] text-pencil">
-                  = <span className="relative inline-block">
-                    11/24
-                    <Gola className="absolute -top-2 -left-3 h-[calc(100%+16px)] w-[calc(100%+24px)]" draw="view" />
-                  </span>
-                </p>
-                <Note className="mt-1 block pl-28 text-[22px]">Kahan gadbad hui?</Note>
+          {/* step 3 */}
+          <li className="lift-soft reveal" style={{ flex: "1 1 320px", minWidth: "0", backgroundColor: "var(--color-mist)", borderRadius: "28px", padding: "32px", display: "flex", flexDirection: "column", gap: "16px" }}>
+            <span className="num" style={{ width: "48px", height: "48px", borderRadius: "50%", backgroundColor: "var(--color-peela)", border: "2.5px solid var(--color-kohl)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "20px" }}>3</span>
+            <h3 style={{ margin: "0", fontWeight: 800, fontSize: "26px", lineHeight: 1.1 }}>Mistake caught, try again</h3>
+            <p style={{ margin: "0", fontSize: "16px", lineHeight: 1.55, color: "var(--color-muted)" }}>A red circle on the wrong step. No answer handed over, just a question: where did it go wrong?</p>
+            <div style={{ marginTop: "auto", paddingTop: "18px" }}>
+              <div style={{ position: "relative", backgroundColor: "var(--color-paper)", backgroundImage: "repeating-linear-gradient(180deg, transparent 0, transparent 39px, #E4DED2 39px, #E4DED2 40px)", border: "2.5px solid var(--color-kohl)", borderRadius: "10px", height: "84px", padding: "14px 18px", fontFamily: "var(--font-hand)", fontSize: "28px", lineHeight: 1, color: "var(--color-pencil)" }}>={" "}
+                <span style={{ position: "relative", display: "inline-block" }}>11/24
+                  <svg viewBox="0 0 120 56" preserveAspectRatio="none" aria-hidden="true" style={{ position: "absolute", left: "-12px", top: "-10px", width: "calc(100% + 24px)", height: "calc(100% + 20px)", overflow: "visible" }}>
+                    <path className="reveal-draw" pathLength={100} vectorEffect="non-scaling-stroke" d="M72 6C40 1 8 10 6 28c-2 18 40 25 70 23 28-2 42-13 38-27C110 8 84 1 50 8" fill="none" stroke="#C83A22" strokeWidth="3" strokeLinecap="round" />
+                  </svg>
+                </span>
               </div>
-              <span className="mt-4 inline-flex items-center gap-2 rounded-control border-2 border-kohl bg-red-pen px-4 py-2 text-sm font-bold text-paper shadow-hard-sm">
-                <svg viewBox="0 0 24 24" aria-hidden="true" className="size-4">
-                  <path
-                    d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                Phir se try karo
-              </span>
+              <div style={{ marginTop: "12px", display: "inline-flex", alignItems: "center", gap: "8px", backgroundColor: "var(--color-red-pen)", color: "#FFFFFF", border: "2px solid var(--color-kohl)", borderRadius: "999px", padding: "7px 14px", fontSize: "13px", fontWeight: 700 }}>
+                <svg className="spin-hover" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+                  <path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" />
+                </svg>{" "}Try again
+              </div>
             </div>
           </li>
         </ol>
       </div>
     </section>
-  );
-}
-
-function StepNumber({ n }: { n: number }) {
-  return (
-    <span className="flex size-12 items-center justify-center rounded-full border-[2.5px] border-kohl bg-peela font-display text-xl font-black">
-      {n}
-    </span>
   );
 }

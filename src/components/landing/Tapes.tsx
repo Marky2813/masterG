@@ -1,38 +1,17 @@
-// Two crossed strips of tape with Masterji's catchphrases, scrolling in opposite
-// directions. Decorative: hidden from assistive technology. Still when the visitor
-// prefers reduced motion (the animation classes are motion-safe only).
-const RED = ["Ye galat hai", "Phir se try karo", "Khud dhoondho", "Ab agla line tum karo"];
-const YELLOW = ["Phir se wahi galti?", "Dhyan se padho question", "Saaf likho beta", "Shabaash!", "Dekha? Khud pakda!"];
-
-function Run({ items }: { items: string[] }) {
-  const set = items.map((text) => (
-    <span key={text} className="flex shrink-0 items-center gap-8 pr-8">
-      {text}
-      <span aria-hidden="true" className="text-[0.8em]">
-        ✱
-      </span>
-    </span>
-  ));
-  // Two identical copies, so translating by -50% loops without a seam.
-  return (
-    <div className="flex w-max">
-      {set}
-      {set}
-    </div>
-  );
-}
-
+// Two tilted tapes that run across the page, in a teacher's voice.
 export default function Tapes() {
   return (
-    <div aria-hidden="true" className="relative h-[170px] overflow-hidden md:h-[210px]">
-      <div className="absolute top-1/2 left-[-8%] w-[116%] -translate-y-1/2 rotate-[3.2deg] border-y-[2.5px] border-kohl bg-red-pen py-3 font-display text-[22px] leading-none font-black whitespace-nowrap text-paper [font-stretch:125%] md:text-[30px]">
-        <div className="motion-safe:animate-tape-left">
-          <Run items={RED} />
+    <div aria-hidden="true" style={{ position: "relative", height: "190px", overflow: "hidden", backgroundColor: "var(--color-kagaz)" }}>
+      <div style={{ position: "absolute", left: "-10%", width: "120%", top: "64px", transform: "rotate(3.5deg)", backgroundColor: "var(--color-red-pen)", borderTop: "3px solid var(--color-kohl)", borderBottom: "3px solid var(--color-kohl)", padding: "14px 0", overflow: "hidden", color: "#FFFFFF", fontWeight: 800, fontSize: "24px" }}>
+        <div className="marq-rev" style={{ whiteSpace: "nowrap" }}>
+          <span style={{ paddingRight: "32px" }}>Mistake caught ✱ Try again ✱ Find it yourself ✱ Mistake caught ✱ Try again ✱ Find it yourself ✱</span>
+          <span style={{ paddingRight: "32px" }}>Mistake caught ✱ Try again ✱ Find it yourself ✱ Mistake caught ✱ Try again ✱ Find it yourself ✱</span>
         </div>
       </div>
-      <div className="absolute top-1/2 left-[-8%] w-[116%] -translate-y-1/2 -rotate-[2.8deg] border-y-[2.5px] border-kohl bg-peela py-3 font-display text-[22px] leading-none font-black whitespace-nowrap text-kohl [font-stretch:125%] md:text-[30px]">
-        <div className="motion-safe:animate-tape-right">
-          <Run items={YELLOW} />
+      <div style={{ position: "absolute", left: "-10%", width: "120%", top: "70px", transform: "rotate(-3deg)", backgroundColor: "var(--color-peela)", borderTop: "3px solid var(--color-kohl)", borderBottom: "3px solid var(--color-kohl)", padding: "14px 0", overflow: "hidden", color: "var(--color-kohl)", fontWeight: 800, fontSize: "24px" }}>
+        <div className="marq" style={{ whiteSpace: "nowrap" }}>
+          <span style={{ paddingRight: "32px" }}>That&apos;s not right. ✱ Same mistake again? ✱ Read the question carefully. ✱ Write neatly. ✱ Well done! ✱</span>
+          <span style={{ paddingRight: "32px" }}>That&apos;s not right. ✱ Same mistake again? ✱ Read the question carefully. ✱ Write neatly. ✱ Well done! ✱</span>
         </div>
       </div>
     </div>
