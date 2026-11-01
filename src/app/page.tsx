@@ -1,31 +1,18 @@
 import type { Metadata } from "next";
-import Closing from "@/components/landing/Closing";
-import Features from "@/components/landing/Features";
-import Footer from "@/components/landing/Footer";
-import Header from "@/components/landing/Header";
-import Hero from "@/components/landing/Hero";
-import HowItWorks from "@/components/landing/HowItWorks";
-import Rules from "@/components/landing/Rules";
-import Tapes from "@/components/landing/Tapes";
+import Landing from "@/components/landing/Landing";
 
 export const metadata: Metadata = {
-  title: "Master G · Masterji, AI maths tuition",
+  title: "Master G · the maths teacher who checks every step",
   description:
-    "Masterji checks each step of a Class 1–8 maths sum written on a digital notebook, ticks what is right, and circles the galti in red pen.",
+    "Master G watches every line of a Class 1–8 maths sum on a digital notebook, stays quiet while it's right, and circles the mistake in red pen so your child can find the fix.",
 };
 
-// Landing page at /. Its one call to action opens the whiteboard app at /learn.
-export default function Landing() {
+// Landing page at /. "Start a class" opens the notebook at /learn; the cube's question opens it
+// with that question already set (/learn?q=…).
+export default function Page() {
   return (
-    <main className="landing-ruled font-body text-kohl">
-      <Header />
-      <Hero />
-      <Tapes />
-      <HowItWorks />
-      <Features />
-      <Rules />
-      <Closing />
-      <Footer />
+    <main>
+      <Landing />
     </main>
   );
 }

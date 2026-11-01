@@ -218,6 +218,31 @@ export default function QuestionBox() {
     setDraft("");
   };
 
+  // /learn?q=… (the landing page's cube question): set it as if it had been typed. Deferred one
+  // tick so the step service and report recorder, which subscribe in the page's effects (they run
+  // after this child's), hear the questionConfirmed event. The param is then dropped from the URL
+  // so a reload doesn't set it again. Skipped if a question got set in the meantime.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q")?.trim();
+    if (!q) return;
+    let alreadySet = false;
+    const off = bus.on("questionConfirmed", () => {
+      alreadySet = true;
+    });
+    const t = setTimeout(() => {
+      off();
+      if (alreadySet) return;
+      confirm(q, kindOf(q), "typed");
+      const url = new URL(window.location.href);
+      url.searchParams.delete("q");
+      window.history.replaceState(window.history.state, "", url);
+    }, 0);
+    return () => {
+      off();
+      clearTimeout(t);
+    };
+  }, []);
+
   // Put homework question i on the board, exactly like confirming a typed/photo question.
   const pickHomework = (i: number) => {
     const item = getHomework()?.items[i];

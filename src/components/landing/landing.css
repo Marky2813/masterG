@@ -1,0 +1,501 @@
+/* Landing page only (src/components/landing). Every rule is scoped under .mg and every keyframe is
+   prefixed mg-, so nothing leaks into /learn or the other pages after a client-side navigation.
+   Colours come from the @theme tokens in src/app/globals.css. */
+
+.mg {
+  --vh: min(100vh, 1100px);
+  font-family: var(--font-bricolage), system-ui, sans-serif;
+  color: var(--color-kohl);
+  background-color: var(--color-kagaz);
+  min-width: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-optical-sizing: auto;
+  overflow-x: clip;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.mg) {
+    scroll-behavior: smooth;
+  }
+}
+.mg *,
+.mg *::before,
+.mg *::after {
+  box-sizing: border-box;
+}
+.mg a {
+  color: var(--color-kohl);
+}
+.mg a:hover {
+  color: var(--color-red-pen);
+}
+.mg button {
+  font: inherit;
+  cursor: pointer;
+}
+.mg a:focus-visible,
+.mg button:focus-visible {
+  outline: 3px solid var(--color-kohl);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+.mg .grid-bg {
+  background-color: var(--color-kagaz);
+  background-image: linear-gradient(rgba(22, 21, 19, 0.075) 1px, transparent 1px);
+  background-size: 100% 36px;
+}
+.mg .pill {
+  transition: background-color 0.18s, color 0.18s, translate 0.18s;
+}
+.mg .pill:hover {
+  background-color: var(--color-kohl);
+  color: #ffffff;
+  translate: 0 -2px;
+}
+.mg .btn-hard {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.14s ease-out;
+}
+.mg .btn-hard:hover {
+  color: var(--color-kohl);
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--color-kohl) !important;
+}
+.mg .btn-hard:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--color-kohl) !important;
+}
+.mg .btn-hard::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -70%;
+  width: 45%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.7s ease;
+  pointer-events: none;
+}
+.mg .btn-hard:hover::after {
+  left: 140%;
+}
+.mg .lift {
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s ease;
+}
+.mg .lift:hover {
+  transform: translate(-3px, -6px) rotate(-0.4deg);
+  box-shadow: 12px 14px 0 var(--color-kohl) !important;
+}
+.mg .lift-soft {
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mg .lift-soft:hover {
+  transform: translateY(-8px);
+}
+.mg .lift-soft:hover .num {
+  animation: mg-wiggle 0.5s ease;
+}
+.mg .lift-soft:hover .spin-hover {
+  animation: mg-spinOnce 0.6s ease;
+}
+
+/* ---- the cube ---- */
+.mg .orbit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 470px;
+  height: 470px;
+  margin: -235px 0 0 -235px;
+  border: 2px dashed rgba(22, 21, 19, 0.3);
+  border-radius: 50%;
+  animation: mg-spin 46s linear infinite;
+  pointer-events: none;
+}
+.mg .orbit::after {
+  content: "";
+  position: absolute;
+  inset: 60px;
+  border: 1.5px solid rgba(22, 21, 19, 0.12);
+  border-radius: 50%;
+}
+.mg .sat {
+  position: absolute;
+  translate: -50% -50%;
+  animation: mg-spin 46s linear infinite reverse;
+}
+.mg .cube-btn {
+  position: relative;
+  display: block;
+  width: 300px;
+  height: 300px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  perspective: 1100px;
+  cursor: grab;
+  border-radius: 48px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  z-index: 2;
+}
+.mg .cube-btn:active {
+  cursor: grabbing;
+}
+.mg .cube-float {
+  position: absolute;
+  left: 50px;
+  top: 42px;
+  width: 200px;
+  height: 200px;
+  transform-style: preserve-3d;
+  animation: mg-cubeFloat 4.5s ease-in-out infinite;
+}
+.mg .cube-turn {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+.mg .cube {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+.mg .face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4px solid var(--color-kohl);
+  border-radius: 32px;
+  font-family: var(--font-bricolage), sans-serif;
+  font-weight: 800;
+  font-size: 112px;
+  line-height: 1;
+  backface-visibility: hidden;
+  box-shadow: inset 0 -18px 0 rgba(0, 0, 0, 0.14), inset 0 14px 0 rgba(255, 255, 255, 0.28);
+}
+.mg .cube-shadow {
+  position: absolute;
+  left: 70px;
+  bottom: -2px;
+  width: 160px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+  filter: blur(10px);
+  animation: mg-shadowPulse 4.5s ease-in-out infinite;
+}
+.mg .hint {
+  position: absolute;
+  left: -6px;
+  top: 38px;
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  font-family: var(--font-hand);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.05;
+  color: var(--color-red-pen);
+  rotate: -10deg;
+  pointer-events: none;
+  z-index: 3;
+}
+.mg .rig {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 470px;
+  height: 470px;
+  transform-origin: 50% 50%;
+  transition: opacity 0.3s ease, visibility 0s;
+}
+/* after the lesson: gone (fades out, then stops being drawn at all) */
+.mg .rig.gone {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+}
+.mg .rig-fade {
+  transition: opacity 0.35s;
+}
+.mg .cube-float.r-nod {
+  animation: mg-cubeFloat 4.5s ease-in-out infinite, mg-nodA 0.95s ease-out;
+}
+.mg .cube-float.r-nod2 {
+  animation: mg-cubeFloat 4.5s ease-in-out infinite, mg-nodB 0.95s ease-out;
+}
+.mg .cube-float.r-shake {
+  animation: mg-cubeFloat 4.5s ease-in-out infinite, mg-shakeA 1.1s ease-out;
+}
+.mg .cube-float.r-shake2 {
+  animation: mg-cubeFloat 4.5s ease-in-out infinite, mg-shakeB 1.1s ease-out;
+}
+.mg .drop {
+  animation: mg-dropIn 1.3s cubic-bezier(0.3, 0, 0.3, 1) both;
+}
+
+/* ---- entrance and ink motion ---- */
+.mg .rise {
+  opacity: 0;
+  translate: 0 28px;
+  animation: mg-rise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+.mg .pop {
+  opacity: 0;
+  scale: 0.5;
+  animation: mg-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.mg .slap {
+  opacity: 0;
+  translate: 0 -40px;
+  scale: 1.3;
+  animation: mg-slap 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.mg .ink {
+  display: inline-block;
+  clip-path: inset(-20% 100% -20% 0);
+  animation: mg-ink 0.6s cubic-bezier(0.45, 0, 0.55, 1) forwards;
+}
+.mg .pen {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: mg-pen 0.55s ease-out forwards;
+}
+.mg .shake {
+  display: inline-block;
+  animation: mg-shake 0.5s ease-in-out 0.65s;
+}
+.mg .burst {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.mg .burst i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: mg-burst 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.35s forwards;
+}
+.mg .wave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 22px;
+}
+.mg .wave i {
+  display: block;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--color-red-pen);
+  animation: mg-wv 0.7s ease-in-out infinite alternate;
+}
+.mg .wave i:nth-child(2) { animation-delay: 0.12s; }
+.mg .wave i:nth-child(3) { animation-delay: 0.24s; }
+.mg .wave i:nth-child(4) { animation-delay: 0.06s; }
+.mg .wave i:nth-child(5) { animation-delay: 0.3s; }
+.mg .wave i:nth-child(6) { animation-delay: 0.18s; }
+.mg .wave-dark span { animation: mg-wv 0.8s ease-in-out infinite alternate; }
+.mg .wave-dark span:nth-child(2) { animation-delay: 0.15s; }
+.mg .wave-dark span:nth-child(3) { animation-delay: 0.3s; }
+.mg .wave-dark span:nth-child(4) { animation-delay: 0.08s; }
+.mg .wave-dark span:nth-child(5) { animation-delay: 0.22s; }
+.mg .wave-dark span:nth-child(6) { animation-delay: 0.36s; }
+.mg .float { animation: mg-float 8s ease-in-out infinite; }
+.mg .float-slow { animation: mg-floatSlow 5s ease-in-out infinite; }
+.mg .blink { animation: mg-blink 1s steps(1) infinite; }
+.mg .travel {
+  position: absolute;
+  top: -6px;
+  margin-left: -8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-kohl);
+  box-shadow: 0 0 0 4px rgba(22, 21, 19, 0.18);
+  animation: mg-travel 3.2s ease-in-out infinite;
+}
+.mg .wobble { animation: mg-wobble 2.6s ease-in-out infinite; }
+.mg .bob { animation: mg-bob 2.2s ease-in-out infinite; }
+.mg .marq { display: flex; width: max-content; animation: mg-marq 30s linear infinite; }
+.mg .marq-rev { display: flex; width: max-content; animation: mg-marq 34s linear infinite reverse; }
+.mg .h-w {
+  transition: font-weight 0.9s cubic-bezier(0.22, 1, 0.36, 1), font-stretch 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mg .rail-btn {
+  transition: background-color 0.25s, color 0.25s, translate 0.2s, box-shadow 0.2s;
+}
+.mg .rail-btn:hover {
+  translate: 0 -2px;
+}
+.mg .pe-none { pointer-events: none; }
+.mg .pe-none a,
+.mg .pe-none button,
+.mg .pe-auto { pointer-events: auto; }
+
+/* ---- scroll-linked motion (Chrome, Edge; others show the final state) ---- */
+@supports (animation-timeline: view()) {
+  .mg .reveal {
+    animation: mg-revealUp linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 30%;
+  }
+  .mg .reveal-draw {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: mg-pen linear both;
+    animation-timeline: view();
+    animation-range: entry 20% cover 45%;
+  }
+  .mg .wt-scroll {
+    animation: mg-wtScroll linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 40%;
+  }
+  .mg .cta-a {
+    animation: mg-ctaA linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 45%;
+  }
+  .mg .cta-b {
+    animation: mg-ctaB linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 45%;
+  }
+}
+/* Scrolling back up (or once an element has played) freezes it in its final state. */
+.mg.scroll-up .wt-scroll,
+.mg.scroll-up .cta-a,
+.mg.scroll-up .cta-b,
+.mg.scroll-up .reveal,
+.mg.scroll-up .reveal-draw,
+.mg .done {
+  animation: none !important;
+}
+.mg.scroll-up .reveal-draw,
+.mg .reveal-draw.done {
+  stroke-dashoffset: 0 !important;
+}
+.mg.scroll-up .cta-b,
+.mg .cta-b.done {
+  font-weight: 300;
+  font-stretch: 75%;
+}
+
+@keyframes mg-spin { to { transform: rotate(360deg); } }
+@keyframes mg-rise { to { opacity: 1; translate: 0 0; } }
+@keyframes mg-pop { to { opacity: 1; scale: 1; } }
+@keyframes mg-slap { to { opacity: 1; translate: 0 0; scale: 1; } }
+@keyframes mg-ink { to { clip-path: inset(-20% -5% -20% 0); } }
+@keyframes mg-pen { to { stroke-dashoffset: 0; } }
+@keyframes mg-shake {
+  0%, 100% { translate: 0; }
+  20% { translate: -6px; }
+  40% { translate: 6px; }
+  60% { translate: -4px; }
+  80% { translate: 3px; }
+}
+@keyframes mg-burst {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0); }
+  100% { opacity: 0; transform: translate(var(--x), var(--y)) rotate(220deg); }
+}
+@keyframes mg-wv { from { transform: scaleY(0.3); } to { transform: scaleY(1); } }
+@keyframes mg-float {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-16px) rotate(10deg); }
+}
+@keyframes mg-floatSlow { 0%, 100% { translate: 0 0; } 50% { translate: 0 -8px; } }
+@keyframes mg-blink { 50% { opacity: 0; } }
+@keyframes mg-travel { 0% { left: 0; } 40%, 60% { left: 50%; } 100% { left: 100%; } }
+@keyframes mg-wobble { 0%, 100% { rotate: 4deg; } 50% { rotate: -3deg; } }
+@keyframes mg-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
+@keyframes mg-marq { to { transform: translateX(-50%); } }
+@keyframes mg-wiggle { 0%, 100% { rotate: 0deg; } 25% { rotate: -12deg; } 75% { rotate: 12deg; } }
+@keyframes mg-spinOnce { to { rotate: -360deg; } }
+@keyframes mg-revealUp { from { opacity: 0; translate: 0 48px; } to { opacity: 1; translate: 0 0; } }
+@keyframes mg-cubeFloat { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+@keyframes mg-shadowPulse { 0%, 100% { scale: 1; opacity: 0.45; } 50% { scale: 0.78; opacity: 0.25; } }
+@keyframes mg-nodA { 0%, 100% { rotate: x 0deg; } 20% { rotate: x 22deg; } 45% { rotate: x -8deg; } 70% { rotate: x 10deg; } }
+@keyframes mg-nodB { 0%, 100% { rotate: x 0deg; } 20% { rotate: x 22deg; } 45% { rotate: x -8deg; } 70% { rotate: x 10deg; } }
+@keyframes mg-shakeA { 0%, 100% { rotate: y 0deg; } 15% { rotate: y -26deg; } 35% { rotate: y 22deg; } 55% { rotate: y -14deg; } 75% { rotate: y 8deg; } }
+@keyframes mg-shakeB { 0%, 100% { rotate: y 0deg; } 15% { rotate: y -26deg; } 35% { rotate: y 22deg; } 55% { rotate: y -14deg; } 75% { rotate: y 8deg; } }
+@keyframes mg-dropIn {
+  0% { translate: 0 -120vh; rotate: -35deg; }
+  55% { translate: 0 0; rotate: 6deg; }
+  68% { translate: 0 -38px; rotate: -2deg; }
+  82% { translate: 0 0; rotate: 0deg; }
+  90% { translate: 0 -8px; }
+  100% { translate: 0 0; }
+}
+@keyframes mg-wtScroll {
+  from { font-weight: 250; font-stretch: 75%; opacity: 0.35; }
+  to { font-weight: 800; font-stretch: 100%; opacity: 1; }
+}
+@keyframes mg-ctaA { from { font-weight: 250; font-stretch: 75%; } to { font-weight: 800; font-stretch: 100%; } }
+@keyframes mg-ctaB { from { font-weight: 800; font-stretch: 100%; } to { font-weight: 300; font-stretch: 75%; } }
+
+/* ---- layout breakpoints (from the design) ---- */
+@media (max-width: 1100px) {
+  .mg .hide-md { display: none !important; }
+}
+@media (max-width: 760px) {
+  .mg .hide-sm { display: none !important; }
+  .mg .hint { display: none; }
+}
+@media (max-width: 900px) {
+  .mg .hero-grid { padding-top: 20px !important; }
+  .mg .hero-sec { min-height: 0 !important; }
+  /* the question card stays on phones (it opens the notebook), in the flow under the hero copy */
+  .mg .q-row { justify-content: flex-start !important; padding-bottom: 36px !important; }
+  .mg .q-card { width: 100% !important; transform: none !important; padding: 14px 16px 16px 48px !important; }
+  .mg .q-card .q-ink { transform-origin: left bottom; scale: 0.82; }
+  .mg .story-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-content: start !important;
+    row-gap: 10px !important;
+    padding-top: 10px !important;
+  }
+  .mg .story-left,
+  .mg .story-right { grid-column: 1 / -1 !important; }
+  .mg .story-spacer { display: none !important; }
+  .mg .nb-wrap { zoom: 0.62; }
+  .mg .mj-box { zoom: 0.8; }
+  .mg .f-sec { height: auto !important; }
+  .mg .f-pin { position: relative !important; height: auto !important; top: auto !important; padding: 80px 0 !important; }
+  .mg .f-track { flex-direction: column !important; transform: none !important; padding: 0 20px !important; }
+  .mg .strip-card { width: 100% !important; }
+  .mg .rail-label { display: none !important; }
+  .mg .rig-fade { display: none !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mg *,
+  .mg *::before,
+  .mg *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .mg .rise,
+  .mg .pop,
+  .mg .slap,
+  .mg .reveal {
+    opacity: 1 !important;
+    translate: none !important;
+    scale: none !important;
+    rotate: none !important;
+  }
+  .mg .ink { clip-path: none !important; }
+  .mg .pen,
+  .mg .reveal-draw { stroke-dashoffset: 0 !important; }
+  .mg .burst { display: none; }
+}
