@@ -16,7 +16,10 @@ import { getHomework, homeworkRef, nextHomework } from "../sessionState"; // tea
 import { kindOf } from "../brain/kind";
 import { clientLog, getSessionId } from "../log/client";
 import { Mic, Player } from "./audio";
-import { liveConfig } from "./liveConfig";
+import { liveConfig, safeKidName } from "./liveConfig";
+import { getMembership } from "../classroom/client";
+
+const kidNameFromClass = () => (typeof window === "undefined" ? undefined : safeKidName(getMembership()?.name));
 import { planGraph } from "../redpen/graph";
 import { validCounting } from "../redpen/counting";
 
@@ -65,6 +68,8 @@ export class MasterjiVoice {
   private recentPraise: string[] = []; // his last short praises, so the next one uses new words
   private praiseTurn = false;
   language: Language;
+  // The name the child typed when joining their class (/join), so he greets them instead of asking.
+  private kidName = kidNameFromClass();
 
   constructor(
     language: Language,
@@ -95,7 +100,8 @@ export class MasterjiVoice {
     this.subscribe();
     // One message: a second note right after would cut off his greeting.
     const q = sessionState.question; // set before Masterji started?
-    this.note(`[SESSION START] Greet the child and ask their name.${q ? `\n${this.questionNote(q.text)}` : ""}`);
+    const greet = this.kidName ? `Greet ${this.kidName} by name (you already know it; don't ask).` : "Greet the child and ask their name.";
+    this.note(`[SESSION START] ${greet}${q ? `\n${this.questionNote(q.text)}` : ""}`);
   }
 
   // A fresh Live session (token + connect). Used at start and on every reconnect.
@@ -103,7 +109,7 @@ export class MasterjiVoice {
     const res = await fetch("/api/live-token", {
       method: "POST",
       headers: { "content-type": "application/json", "x-session-id": getSessionId() },
-      body: JSON.stringify({ language: this.language }),
+      body: JSON.stringify({ language: this.language, kidName: this.kidName }),
     });
     const json = await res.json();
     if (!res.ok) {
@@ -114,7 +120,7 @@ export class MasterjiVoice {
     const generation = ++this.generation;
     this.session = await ai.live.connect({
       model: json.model,
-      config: liveConfig(this.language),
+      config: liveConfig(this.language, undefined, json.kidName),
       callbacks: {
         onopen: () => this.status("live"),
         onmessage: (m: LiveServerMessage) => {

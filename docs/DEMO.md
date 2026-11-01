@@ -37,6 +37,16 @@ Both run on the overnight build (`overnight/preview`, PR #64). Rehearse once wit
 | Report | Open the shareable report link for the session just run. Point at the mistake categories it shows. "This is what the teacher gets." | Show a screenshot saved from the rehearsal. Label it a rehearsal run. |
 | Homework queue | Open the teacher's queue, show one sum set by the teacher, open it in `/learn`. | Skip. |
 
+## Segment: teacher dashboard (rehearse once)
+
+Before judging: make the demo class at `/teacher` on the demo laptop and keep the dashboard tab open. Each teammate joins it from their own phone or laptop (`/join?c=CODE`) and does two or three sums, so the dashboard holds real sessions. Don't seed or fake any.
+
+| Beat | Do | Fallback |
+|---|---|---|
+| Live sync | The kid's tablet is joined to the class. Solve a sum with one mistake. Switch to the dashboard tab: within about 10 s the kid's row, the mistakes chart and the grid update. | Reload the dashboard. |
+| Reteach | Tap "Write the AI summary": "2 of 3 kids added across, reteach common denominators", with worksheet sums whose answers come from our checker. | Show `docs/screenshots/classroom/dashboard-desktop.png` and say it is a test run. |
+| One child | Open a child, then a session's Report →. That is the same report a parent gets on WhatsApp. | Skip. |
+
 ## Other fallbacks
 
 | Problem | Fix |

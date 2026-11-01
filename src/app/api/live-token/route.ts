@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { LIVE_MODEL } from "@/lib/voice/config";
-import { liveConfig } from "@/lib/voice/liveConfig";
+import { liveConfig, safeKidName } from "@/lib/voice/liveConfig";
 import { logEvent } from "@/lib/log/server";
 import type { Language } from "@/lib/types";
 
@@ -13,16 +13,18 @@ export async function POST(request: Request) {
     return Response.json({ error: "GEMINI_API_KEY missing: put it in .env.local" }, { status: 500 });
   }
   let language: Language = "hinglish";
+  let kidName: string | undefined;
   try {
-    const body = (await request.json()) as { language?: Language };
+    const body = (await request.json()) as { language?: Language; kidName?: unknown };
     if (body.language === "english") language = "english";
+    kidName = safeKidName(body.kidName);
   } catch {
     /* default */
   }
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions: { apiVersion: "v1alpha" } });
     const now = Date.now();
-    const config = liveConfig(language);
+    const config = liveConfig(language, undefined, kidName);
     // One retry: a network blip ("fetch failed") shouldn't kill the session start on stage.
     const create = () => ai.authTokens.create({
       config: {
@@ -40,8 +42,8 @@ export async function POST(request: Request) {
       await logEvent(sessionId, "voice.token_retry", { error: (e as Error).message });
       token = await create();
     }
-    await logEvent(sessionId, "voice.token", { model: LIVE_MODEL, language, voice: config.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName });
-    return Response.json({ token: token.name, model: LIVE_MODEL, language });
+    await logEvent(sessionId, "voice.token", { model: LIVE_MODEL, language, voice: config.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName, kidName: !!kidName });
+    return Response.json({ token: token.name, model: LIVE_MODEL, language, kidName });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("[api/live-token]", message);
