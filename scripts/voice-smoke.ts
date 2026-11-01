@@ -5,7 +5,7 @@ import { bus } from "../src/lib/bus";
 import type { Verdict } from "../src/lib/types";
 import { kindOf } from "../src/lib/brain/kind";
 import "../src/lib/sessionState";
-import { MasterjiVoice } from "../src/lib/voice/voiceService";
+import { MasterjiVoice, spokenClean } from "../src/lib/voice/voiceService";
 
 // clientLog posts to /api/log: keep those events here instead.
 const logged: { type: string; data: Record<string, unknown> }[] = [];
@@ -180,6 +180,39 @@ async function main() {
   h.turn("Haan, graph dekho.");
   ok(h.notes().length === n + 1, "and goes out once that reply ends");
   off();
+  h.done();
+}
+
+// ---- log 2026-11-01T04-28-28-6j8t: tool-call text in his speech, and a double celebration ----
+{
+  const raw = "Haan toh 6/2 kitna hua? Maine board par likh diya hai, dekho.call:write_note{clusterId:c5,text:Haan beta, 6/2, lekin iska answer kitna aayega?";
+  ok(spokenClean(raw) === "Haan toh 6/2 kitna hua? Maine board par likh diya hai, dekho.", `tool-call text never reaches the caption (${JSON.stringify(spokenClean(raw))})`);
+  ok(spokenClean('Dekho [STEP c3 CORRECT] ye write_note("c2", "LCM") sahi hai') === "Dekho ye sahi hai", "old forms still hidden: [notes] and write_note(...)");
+  ok(spokenClean("Chalo, draw_graph({lines: [y = 2x]}) dekho") === "Chalo, dekho", "any tool name with arguments is hidden");
+  const h = harness();
+  h.question("2x + 5 = 11");
+  h.turn("Namaste beta!");
+  const priv = h.v as unknown as { onMessage(m: LiveServerMessage): void; discardStale: boolean };
+  priv.onMessage({ serverContent: { outputTranscription: { text: raw } } } as LiveServerMessage);
+  ok(priv.discardStale && logged.some((l) => l.type === "voice.spoken_tool_text_cut"), "speaking a tool call stops the audio and drops the rest of that reply");
+  h.turn();
+  // 7:01: the final-answer note waited while he replied to the child; that reply already praised x = 3.
+  await h.v.startTalking();
+  h.verdict({ clusterId: "c6", status: "correct", text: "x=3" });
+  h.v.stopTalking();
+  await new Promise((r) => setTimeout(r, 300));
+  const n = h.notes().length;
+  h.turn("Shabash! Bilkul sahi, x = 3! Aaj ka saara homework khatam.");
+  ok(h.notes().length === n && logged.some((l) => l.type === "voice.final_note_already_answered"), "a queued final-answer note he already answered is not sent as a new turn (no second celebration)");
+  // ...but one he has NOT answered yet still goes out
+  h.question("3/4 + 1/6");
+  await h.v.startTalking();
+  h.verdict({ clusterId: "c7", status: "correct", text: "11/12" });
+  h.v.stopTalking();
+  await new Promise((r) => setTimeout(r, 300));
+  const m = h.notes().length;
+  h.turn("Haan beta, likho.");
+  ok(h.notes().length === m + 1 && /FINAL ANSWER CORRECT/.test(h.notes().at(-1) ?? ""), "a final-answer note he hasn't answered still goes out");
   h.done();
 }
 

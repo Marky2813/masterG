@@ -34,6 +34,20 @@ export function reconnectContext(history: string[], question: string | undefined
     .join("\n");
 }
 
+// Tool names the model must call, never say. Log 2026-11-01T04-28-28-6j8t: he spoke
+// "…dekho.call:write_note{clusterId:c5,text:Haan beta, 6/2, …}" and it reached the caption.
+const TOOL_NAMES = "write_note|write_line|write_working|set_question|draw_graph|show_counting";
+const TOOL_TEXT_START = new RegExp(`\\bcall\\s*:|\\b(?:${TOOL_NAMES})\\s*[({]`, "i");
+// What the child may see of his words: no hidden notes ("[STEP …]"), no tool-call text.
+export function spokenClean(s: string): string {
+  return s
+    .replace(/\[[^\]]*\]?/g, "")
+    .replace(new RegExp(`(?:\\bcall\\s*:\\s*)?\\b(?:${TOOL_NAMES})\\s*[({][^)}]*(?:[)}]+|$)`, "gi"), "")
+    .replace(/\bcall\s*:[\s\S]*$/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 const kidNameFromClass = () => (typeof window === "undefined" ? undefined : safeKidName(getMembership()?.name));
 import { planGraph } from "../redpen/graph";
 import { validCounting } from "../redpen/counting";
@@ -56,6 +70,8 @@ export class MasterjiVoice {
   private offs: (() => void)[] = [];
   private wrong = new Set<string>(); // clusters currently marked wrong, to detect FIXED
   private masterjiLine = "";
+  private lastTurn: { text: string; at: number } | null = null; // his last finished reply, cleaned
+  private pendingSince = 0; // when the oldest queued note was queued
   private kidLine = "";
   private speakingTimer?: ReturnType<typeof setInterval>;
   private wasAudible = false;
@@ -208,7 +224,7 @@ export class MasterjiVoice {
     if (this.player?.speaking || wasGenerating) {
       const frac = this.player?.speaking ? this.player.flush() : 0;
       // The server thinks the child heard everything it generated; the child heard only what played.
-      const words = this.masterjiLine.replace(/\[[^\]]*\]?/g, "").trim().split(/\s+/).filter(Boolean);
+      const words = spokenClean(this.masterjiLine).split(/\s+/).filter(Boolean);
       const heard = words.slice(0, Math.round(words.length * frac)).join(" ");
       if (heard) this.cb.onCaption?.("masterji", heard + " —", true);
       clientLog("voice.interrupt", { by: "kid", masterjiSaid: this.masterjiLine, heardFrac: +frac.toFixed(2), heard });
@@ -266,6 +282,7 @@ export class MasterjiVoice {
   note(text: string): void {
     if (this.busy()) {
       clientLog("voice.note_queued", { text });
+      if (!this.pending.length) this.pendingSince = performance.now();
       this.pending.push(text);
       return;
     }
@@ -289,9 +306,19 @@ export class MasterjiVoice {
 
   private flushNotes(): void {
     if (this.pending.length === 0 || this.busy()) return;
-    const text = this.pending.join("\n");
+    // A final-answer note that waited while he replied, and that reply already praised that very answer:
+    // send it as context only, or he celebrates twice (log 2026-11-01T04-28-28-6j8t, 7:01 and 7:12).
+    const after = this.lastTurn && this.lastTurn.at > this.pendingSince ? this.lastTurn.text.replace(/\s+/g, "").toLowerCase() : "";
+    const keep: string[] = [];
+    for (const t of this.pending) {
+      const wrote = t.startsWith("[FINAL ANSWER CORRECT") ? t.match(/child wrote: ([^|\]]+)/)?.[1]?.replace(/\s+/g, "").toLowerCase() : undefined;
+      if (wrote && after.includes(wrote)) {
+        clientLog("voice.final_note_already_answered", { note: t, said: this.lastTurn?.text });
+        this.quietNote(`${t} (You already praised this answer in your last reply: don't praise it again; continue from there.)`);
+      } else keep.push(t);
+    }
     this.pending = [];
-    this.sendNote(text, true);
+    if (keep.length) this.sendNote(keep.join("\n"), true);
   }
 
   private status(s: VoiceStatus, detail?: string): void {
@@ -510,7 +537,7 @@ export class MasterjiVoice {
       this.generating = false;
       this.player?.flush();
       clientLog("voice.interrupted_by_server", { masterjiSaid: this.masterjiLine });
-      if (this.masterjiLine) this.cb.onCaption?.("masterji", this.masterjiLine + " —", true);
+      if (spokenClean(this.masterjiLine)) this.cb.onCaption?.("masterji", spokenClean(this.masterjiLine) + " —", true);
       this.masterjiLine = "";
     }
     for (const part of sc?.modelTurn?.parts ?? []) {
@@ -528,13 +555,15 @@ export class MasterjiVoice {
       this.masterjiLine += sc.outputTranscription.text;
       // The model sometimes echoes a hidden note ("[STEP c3 ...]"): never show it to the child.
       this.runSpokenTools(this.masterjiLine);
-      const shown = this.masterjiLine
-        .replace(/\[[^\]]*\]?/g, "")
-        .replace(/write_(note|line)\s*\([^)]*\)?/gi, "")
-        .replace(/\s+/g, " ")
-        .trim();
-      if (/\[|write_(note|line)/i.test(this.masterjiLine)) clientLog("voice.echoed_text_hidden", { raw: this.masterjiLine });
+      const shown = spokenClean(this.masterjiLine);
+      if (shown !== this.masterjiLine.replace(/\s+/g, " ").trim()) clientLog("voice.echoed_text_hidden", { raw: this.masterjiLine });
       this.cb.onCaption?.("masterji", shown, false);
+      // He started saying a tool call out loud: stop the audio there and drop the rest of this reply.
+      if (TOOL_TEXT_START.test(this.masterjiLine)) {
+        this.player?.flush();
+        this.discardStale = true;
+        clientLog("voice.spoken_tool_text_cut", { said: this.masterjiLine });
+      }
     }
     if (sc?.inputTranscription?.text) {
       this.kidLine += sc.inputTranscription.text;
@@ -548,8 +577,9 @@ export class MasterjiVoice {
       this.player?.endTurn();
       this.replyOwedAt = 0;
       this.commitKid();
-      const said = this.masterjiLine.trim();
+      const said = spokenClean(this.masterjiLine);
       if (said) this.history.push(`you: ${said.slice(0, 160)}`);
+      if (said) this.lastTurn = { text: said, at: performance.now() };
       if (this.praiseTurn && said) this.recentPraise = [...this.recentPraise, said.replace(/\[[^\]]*\]?/g, "").trim().slice(0, 50)].slice(-2);
       this.praiseTurn = false;
       this.history = this.history.slice(-12);

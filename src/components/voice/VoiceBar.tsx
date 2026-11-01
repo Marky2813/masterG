@@ -135,37 +135,38 @@ export default function VoiceBar({ children }: { children?: ReactNode }) {
           </div>
         )}
 
-        <div className="pointer-events-auto flex flex-col items-center gap-1">
-          {live ? (
-            <>
-              <button
-                aria-label="Hold to talk"
-                title="Hold to talk (or hold Space)"
-                className={`relative flex size-16 select-none items-center justify-center rounded-full shadow-lg transition active:scale-95 ${talking ? "bg-rose-500 text-white" : "bg-amber-400 text-slate-900 hover:bg-amber-300"}`}
-                onPointerDown={down}
-                onPointerUp={up}
-                onPointerLeave={() => talking && up()}
-                onContextMenu={(e) => e.preventDefault()}
-              >
-                {talking && <span className="absolute inset-0 animate-ping rounded-full bg-rose-400/60" aria-hidden="true" />}
-                <svg viewBox="0 0 24 24" className="relative size-7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor" />
-                  <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
-                </svg>
-              </button>
-              <span className="text-[11px] font-medium text-slate-500">{talking ? "Listening… let go to send" : "Hold to talk"}</span>
-            </>
-          ) : (
-            <button className="flex h-12 items-center gap-2 rounded-full bg-slate-900 px-6 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-800 active:scale-95" onClick={start}>
-              <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
-                <rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor" />
-                <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
-              </svg>
-              Start Masterji
-            </button>
-          )}
-        </div>
+        {!live && (
+          <button className="pointer-events-auto flex h-12 items-center gap-2 rounded-full bg-slate-900 px-6 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-800 active:scale-95" onClick={start}>
+            <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+              <rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor" />
+              <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+            </svg>
+            Start Masterji
+          </button>
+        )}
       </div>
+
+      {/* Hold to talk: bottom right, next to "Add space", where a child's hand rests on a tablet. */}
+      {live && (
+        <div data-overlay="bottom" className="fixed right-[5.25rem] bottom-4 z-10 flex flex-col items-center gap-1">
+          <button
+            aria-label="Hold to talk"
+            title="Hold to talk (or hold Space)"
+            className={`relative flex size-14 select-none items-center justify-center rounded-full shadow-lg transition active:scale-95 ${talking ? "bg-rose-500 text-white" : "bg-amber-400 text-slate-900 hover:bg-amber-300"}`}
+            onPointerDown={down}
+            onPointerUp={up}
+            onPointerLeave={() => talking && up()}
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            {talking && <span className="absolute inset-0 animate-ping rounded-full bg-rose-400/60" aria-hidden="true" />}
+            <svg viewBox="0 0 24 24" className="relative size-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor" />
+              <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+            </svg>
+          </button>
+          <span className="text-[11px] font-medium text-slate-500">{talking ? "Listening…" : "Hold to talk"}</span>
+        </div>
+      )}
     </>
   );
 }
