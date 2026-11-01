@@ -1,15 +1,15 @@
-# Master G
+# MasterG
 
-**Your maths teacher's teaching assistant at home.** A child solves a sum in a digital notebook; Master G checks every line as it is written, stays quiet while it is right, and steps in with a red pen and a voice the moment it goes wrong.
+**Your maths teacher's teaching assistant at home.** A child solves a sum in a digital notebook; MasterG checks every line as it is written, stays quiet while it is right, and steps in with a red pen and a voice the moment it goes wrong.
 
 The tutor inside, Masterji, is a classic Indian tuition teacher: strict, a little dramatic, funny, and he speaks Hinglish. He never hands over the answer. He climbs a hint ladder (point, narrow, lead, show) and teaches the method on the board when the child is stuck. Every session becomes a report the child's teacher can act on. Built for NCERT Classes 1–8.
 
 Built at hackCBS 9.0 (31 Oct – 1 Nov 2026) by Akash ([`adot-7`](https://github.com/adot-7)), Sarthak ([`Marky2813`](https://github.com/Marky2813)) and Harjeet ([`HARJEET-SINGH-dev`](https://github.com/HARJEET-SINGH-dev)).
 
-![Master G: Solve it. Master G checks every step. A maths cube you can roll picks today's question](docs/screenshots/landing/desktop-00.png)
+![MasterG: Solve it. MasterG checks every step. A maths cube you can roll picks today's question](docs/screenshots/landing/desktop-00.png)
 
 ## Watch
-<a href="https://www.youtube.com/watch?v=r_-LqMQN29w"><img src="https://img.youtube.com/vi/r_-LqMQN29w/hqdefault.jpg" width="420" alt="Master G demo video"></a>
+<a href="https://www.youtube.com/watch?v=r_-LqMQN29w"><img src="https://img.youtube.com/vi/r_-LqMQN29w/hqdefault.jpg" width="420" alt="MasterG demo video"></a>
 
 - **Demo video:** [youtube.com/watch?v=r_-LqMQN29w](https://www.youtube.com/watch?v=r_-LqMQN29w)
 - **Live:** [masterg.akashparashar.dev](https://masterg.akashparashar.dev) (invite-only; the code is in our submission)
@@ -30,7 +30,7 @@ Built at hackCBS 9.0 (31 Oct – 1 Nov 2026) by Akash ([`adot-7`](https://github
 - **On the hackCBS Wi-Fi** the domain is blocked by the venue's web filter; use mobile data.
 
 ## How it works
-![How Master G works: the child's notebook sends each written line and their voice to the Master G web app; on Amazon EC2 in Mumbai the step checker, reports and class dashboard, and short-lived voice tokens; Gemini Flash reads and judges each handwritten step; the Gemini Live API is Masterji's voice; red-pen ticks, circles, hints and his voice come back to the child; the teacher and parent get the report card and class dashboard](docs/design/architecture.jpg)
+![How MasterG works: the child's notebook sends each written line and their voice to the MasterG web app; on Amazon EC2 in Mumbai the step checker, reports and class dashboard, and short-lived voice tokens; Gemini Flash reads and judges each handwritten step; the Gemini Live API is Masterji's voice; red-pen ticks, circles, hints and his voice come back to the child; the teacher and parent get the report card and class dashboard](docs/design/architecture.jpg)
 
 - **The notebook** (`src/components/notebook/`, `src/lib/notebook/`): a canvas that groups pen strokes into lines. When the pen rests, a crop of the line goes to the server. Stacked fractions, wide gaps between terms and lines the child extends are all kept as one step.
 - **Read and judge** (`src/lib/gemini/`, `src/lib/brain/`, `src/lib/checker.ts`): Gemini Flash (`gemini-3.5-flash-lite`) reads the handwriting into a maths expression and gives a verdict, a mistake type and a handwriting rating as JSON. A mathjs checker then recomputes every step it can, and **when the checker can compute a step, the checker wins**, so a correct step is not called wrong because the model misread it. If any plausible reading makes a step correct, it is correct.

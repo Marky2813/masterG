@@ -8,7 +8,7 @@ export default function Header({ progressRef }: { progressRef: (e: HTMLElement |
   return (
     <header style={{ position: "sticky", top: 0, zIndex: 40, height: "84px", backgroundColor: "rgba(248,245,238,.86)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: "2px solid var(--color-kohl)" }}>
       <div style={{ position: "relative", maxWidth: "1360px", height: "84px", margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px" }}>
-        <a href="#top" aria-label="Master G home" style={{ textDecoration: "none", color: "var(--color-kohl)" }}>
+        <a href="#top" aria-label="MasterG home" style={{ textDecoration: "none", color: "var(--color-kohl)" }}>
           <Wordmark />
         </a>
         <nav aria-label="Main" className="hide-sm" style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -16,7 +16,7 @@ export default function Header({ progressRef }: { progressRef: (e: HTMLElement |
             How a class works
           </a>
           <a className="pill" href="#features" style={pill}>
-            Master G&apos;s tools
+            MasterG&apos;s tools
           </a>
         </nav>
         <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>

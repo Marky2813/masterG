@@ -246,7 +246,7 @@ export async function decodeReport(data: string): Promise<Report> {
 // Throws on data that isn't a report, so a broken link shows an error, never made-up content.
 export function parseReport(x: unknown): Report {
   const o = x as Partial<Report> | null;
-  if (!o || o.v !== 1 || !Array.isArray(o.qs) || typeof o.t0 !== "number") throw new Error("not a Master G report");
+  if (!o || o.v !== 1 || !Array.isArray(o.qs) || typeof o.t0 !== "number") throw new Error("not a MasterG report");
   return {
     v: 1,
     t0: o.t0,

@@ -6,7 +6,7 @@ import { FACES, glyphsFor, solveHref } from "./faces";
 
 // Hero copy and "Today's question". The section lets pointer events through (pe-none) so the
 // cube underneath can be hovered, dragged and tapped; its links and buttons take them back.
-const LINES = ["Solve it.", "Master G", "checks every", "step."];
+const LINES = ["Solve it.", "MasterG", "checks every", "step."];
 const stretch = (w: number) => Math.round(75 + ((Math.min(800, w) - 250) / 550) * 25);
 const eye = (
   <>
@@ -86,7 +86,7 @@ export default function Hero({ w, face, roll }: { w: number[]; face: number; rol
         <div style={{ maxWidth: "660px", minWidth: 0 }}>
           <Headline w={w} />
           <p className="rise" style={{ margin: "36px 0 0", maxWidth: "46ch", color: "#4A463F", fontSize: "20px", lineHeight: 1.5, animationDelay: ".6s" }}>
-            Master G watches every line, catches the mistake, and lets your child find the fix on their own.
+            MasterG watches every line, catches the mistake, and lets your child find the fix on their own.
           </p>
           <div className="rise" style={{ marginTop: "32px", display: "flex", flexWrap: "wrap", gap: "14px", alignItems: "center", animationDelay: ".72s" }}>
             <Link className="btn-hard" href="/learn" style={{ textDecoration: "none", backgroundColor: "var(--color-peela)", color: "var(--color-kohl)", border: "3px solid var(--color-kohl)", boxShadow: "5px 5px 0 var(--color-kohl)", borderRadius: "16px", padding: "18px 28px", fontWeight: 800, fontSize: "19px" }}>

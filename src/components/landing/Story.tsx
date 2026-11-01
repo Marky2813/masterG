@@ -3,7 +3,7 @@
 import { memo, type ReactNode } from "react";
 
 // The scroll story: a notebook page that writes one line per scroll step (2/3 + 1/4, a mistake at
-// line 4, the fix at line 5), Master G's panel ("Watching quietly" / "Speaking") and a step rail.
+// line 4, the fix at line 5), MasterG's panel ("Watching quietly" / "Speaking") and a step rail.
 // It is an illustration of the product, not a recording.
 const RAIL = ["Find the LCM", "Convert 2/3", "Convert 1/4", "Mistake!", "Fixed it"];
 const hand = { fontFamily: "var(--font-hand)", fontSize: "30px", lineHeight: 1, color: "var(--color-pencil)" } as const;
@@ -38,7 +38,7 @@ const Notebook = memo(function Notebook({ s }: { s: number }) {
     <div className="nb-wrap pe-auto" style={{ position: "relative", marginTop: "14px" }}>
       <div
         role="img"
-        aria-label="A notebook page showing the sum two thirds plus one quarter being solved step by step, with Master G's red pen marks"
+        aria-label="A notebook page showing the sum two thirds plus one quarter being solved step by step, with MasterG's red pen marks"
         style={{ position: "relative", transform: "rotate(-1.4deg)", border: "3px solid var(--color-kohl)", borderRadius: "8px", boxShadow: "12px 12px 0 var(--color-kohl)", backgroundColor: "var(--color-paper)", backgroundImage: "linear-gradient(90deg, transparent 66px, var(--color-margin) 66px, var(--color-margin) 68px, transparent 68px), repeating-linear-gradient(180deg, transparent 0, transparent 43px, #E4DED2 43px, #E4DED2 44px)", padding: "0 20px 0 0", overflow: "visible" }}
       >
         {/* holes */}
@@ -132,7 +132,7 @@ const Tutor = memo(function Tutor({ s }: { s: number }) {
             {dot("var(--color-red-pen)")}
             {dot("var(--color-peela)")}
             {dot("#E58FA3")}
-            <span style={{ marginLeft: "8px", fontWeight: 800, fontSize: "14px" }}>Master G</span>
+            <span style={{ marginLeft: "8px", fontWeight: 800, fontSize: "14px" }}>MasterG</span>
           </div>
           {quiet ? (
             <span style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 700, color: "#57534C" }}>
@@ -154,7 +154,7 @@ const Tutor = memo(function Tutor({ s }: { s: number }) {
           {quiet && (
             <>
               <p className="rise" style={{ margin: 0, fontSize: "17px", lineHeight: 1.45, color: "#57534C" }}>
-                Every line is right so far, so Master G stays quiet and keeps watching.
+                Every line is right so far, so MasterG stays quiet and keeps watching.
               </p>
               <p className="rise" style={{ margin: "10px 0 0", fontSize: "13px", color: "#6B665F", animationDelay: ".1s" }}>
                 Quiet while you&apos;re right, like a real tutor.
@@ -206,10 +206,10 @@ export default function Story({ step, storyRef, goStep }: { step: number; storyR
         <div className="story-left" style={{ gridColumn: "1 / span 7", minWidth: 0, display: "flex", flexDirection: "column", gap: "22px" }}>
           <div style={{ minWidth: 0 }}>
             <h2 className="wt-scroll" style={{ margin: 0, color: "var(--color-kohl)", fontWeight: 800, fontSize: "clamp(28px, 3.2vw, 48px)", lineHeight: 0.98, letterSpacing: "-0.02em" }}>
-              Watch Master G catch a mistake
+              Watch MasterG catch a mistake
             </h2>
             <p className="hide-md" style={{ margin: "12px 0 0", maxWidth: "52ch", color: "#4A463F", fontSize: "18px", lineHeight: 1.55 }}>
-              Scroll to write each line. Master G stays quiet while the steps are right, and catches the mistake the moment it lands on the page.
+              Scroll to write each line. MasterG stays quiet while the steps are right, and catches the mistake the moment it lands on the page.
             </p>
             <ul className="hide-md" style={{ listStyle: "none", margin: "14px 0 0", padding: 0, display: "flex", flexWrap: "wrap", gap: "8px 22px", color: "var(--color-kohl)", fontSize: "16px", fontWeight: 600 }}>
               <Bullet

@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import InviteForm from "@/components/classroom/InviteForm";
 import "../report/report.css";
 
-export const metadata: Metadata = { title: "Invite code · Master G" };
+export const metadata: Metadata = { title: "Invite code · MasterG" };
 export const viewport: Viewport = { themeColor: "#FFE36E", colorScheme: "light" };
 
 export default function InvitePage() {

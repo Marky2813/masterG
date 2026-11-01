@@ -1,4 +1,4 @@
-# hackCBS 9.0 submission form: Master G
+# hackCBS 9.0 submission form: MasterG
 
 Copy each block into the form. Everything here is limited to `docs/CLAIMS.md`. Statistics carry their source.
 
@@ -24,7 +24,7 @@ Families who can afford it pay for private tuition to fill this gap. Most childr
 
 ## The Solution and Architecture
 
-**Master G** is a digital notebook with an AI tutor, Masterji, who behaves like a classic Indian tuition teacher: strict, funny, and in Hinglish.
+**MasterG** is a digital notebook with an AI tutor, Masterji, who behaves like a classic Indian tuition teacher: strict, funny, and in Hinglish.
 
 **For the child (NCERT Classes 1–8)**
 - The child writes with a stylus (or a finger or mouse). Masterji reads every line as it is written.

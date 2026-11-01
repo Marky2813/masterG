@@ -1,4 +1,4 @@
-# Pitch: Master G (for the video and the sales story)
+# Pitch: MasterG (for the video and the sales story)
 
 Everything here is limited to what `docs/CLAIMS.md` supports. Where a number would help, it says `[source needed]`. Do not fill those in without a source. Features marked "in progress" are not finished.
 
@@ -54,7 +54,7 @@ Price points: not decided. `[source needed]` for willingness to pay. Suggested f
 | 20-30 | Masterji's voice: "Phir se wahi galti?" Kid fixes it. Tick. "Shabash!" | "He gives hints. Not answers." |
 | 30-40 | Kid says "kaise?". Red-pen method appears line by line. Then a graph. | "And when she is stuck, he teaches the method, on the board." |
 | 40-50 | Report screen (only if merged; otherwise skip). | "The teacher sees exactly where each child is stuck." |
-| 50-60 | Logo, tagline. | "Master G. Your teacher's teaching assistant, at home." |
+| 50-60 | Logo, tagline. | "MasterG. Your teacher's teaching assistant, at home." |
 
 Do not show the report screen unless it exists and was run. Do not state any statistic.
 

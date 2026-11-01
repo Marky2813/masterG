@@ -15,7 +15,7 @@ export default function Closing() {
             Open your notebook.
           </span>
           <span className="cta-b" style={{ display: "block" }}>
-            Master G is ready.
+            MasterG is ready.
           </span>
         </h2>
         <div className="reveal" style={{ marginTop: "40px", display: "flex", flexWrap: "wrap", gap: "14px", alignItems: "center" }}>
@@ -30,7 +30,7 @@ export default function Closing() {
         <footer style={{ marginTop: "96px", paddingTop: "24px", borderTop: "1.5px solid rgba(22,21,19,.3)", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "16px", color: "#4A463F", fontSize: "14px" }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: "10px", fontWeight: 800, color: "var(--color-kohl)", fontSize: "18px" }}>
             <BrandMark className="size-7" />
-            Master G
+            MasterG
           </span>
           <nav aria-label="Footer" style={{ display: "flex", flexWrap: "wrap", gap: "18px" }}>
             <Link href="/teacher" prefetch={false} style={foot}>
@@ -40,7 +40,7 @@ export default function Closing() {
               Join my class
             </Link>
           </nav>
-          <span>© 2026 Master G</span>
+          <span>© 2026 MasterG</span>
         </footer>
       </div>
     </section>

@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import Dashboard from "@/components/classroom/Dashboard";
 import "../../report/report.css";
 
-export const metadata: Metadata = { title: "Class dashboard · Master G" };
+export const metadata: Metadata = { title: "Class dashboard · MasterG" };
 export const viewport: Viewport = { themeColor: "#FFE36E", colorScheme: "light" };
 
 // /teacher/<CODE>#k=<teacher key>: the key stays in the fragment (never sent as a URL to the server)

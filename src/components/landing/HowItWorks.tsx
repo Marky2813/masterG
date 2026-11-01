@@ -5,14 +5,14 @@ export default function HowItWorks() {
       <div style={{ maxWidth: "1360px", margin: "0 auto" }}>
         <div className="reveal" style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-end", gap: "24px" }}>
           <h2 className="wt-scroll" style={{ margin: "0", fontWeight: 800, fontSize: "clamp(34px, 4.6vw, 68px)", lineHeight: 0.95, letterSpacing: "-0.02em", maxWidth: "14ch" }}>How a class works</h2>
-          <p style={{ margin: "0", maxWidth: "40ch", fontSize: "18px", lineHeight: 1.5, color: "var(--color-muted)" }}>Just like evening tuition: a notebook, a pencil, and Master G watching every line you write.</p>
+          <p style={{ margin: "0", maxWidth: "40ch", fontSize: "18px", lineHeight: 1.5, color: "var(--color-muted)" }}>Just like evening tuition: a notebook, a pencil, and MasterG watching every line you write.</p>
         </div>
         <ol style={{ listStyle: "none", margin: "56px 0 0", padding: "0", display: "flex", flexWrap: "wrap", gap: "24px" }}>
           {/* step 1 */}
           <li className="lift-soft reveal" style={{ flex: "1 1 320px", minWidth: "0", backgroundColor: "var(--color-mist)", borderRadius: "28px", padding: "32px", display: "flex", flexDirection: "column", gap: "16px" }}>
             <span className="num" style={{ width: "48px", height: "48px", borderRadius: "50%", backgroundColor: "var(--color-peela)", border: "2.5px solid var(--color-kohl)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "20px" }}>1</span>
             <h3 style={{ margin: "0", fontWeight: 800, fontSize: "26px", lineHeight: 1.1 }}>Write the question or snap it</h3>
-            <p style={{ margin: "0", fontSize: "16px", lineHeight: 1.55, color: "var(--color-muted)" }}>Write the question by hand, or snap the textbook page. Master G reads it either way.</p>
+            <p style={{ margin: "0", fontSize: "16px", lineHeight: 1.55, color: "var(--color-muted)" }}>Write the question by hand, or snap the textbook page. MasterG reads it either way.</p>
             <div style={{ marginTop: "auto", paddingTop: "18px", display: "flex", alignItems: "flex-end", gap: "14px", flexWrap: "wrap" }}>
               <div className="float-slow" style={{ position: "relative", backgroundColor: "#FFFFFF", border: "2.5px solid var(--color-kohl)", borderRadius: "10px", padding: "18px 18px 16px", transform: "rotate(-3deg)", boxShadow: "5px 5px 0 var(--color-kohl)", width: "210px" }}>
                 <span style={{ position: "absolute", top: "-12px", left: "70px", width: "70px", height: "22px", backgroundColor: "rgba(245,179,193,.9)", border: "1.5px solid var(--color-kohl)", transform: "rotate(4deg)" }} />
@@ -40,7 +40,7 @@ export default function HowItWorks() {
           <li className="lift-soft reveal" style={{ flex: "1 1 320px", minWidth: "0", backgroundColor: "var(--color-mist)", borderRadius: "28px", padding: "32px", display: "flex", flexDirection: "column", gap: "16px" }}>
             <span className="num" style={{ width: "48px", height: "48px", borderRadius: "50%", backgroundColor: "var(--color-peela)", border: "2.5px solid var(--color-kohl)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "20px" }}>2</span>
             <h3 style={{ margin: "0", fontWeight: 800, fontSize: "26px", lineHeight: 1.1 }}>Solve it in the notebook</h3>
-            <p style={{ margin: "0", fontSize: "16px", lineHeight: 1.55, color: "var(--color-muted)" }}>Master G follows each line as it&apos;s written. When it&apos;s going right, he stays quiet.</p>
+            <p style={{ margin: "0", fontSize: "16px", lineHeight: 1.55, color: "var(--color-muted)" }}>MasterG follows each line as it&apos;s written. When it&apos;s going right, he stays quiet.</p>
             <div style={{ marginTop: "auto", paddingTop: "18px" }}>
               <div style={{ backgroundColor: "var(--color-paper)", backgroundImage: "repeating-linear-gradient(180deg, transparent 0, transparent 39px, #E4DED2 39px, #E4DED2 40px)", border: "2.5px solid var(--color-kohl)", borderRadius: "10px", height: "84px", padding: "14px 18px", fontFamily: "var(--font-hand)", fontSize: "28px", lineHeight: 1, color: "var(--color-pencil)", display: "flex", alignItems: "flex-start", gap: "4px" }}>LCM (3, 4) = 12
                 <span className="blink" style={{ width: "3px", height: "28px", backgroundColor: "var(--color-pencil)", marginLeft: "2px" }} />
@@ -49,7 +49,7 @@ export default function HowItWorks() {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#161513" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
                   <circle cx="12" cy="12" r="3" />
-                </svg>{" "}Master G: quiet, all correct
+                </svg>{" "}MasterG: quiet, all correct
               </div>
             </div>
           </li>

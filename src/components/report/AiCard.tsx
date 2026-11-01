@@ -16,7 +16,7 @@ export interface AiCopy {
 
 const CHILD_COPY: AiCopy = {
   title: "For the teacher",
-  source: "Written by Gemini Flash from the facts on this page only. Answers to the practice questions are worked out by Master G's maths checker, not the AI.",
+  source: "Written by Gemini Flash from the facts on this page only. Answers to the practice questions are worked out by MasterG's maths checker, not the AI.",
   lacking: "Where the child is lacking",
   next: "Practise next",
   worksheet: "For the next worksheet",
@@ -63,7 +63,7 @@ export default function AiCard({ state, onWrite, canWrite, copy = CHILD_COPY }: 
                         {s.why && <p className="mt-0.5 text-[13px] leading-snug text-muted">{s.why}</p>}
                       </div>
                       {s.a ? (
-                        <span className="shrink-0 text-right text-[12px] leading-tight text-muted" title="Computed by the Master G checker">
+                        <span className="shrink-0 text-right text-[12px] leading-tight text-muted" title="Computed by the MasterG checker">
                           Answer
                           <span className="block font-hand text-[18px] font-bold text-kohl">{pretty(s.a)}</span>
                         </span>

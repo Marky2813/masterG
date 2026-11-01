@@ -29,7 +29,7 @@ export default function InviteForm() {
   return (
     <Shell>
       <Card tone="peela" className="px-5 py-6 md:px-7">
-        <H1 kicker="Early access">Master G is invite-only for now</H1>
+        <H1 kicker="Early access">MasterG is invite-only for now</H1>
         <p className="mt-3 text-[15px] leading-relaxed">Enter the invite code you were given. You only need to do this once on this device.</p>
       </Card>
       <Card className="mt-6 px-5 py-6 md:px-7">

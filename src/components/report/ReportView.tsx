@@ -264,7 +264,7 @@ export default function ReportView() {
       </p>
 
       <p className="report-print-footer">
-        Master G · home maths practice with Masterji · printed {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+        MasterG · home maths practice with Masterji · printed {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
       </p>
 
       {/* Actions */}
@@ -295,7 +295,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         <header className="mb-5 flex items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2.5">
             <BrandMark className="size-9" />
-            <span className="font-display text-[20px] leading-none font-black tracking-tight whitespace-nowrap [font-stretch:112%]">Master G</span>
+            <span className="font-display text-[20px] leading-none font-black tracking-tight whitespace-nowrap [font-stretch:112%]">MasterG</span>
           </Link>
           <span className="text-right font-hand text-[15px] leading-tight font-bold text-red-pen md:text-[17px]">
             your maths teacher&apos;s

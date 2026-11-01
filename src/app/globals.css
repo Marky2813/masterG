@@ -23,7 +23,7 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* ---- Landing page (Master G style guide) ----------------------------------
+/* ---- Landing page (MasterG style guide) ----------------------------------
    Tokens and motion for src/app/page.tsx and src/components/landing/. The app
    at /learn does not use these names, so its look is unchanged. */
 @theme {

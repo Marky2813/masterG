@@ -1,4 +1,4 @@
-# Master G — Build Plan
+# MasterG — Build Plan
 
 > AI math tuition teacher ("Masterji") that watches a kid solve sums in a digital notebook, catches mistakes step by step, scolds a little, hints, and makes them try again — in Hinglish or English, by voice, writing on the notebook in red pen.
 

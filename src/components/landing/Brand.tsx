@@ -1,4 +1,4 @@
-// Master G mark and wordmark. The mark is the maths cube from the landing page, drawn small and
+// MasterG mark and wordmark. The mark is the maths cube from the landing page, drawn small and
 // isometric: a pink top, a yellow face with a red-pen plus, a paper face with a tick, kohl
 // outlines and a hard kohl shadow. Used by the landing page, /report, /teacher, /join and /invite.
 export function BrandMark({ className = "size-9" }: { className?: string }) {
@@ -13,12 +13,12 @@ export function BrandMark({ className = "size-9" }: { className?: string }) {
   );
 }
 
-// Cube + "Master G" in the landing's display face.
+// Cube + "MasterG" in the landing's display face.
 export function Wordmark({ className = "" }: { className?: string }) {
   return (
     <span className={`flex items-center gap-3 ${className}`}>
       <BrandMark className="size-10" />
-      <span style={{ fontWeight: 800, fontSize: "24px", letterSpacing: "-0.01em", whiteSpace: "nowrap" }}>Master G</span>
+      <span style={{ fontWeight: 800, fontSize: "24px", letterSpacing: "-0.01em", whiteSpace: "nowrap" }}>MasterG</span>
     </span>
   );
 }

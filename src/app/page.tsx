@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Landing from "@/components/landing/Landing";
 
 export const metadata: Metadata = {
-  title: "Master G · the maths teacher who checks every step",
+  title: "MasterG · the maths teacher who checks every step",
   description:
-    "Master G watches every line of a Class 1–8 maths sum on a digital notebook, stays quiet while it's right, and circles the mistake in red pen so your child can find the fix.",
+    "MasterG watches every line of a Class 1–8 maths sum on a digital notebook, stays quiet while it's right, and circles the mistake in red pen so your child can find the fix.",
 };
 
 // Landing page at /. "Start a class" opens the notebook at /learn; the cube's question opens it
