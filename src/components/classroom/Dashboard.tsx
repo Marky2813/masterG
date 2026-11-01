@@ -18,7 +18,7 @@ type Load = { kind: "loading" } | { kind: "nokey" } | { kind: "error"; message: 
 
 const CLASS_COPY: AiCopy = {
   title: "What to reteach",
-  source: "Written by Gemini Flash from the class counts on this page only (no names are sent). Answers to the practice questions are worked out by Master G's maths checker, not the AI.",
+  source: "Written by Gemini Flash from the class counts on this page only (no names are sent). Answers to the practice questions are worked out by MasterG's maths checker, not the AI.",
   lacking: "Where the class is lacking",
   next: "Reteach first",
   worksheet: "For the class worksheet",
@@ -104,7 +104,7 @@ export default function Dashboard() {
   const { info, sessions } = load;
   const o = overview!;
   const joinLink = `${window.location.origin}/join?c=${info.code}`;
-  const shareText = `Join our class "${info.name}" on Master G and practise maths with Masterji at home. Class code: ${info.code}. ${joinLink}`;
+  const shareText = `Join our class "${info.name}" on MasterG and practise maths with Masterji at home. Class code: ${info.code}. ${joinLink}`;
   const student = open ? o.rows.find((r) => r.student.id === open) : undefined;
   const flagged = o.rows.filter((r) => r.attention);
 

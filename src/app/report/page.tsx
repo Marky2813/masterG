@@ -3,7 +3,7 @@ import ReportView from "@/components/report/ReportView";
 import "./report.css";
 
 export const metadata: Metadata = {
-  title: "Practice report · Master G",
+  title: "Practice report · MasterG",
   description: "A home maths practice session with Masterji: every step checked, mistakes grouped, and what to practise next.",
 };
 

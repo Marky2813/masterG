@@ -125,7 +125,7 @@ export default function VoiceBar({ children }: { children?: ReactNode }) {
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-[11px] font-semibold tracking-wide text-amber-800/80">
-                Master G <span className="font-normal text-slate-400">· {state.text}</span>
+                MasterG <span className="font-normal text-slate-400">· {state.text}</span>
               </div>
               <div className="text-[15px] leading-snug text-slate-800" aria-live="polite">
                 {shown || <span className="text-slate-400">…</span>}

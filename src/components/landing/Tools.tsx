@@ -2,7 +2,7 @@
 
 import type { LandingMotion } from "./motion";
 
-// Master G's tools: a pinned strip that scrolls sideways on desktop (LandingMotion moves the track)
+// MasterG's tools: a pinned strip that scrolls sideways on desktop (LandingMotion moves the track)
 // and stacks into a column on phones.
 const chip = { border: "2px solid var(--color-kohl)", borderRadius: "999px", padding: "5px 12px", fontSize: "13px", fontWeight: 700 } as const;
 
@@ -63,7 +63,7 @@ export default function Tools({ motion }: { motion: LandingMotion }) {
       <div className="f-pin" ref={motion.ref("fPin")} style={{ position: "sticky", top: "84px", height: "calc(var(--vh) - 84px)", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         <div className="f-track" ref={motion.ref("fTrack")} style={{ display: "flex", alignItems: "stretch", gap: "26px", padding: "14px 40px 22px", willChange: "transform" }}>
           <div style={{ flex: "none", width: "min(86vw, 420px)", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "28px", padding: "6px 12px 6px 0" }}>
-            <h2 className="wt-scroll" style={{ margin: "0", color: "var(--color-kohl)", fontWeight: 800, fontSize: "clamp(34px, 4.6vw, 68px)", lineHeight: 0.95, letterSpacing: "-0.02em", maxWidth: "13ch" }}>Master G&apos;s tools</h2>
+            <h2 className="wt-scroll" style={{ margin: "0", color: "var(--color-kohl)", fontWeight: 800, fontSize: "clamp(34px, 4.6vw, 68px)", lineHeight: 0.95, letterSpacing: "-0.02em", maxWidth: "13ch" }}>MasterG&apos;s tools</h2>
             <p style={{ margin: "0", maxWidth: "40ch", fontSize: "18px", lineHeight: 1.5, color: "#4A463F" }}>What a good tuition teacher does at the notebook: watch every line, mark it in red pen, ask instead of telling. For practice at home, any evening.</p>
             <div className="hide-md" style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14px", fontWeight: 700 }}>
               <span style={{ position: "relative", width: "120px", height: "4px", borderRadius: "2px", backgroundColor: "rgba(22,21,19,.12)" }}>
@@ -75,7 +75,7 @@ export default function Tools({ motion }: { motion: LandingMotion }) {
           <article className="strip-card lift" style={{ flex: "none", width: "min(86vw, 880px)", backgroundColor: "#FFFFFF", border: "3px solid var(--color-kohl)", borderRadius: "28px", boxShadow: "8px 8px 0 var(--color-kohl-ink)", padding: "32px", display: "flex", flexWrap: "wrap", gap: "28px", alignItems: "stretch" }}>
             <div style={{ flex: "1 1 260px", minWidth: "0", display: "flex", flexDirection: "column", gap: "12px" }}>
               <h3 style={{ margin: "0", fontWeight: 800, fontSize: "30px", lineHeight: 1.05 }}>A real red pen</h3>
-              <p style={{ margin: "0", fontSize: "16px", lineHeight: 1.55, color: "var(--color-muted)" }}>Master G marks the notebook the way a teacher does: ticks, crosses, a circle round the wrong step, short notes in the margin. Always handwritten, never typed.</p>
+              <p style={{ margin: "0", fontSize: "16px", lineHeight: 1.55, color: "var(--color-muted)" }}>MasterG marks the notebook the way a teacher does: ticks, crosses, a circle round the wrong step, short notes in the margin. Always handwritten, never typed.</p>
               <div style={{ marginTop: "auto", display: "flex", flexWrap: "wrap", gap: "8px" }}>
                 <span style={{ border: "2px solid var(--color-kohl)", borderRadius: "999px", padding: "5px 12px", fontSize: "13px", fontWeight: 700 }}>Tick</span>
                 <span style={{ border: "2px solid var(--color-kohl)", borderRadius: "999px", padding: "5px 12px", fontSize: "13px", fontWeight: 700 }}>Cross</span>
@@ -130,11 +130,11 @@ export default function Tools({ motion }: { motion: LandingMotion }) {
           {/* C: Hinglish voice */}
           <article className="strip-card lift" style={{ flex: "none", width: "min(86vw, 380px)", backgroundColor: "#FFFFFF", border: "3px solid var(--color-kohl)", borderRadius: "28px", boxShadow: "8px 8px 0 var(--color-kohl-ink)", padding: "28px", display: "flex", flexDirection: "column", gap: "12px" }}>
             <h3 style={{ margin: "0", fontWeight: 800, fontSize: "26px", lineHeight: 1.05 }}>Talks the way you do</h3>
-            <p style={{ margin: "0", fontSize: "15px", lineHeight: 1.5, color: "var(--color-muted)" }}>Speak the way you do at home. Master G switches between Hindi and English the way tutors do.</p>
+            <p style={{ margin: "0", fontSize: "15px", lineHeight: 1.5, color: "var(--color-muted)" }}>Speak the way you do at home. MasterG switches between Hindi and English the way tutors do.</p>
             <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "8px" }}>
-              <div className="reveal" style={{ alignSelf: "flex-end", maxWidth: "85%", backgroundColor: "var(--color-pencil)", color: "#FFFFFF", borderRadius: "16px 16px 4px 16px", padding: "10px 14px", fontSize: "15px", lineHeight: 1.4 }}>Master G, what&apos;s an LCM?</div>
+              <div className="reveal" style={{ alignSelf: "flex-end", maxWidth: "85%", backgroundColor: "var(--color-pencil)", color: "#FFFFFF", borderRadius: "16px 16px 4px 16px", padding: "10px 14px", fontSize: "15px", lineHeight: 1.4 }}>MasterG, what&apos;s an LCM?</div>
               <div className="reveal" style={{ alignSelf: "flex-start", maxWidth: "92%", backgroundColor: "var(--color-mist)", border: "2px solid var(--color-kohl)", borderRadius: "16px 16px 16px 4px", padding: "10px 14px", fontSize: "15px", lineHeight: 1.4 }}>
-                <span style={{ display: "block", fontWeight: 800, fontSize: "12px", color: "#A8301C" }}>Master G</span>Least Common Multiple. The smallest number both 3 and 4 divide into. Can you find it?
+                <span style={{ display: "block", fontWeight: 800, fontSize: "12px", color: "#A8301C" }}>MasterG</span>Least Common Multiple. The smallest number both 3 and 4 divide into. Can you find it?
               </div>
               <div className="reveal" style={{ alignSelf: "flex-end", backgroundColor: "var(--color-pencil)", color: "#FFFFFF", borderRadius: "16px 16px 4px 16px", padding: "10px 14px", fontSize: "15px" }}>12!</div>
             </div>
@@ -159,7 +159,7 @@ export default function Tools({ motion }: { motion: LandingMotion }) {
           {/* D: speed */}
           <article className="strip-card lift" style={{ flex: "none", width: "min(86vw, 380px)", backgroundColor: "var(--color-rabar)", border: "3px solid var(--color-kohl)", borderRadius: "28px", boxShadow: "8px 8px 0 var(--color-kohl-ink)", padding: "28px", display: "flex", flexDirection: "column", gap: "12px" }}>
             <h3 style={{ margin: "0", fontWeight: 800, fontSize: "26px", lineHeight: 1.05 }}>Quiet when right. Quick when wrong.</h3>
-            <p style={{ margin: "0", fontSize: "15px", lineHeight: 1.5 }}>Master G waits for a pause and checks the maths before speaking, about 2 seconds after the pause. A wrong correction is worse than a slow one.</p>
+            <p style={{ margin: "0", fontSize: "15px", lineHeight: 1.5 }}>MasterG waits for a pause and checks the maths before speaking, about 2 seconds after the pause. A wrong correction is worse than a slow one.</p>
             <div style={{ marginTop: "auto", paddingTop: "18px" }}>
               <div style={{ position: "relative", height: "4px", backgroundColor: "var(--color-kohl)", borderRadius: "2px", margin: "18px 10px 0" }}>
                 <span className="travel" aria-hidden="true" />
@@ -175,7 +175,7 @@ export default function Tools({ motion }: { motion: LandingMotion }) {
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", width: "33%" }}>
                   <span style={{ width: "24px", height: "24px", borderRadius: "50%", backgroundColor: "var(--color-red-pen)", border: "3px solid var(--color-kohl)" }} />
-                  <span style={{ fontSize: "13px", fontWeight: 800, textAlign: "center" }}>Master G speaks</span>
+                  <span style={{ fontSize: "13px", fontWeight: 800, textAlign: "center" }}>MasterG speaks</span>
                 </div>
               </div>
             </div>
@@ -183,7 +183,7 @@ export default function Tools({ motion }: { motion: LandingMotion }) {
           {/* E: handwriting */}
           <article className="strip-card lift" style={{ flex: "none", width: "min(86vw, 360px)", backgroundColor: "var(--color-peela)", border: "3px solid var(--color-kohl)", borderRadius: "28px", boxShadow: "8px 8px 0 var(--color-kohl-ink)", padding: "28px", display: "flex", flexDirection: "column", gap: "12px" }}>
             <h3 style={{ margin: "0", fontWeight: 800, fontSize: "26px", lineHeight: 1.05 }}>Reads children&apos;s handwriting</h3>
-            <p style={{ margin: "0", fontSize: "15px", lineHeight: 1.5 }}>Reads the steps a child writes by hand. When it isn&apos;t sure what was written, Master G asks the child to write it again instead of guessing.</p>
+            <p style={{ margin: "0", fontSize: "15px", lineHeight: 1.5 }}>Reads the steps a child writes by hand. When it isn&apos;t sure what was written, MasterG asks the child to write it again instead of guessing.</p>
             <div style={{ marginTop: "auto", paddingTop: "14px", display: "flex", gap: "10px", alignItems: "center" }}>
               <span style={{ width: "58px", height: "64px", backgroundColor: "var(--color-paper)", border: "2.5px solid var(--color-kohl)", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-hand)", fontSize: "44px", color: "var(--color-pencil)" }}>1</span>
               <span style={{ width: "58px", height: "64px", backgroundColor: "var(--color-paper)", border: "2.5px solid var(--color-kohl)", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-hand)", fontSize: "44px", color: "var(--color-pencil)" }}>7</span>

@@ -8,7 +8,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# Master G: team rules for every agent (Claude Code, Codex, Cursor, ...)
+# MasterG: team rules for every agent (Claude Code, Codex, Cursor, ...)
 
 AI math tuition teacher ("Masterji") for NCERT Classes 1–8. A kid writes on a stylus notebook. Masterji watches every step, stays quiet while it's right, and steps in by voice and red pen when it's wrong. **He never calls a correct step wrong.** That is the bar the whole product rests on.
 

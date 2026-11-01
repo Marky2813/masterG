@@ -3,7 +3,7 @@ import TeacherHome from "@/components/classroom/TeacherHome";
 import "../report/report.css";
 
 export const metadata: Metadata = {
-  title: "Teacher · Master G",
+  title: "Teacher · MasterG",
   description: "Make a class, share its code with your students, and see where each child is lacking from their home practice with Masterji.",
 };
 export const viewport: Viewport = { themeColor: "#FFE36E", colorScheme: "light" };

@@ -36,7 +36,7 @@ const kalam = Kalam({
 });
 
 export const metadata: Metadata = {
-  title: "Master G",
+  title: "MasterG",
   description: "Masterji, your AI maths tuition teacher",
 };
 

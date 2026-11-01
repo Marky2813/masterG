@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time setup of the Master G server (Ubuntu 24.04, run as root):
+# One-time setup of the MasterG server (Ubuntu 24.04, run as root):
 #   sudo DOMAIN=masterg.akashparashar.dev bash setup.sh
 # Then put the secrets in /srv/masterg/shared/.env.local (GEMINI_API_KEY=..., INVITE_CODE=...),
 # chmod 600, and run: sudo -u masterg /srv/masterg/update.sh --force
@@ -30,7 +30,7 @@ install -o masterg -g masterg -m 755 /srv/masterg/repo/deploy/update.sh /srv/mas
 
 cat > /etc/systemd/system/masterg.service <<UNIT
 [Unit]
-Description=Master G (next start)
+Description=MasterG (next start)
 After=network.target
 
 [Service]
@@ -47,7 +47,7 @@ UNIT
 
 cat > /etc/systemd/system/masterg-update.service <<UNIT
 [Unit]
-Description=Master G: deploy the latest main if it changed
+Description=MasterG: deploy the latest main if it changed
 
 [Service]
 Type=oneshot
@@ -57,7 +57,7 @@ UNIT
 
 cat > /etc/systemd/system/masterg-update.timer <<UNIT
 [Unit]
-Description=Master G: check main every minute
+Description=MasterG: check main every minute
 
 [Timer]
 OnBootSec=2min
