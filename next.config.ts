@@ -11,7 +11,8 @@ const lanHosts = Object.values(networkInterfaces())
 
 const nextConfig: NextConfig = {
   /* config options here */
-  allowedDevOrigins: lanHosts,
+  // *.trycloudflare.com: a Cloudflare quick tunnel gives the laptop an https address, so phones get the mic.
+  allowedDevOrigins: [...lanHosts, "*.trycloudflare.com"],
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

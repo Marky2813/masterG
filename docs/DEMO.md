@@ -39,7 +39,7 @@ Both run on the overnight build (`overnight/preview`, PR #64). Rehearse once wit
 
 ## Segment: teacher dashboard (rehearse once)
 
-Before judging: make the demo class at `/teacher` on the demo laptop and keep the dashboard tab open. Each teammate joins it from their own phone or laptop (`/join?c=CODE`) and does two or three sums, so the dashboard holds real sessions. Don't seed or fake any. From another device use the laptop's Wi-Fi address (`npm run dev` prints it as Network, e.g. `http://192.168.1.183:3000/join?c=CODE`). On that plain-http address the browser blocks the mic, so Masterji can't hear them there; writing and step checking still work.
+Before judging: make the demo class at `/teacher` on the demo laptop and keep the dashboard tab open. Each teammate joins it from their own phone or laptop (`/join?c=CODE`) and does two or three sums, so the dashboard holds real sessions. Don't seed or fake any. From another device use the laptop's Wi-Fi address (`npm run dev` prints it as Network, e.g. `http://192.168.1.183:3000/join?c=CODE`). On that plain-http address the browser blocks the mic, so Masterji can't hear them there; writing and step checking still work. For the mic on other devices, run `cloudflared tunnel --url http://localhost:3000` on the laptop and use the `https://….trycloudflare.com` address it prints for everything (the teacher dashboard too, so its join link carries that address). It is public while it runs: stop it (Ctrl-C) after judging.
 
 | Beat | Do | Fallback |
 |---|---|---|
