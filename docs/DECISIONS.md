@@ -29,7 +29,7 @@ Every scope, product, workflow and access decision, on the day it's made. Newest
 | Nov 1 05:35 | Merge #64 (overnight build) to `main` before judging. | Akash ("you can merge it… it's only a revert") | He wanted it in; a revert is cheap. | "nothing merges until Akash reviews" |
 | Nov 1 05:40 | Build a teacher dashboard after the feature freeze: class code, students join with name + roll (device keeps a random student ID), sessions sync to the server, `/teacher/<code>` shows the class. No accounts: the private dashboard link (key in the URL fragment, hashed on the server) is the login. | Akash ("plan this first… then work on this"; "After the plan start") | The product is the teacher's assistant; the teacher has to see every child, not one report at a time. | Feature freeze 22:30 (overridden by Akash for this) |
 | Nov 1 05:40 | Classroom storage is JSON files on the Next server (`data/`, gitignored) behind `src/lib/classroom/store.ts`. A database (YugabyteDB) is the later swap. | Claude (default given in the plan) | Zero setup on the demo laptop; real persistence. Not Vercel-compatible (read-only FS). | — |
-| Nov 1 06:20 | "Added across" for `a/b ± c/d` is named by code (`brain/mistakes.ts`), overriding Flash's label. The verdict is untouched. | Claude | Flash called it "copied wrong" in 2 of 3 steps in one run, and the class note then said to reteach copying. | — |
+| Nov 1 05:55 | "Added across" for `a/b ± c/d` is named by code (`brain/mistakes.ts`), overriding Flash's label. The verdict is untouched. | Claude | Flash called it "copied wrong" in 2 of 3 steps in one run, and the class note then said to reteach copying. | — |
 
 ## Accepted risks
 | Date | Risk | Accepted by |
