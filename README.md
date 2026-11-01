@@ -4,6 +4,8 @@
 
 Built at hackCBS 9.0 by Akash (`adot-7`), Sarthak (`Marky2813`) and Harjeet (`HARJEET-SINGH-dev`). Tracks: EdTech, MLH Best Use of Gemini API, Yugabyte (MEKO; blocked, see Limits).
 
+**Try it:** https://masterg.akashparashar.dev (invite-only for now; the code is in our submission). Best on a laptop or tablet with a stylus; voice needs a mic.
+
 Developers: read [PLAN.md](PLAN.md) (product source of truth) and [AGENTS.md](AGENTS.md) (working rules) first.
 
 ## The problem
