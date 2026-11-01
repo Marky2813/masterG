@@ -244,7 +244,8 @@ export default function ReportView() {
         </div>
       </section>
 
-      <div className="mt-10">
+      {/* On paper only when it has a note: an empty "write the summary" card prints as a blank box. */}
+      <div className={`mt-10 ${aiState.kind === "done" ? "" : "print:hidden"}`}>
         <AiCard state={aiState} onWrite={() => void writeSummary()} canWrite={hasSteps} />
       </div>
 
@@ -260,6 +261,10 @@ export default function ReportView() {
 
       <p className="mt-10 pb-4 text-center text-[13px] text-muted">
         {who === "Your child" ? "This" : `${who}'s`} report is made from the session itself: every step, mark and count above happened. Only the yellow note is written by AI.
+      </p>
+
+      <p className="report-print-footer">
+        Master G · home maths practice with Masterji · printed {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
       </p>
 
       {/* Actions */}

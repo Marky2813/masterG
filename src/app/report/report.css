@@ -5,22 +5,51 @@
   print-color-adjust: exact;
 }
 
+.report-print-footer {
+  display: none;
+}
+
 @media print {
   @page {
     size: A4;
-    margin: 12mm;
+    margin: 14mm 13mm 16mm;
   }
+  /* White paper: the screen's beige page colour printed as a box inside white margins. */
   html,
-  body {
-    background: #f8f5ee !important;
+  body,
+  .report-page {
+    background: #fff !important;
   }
   .report-page {
-    font-size: 13px;
+    font-size: 12.5px;
+    min-height: 0 !important;
   }
+  /* Hard offset shadows look like smudges on paper; the kohl borders carry the look. */
+  .report-page * {
+    box-shadow: none !important;
+  }
+  .report-page section,
+  .report-page article,
   .report-page .break-inside-avoid {
     break-inside: avoid;
   }
+  .report-page h2 {
+    break-after: avoid;
+  }
   .report-page a[href^="http"]::after {
     content: none;
+  }
+  /* The sticky action bar and anything marked print:hidden stay off paper. */
+  .report-page .sticky {
+    display: none !important;
+  }
+  .report-print-footer {
+    display: block;
+    margin-top: 10mm;
+    padding-top: 3mm;
+    border-top: 1px solid #16151333;
+    font-size: 10px;
+    color: #4d4943;
+    text-align: center;
   }
 }
