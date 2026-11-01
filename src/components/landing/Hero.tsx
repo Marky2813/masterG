@@ -1,4 +1,5 @@
 import CtaButton from "./CtaButton";
+import RoleLinks from "./RoleLinks";
 import GlyphField from "./GlyphField";
 import NotebookSample from "./NotebookSample";
 import { Tick } from "./Marks";
@@ -64,6 +65,7 @@ export default function Hero() {
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
             <CtaButton />
             <p className="max-w-xs text-sm leading-snug text-muted">Stylus ke saath best. Voice ke liye mic chahiye.</p>
+            <RoleLinks />
           </div>
         </div>
 
