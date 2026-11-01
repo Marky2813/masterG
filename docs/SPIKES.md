@@ -19,6 +19,7 @@ Before a bulk run (full benchmark, rehearsal), check the quota or balance in Goo
 | Nov 1 03:00–03:45 | Claude | feel probe (`scripts/feel-probe.ts`): old vs new notes/persona, kid speech as text turns | live 3.1 flash | 38 sessions (1 trial, setq 5+5, guard 5+5, chat 6+6, chat final wording 5) | paid | `logs/probe/feel-*.json`, `logs/probe/feel-summary.txt` (gitignored); numbers in *Spike: golden-path feel* below |
 | Oct 31 18:28 | Claude | burst test 25 parallel | gemini-3.5-flash-lite | 25 calls | paid: 25/25 ok, p50 1.2 s | `scripts/burst.ts` |
 | Nov 1 02:30 | Claude | teacher report e2e (`scripts/report-drive.mjs`): headless Chrome writes 3 sums with mouse strokes on /learn, opens 📋 Report | gemini-3.5-flash-lite | 2 full runs + 1 partial: 15 step calls + 2 report-summary calls | paid | `docs/screenshots/report/drive-result.json`: each full run: 6 steps, verdicts as intended (2 wrong, 4 correct; Flash labelled 3/8 `copied_wrong`, not `add_across`), AI summary written both runs, share link 795 chars |
+| Nov 1 10:00–10:40 | Claude | double-reply probe (`scripts/double-reply-probe.ts`): the real `MasterjiVoice` on the live model, child speech as text | live 3.1 flash | 45 sessions (before: wrong 5, name 5, withheld 5, relink 5; after: relink 10, name 5, wrong 5, withheld 5) | paid | `logs/probes/double-reply-*.json` (gitignored); numbers in *Spike: double reply* below |
 
 ## Results
 | Spike | Issue | Owner | Status | Result |
@@ -72,3 +73,18 @@ Not checked: the offline re-decide has no alternative readings (lower bound); th
 | chat | praise variety over 3 praises | 15/18 distinct openings, "aage badho" 6/18 | 11/15, "aage badho" 4/15 (no real change) |
 
 **Log-only findings (no probe):** 36 of 46 empty kid transcripts (of 168 presses) came from pressing talk again before his turn ended; ≥ 12 kid transcripts end mid-phrase ("mera naam Akash", "denominator kya") → 250 ms release tail, needs the real mic to confirm. Raw outputs: `logs/probe/feel-*.json` (gitignored).
+
+## Spike: double reply (Nov 1, branch 73-double-reply)
+**Question:** why does Masterji sometimes say his reply twice inside one `voice.turn`, and does cutting the second version stop it?
+**Logs:** `npx tsx scripts/double-reply-corpus.ts <logs dirs>` over both checkouts: 363 turns, 289 spoken, 21 with a seam (a blank line, or a sentence end glued to the next capital). 5 are real double replies (1.7 %): `bh3t` 14:09, `oho0` 19:05 and 19:21, `r6vb` 03:49, `6j8t` 04:34. The other 16 seams are two-part replies (greeting then the sum, praise then the next homework sum, speech around a tool call), not repeats. 4 of the 5 had no tool call or only an `ok:true` one; 1 (`6j8t` 04:34) followed a `write_working` refused with `ok:false`. None had a note sent while he was replying (the 2 notes that were sent mid-reply got `interrupted` from the server and an empty turn, never a merged one).
+**Raw server messages (probe):** the second version comes inside the same generation, with no `generationComplete`, `interrupted`, tool call or input of ours between the two; its first transcript chunk has no leading space (`" theek hai?"` then `"Haan, main"`). So the main cause is the model itself restarting its reply on a single input.
+
+| Condition (live, `MasterjiVoice` + 3.1 flash live) | Model said it twice | Kept twice in caption/history (before → after the cut) |
+|---|---|---|
+| relink (old reconnect note, then "ek aur sawaal") | before 3/10 turns, after 5/19 | 3/10 → **0/18** (5 cuts, all correct) |
+| wrong (greeting, name, QUESTION SET, STEP WRONG rung 1) | before 0/20, after 2/20 | 0/20 → **0/20** (2 cuts, both correct, in the reply to the name) |
+| withheld (2x = 6, "x kaise?", the answer line refused) | 0/25, 0/25 | 0/25 → 0/25 (no false cut in 25 tool turns) |
+| name (greeting with the sum, then name + class) | before run invalid (probe bug), after 0/10 | — → 0/10 |
+
+The detector (`restatedAt`) was checked on 429 logged and probed replies, also replayed word by word as they stream in: 14 caught, 0 legit replies cut at any point. Misses: `oho0` 19:05 (the second version rewords everything). One relink session (after) stalled on the server (`generationComplete`, then no `turnComplete` for 25 s); the cut sends nothing to the server, so it isn't the cause, but it wasn't investigated.
+**Not checked:** the audio cut (`Player.cutFrom`) only runs in a browser; the probes have no player, so the cut is verified on transcripts live and on the audio queue only offline (`scripts/voice-smoke.ts`, fake player). Not run with real speech in, or on the demo laptop.

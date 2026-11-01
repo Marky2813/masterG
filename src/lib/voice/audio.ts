@@ -82,7 +82,8 @@ export class Player {
   }
   private ctx = new AudioContext({ sampleRate: 24000 });
   private nextTime = 0;
-  private sources = new Set<AudioBufferSourceNode>();
+  private sources = new Map<AudioBufferSourceNode, { n: number; at: number }>(); // queued chunk -> its number and start time
+  private enqueued = 0; // chunks queued so far (marks a point in the stream for cutFrom)
   private lastEnd = 0; // performance.now() when the last queued audio finished
   private turnS = 0; // seconds of audio received for the current reply
 
@@ -121,11 +122,35 @@ export class Player {
     const at = fromSilence ? this.ctx.currentTime + PREROLL_S : this.nextTime;
     src.start(at);
     this.nextTime = at + buf.duration;
-    this.sources.add(src);
+    this.sources.set(src, { n: this.enqueued++, at });
     src.onended = () => {
       this.sources.delete(src);
       if (this.sources.size === 0) this.lastEnd = performance.now();
     };
+  }
+
+  // A point in the stream: the next chunk to be queued. cutFrom(mark) drops that chunk and every later one.
+  mark(): number {
+    return this.enqueued;
+  }
+
+  // He started saying his reply a second time (voiceService restatedAt): drop the audio queued from that
+  // point on, keep the first version playing to its end.
+  cutFrom(mark: number): void {
+    let from = Infinity;
+    for (const [s, { n, at }] of this.sources) {
+      if (n < mark) continue;
+      from = Math.min(from, at);
+      this.turnS -= s.buffer?.duration ?? 0;
+      this.sources.delete(s);
+      try {
+        s.stop();
+      } catch {
+        /* already stopped */
+      }
+    }
+    if (from < this.nextTime) this.nextTime = from;
+    if (this.sources.size === 0) this.lastEnd = performance.now();
   }
 
   // Interruption: stop mid-word, drop everything queued. Returns how much of the current reply
@@ -133,7 +158,7 @@ export class Player {
   flush(): number {
     const unplayed = Math.max(0, this.nextTime - this.ctx.currentTime);
     const heard = this.turnS > 0 ? Math.max(0, Math.min(1, 1 - unplayed / this.turnS)) : 1;
-    for (const s of this.sources) {
+    for (const s of this.sources.keys()) {
       try {
         s.stop();
       } catch {
