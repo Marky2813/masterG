@@ -60,6 +60,32 @@ check("ids stable after adding a stroke", [...ids2.keys()].sort().join() === [..
 const ids3 = assignIds(clusterStrokes([...line1, ...line2]), prev, () => `c${++n}`);
 check("erasing a line drops exactly its cluster", ids3.size === 2 && [...ids3.keys()].every((k) => ids1.has(k)));
 
+// ---- fraction bar drawn after a pause (log 2026-11-01T04-47-56-a3hy, cluster boxes from the log) ----
+// "3x6 + 5x7" (x 798-1188, y 620-688), a pause, then the bar (y 720) and "42" under it: ONE step.
+const num = [s("f3", 800, 622, 40, 60, 2500), s("fx", 850, 640, 30, 30), s("f6", 890, 620, 40, 62), s("f+", 960, 635, 40, 40), s("f5", 1030, 622, 40, 60), s("fx2", 1080, 630, 30, 30), s("f7", 1120, 620, 60, 50)];
+const barDen = [s("fbar", 840, 720, 316, 8, 2000), s("f4", 950, 735, 45, 55), s("f2", 1000, 735, 45, 55)];
+const fg = clusterStrokes([...num, ...barDen]);
+check("stacked fraction with a gap above the bar = one step", fg.length === 1, `got ${fg.map((g) => g.strokeIds.join(" ")).join(" | ")}`);
+
+// Must NOT change: two separate lines from the same log (c7 "6x = -14", c8 "x = -14/6" right under it,
+// 11 units apart). c8's bar already has its numerator touching it, so it doesn't reach up to c7.
+const c7 = [s("g6x", 736, 131, 60, 70, 3000), s("g=", 820, 160, 40, 14), s("g-", 880, 165, 20, 6), s("g14", 905, 131, 56, 72)];
+const c8 = [s("hx", 790, 222, 40, 40, 3000), s("h=", 850, 235, 40, 14), s("h-14", 900, 216, 70, 44), s("hbar", 895, 266, 90, 8), s("h6", 920, 280, 40, 60), s("h=2", 1010, 260, 40, 14), s("h-7", 1080, 218, 50, 44), s("hbar2", 1075, 266, 80, 8), s("h3", 1095, 280, 40, 60)];
+const g78 = clusterStrokes([...c7, ...c8]);
+check("next line with its own fractions stays a separate step", g78.length === 2, `got ${g78.map((g) => g.strokeIds.length).join(",")}`);
+
+// Must NOT change: an underline under an answer (nothing below it) stays as it was.
+const ans = [s("ux", 300, 400, 40, 40, 3000), s("u=", 350, 412, 30, 12), s("u3", 395, 398, 35, 45)];
+const under = s("uline", 290, 470, 150, 6, 1500);
+const gu = clusterStrokes([...ans, under]);
+check("underline (nothing below) does not join the line above", gu.length === 2, `got ${gu.map((g) => g.strokeIds.length).join(",")}`);
+
+// Must NOT change: the next line starting with "=" (short strokes, not a bar) under the previous line.
+const prevL = [s("p3", 300, 500, 40, 60, 3000), s("p+", 350, 515, 30, 30), s("p4", 390, 500, 40, 60)];
+const nextL = [s("n=a", 300, 585, 40, 6, 2500), s("n=b", 300, 597, 40, 6), s("n7", 360, 580, 40, 60)];
+const gn = clusterStrokes([...prevL, ...nextL]);
+check('next line starting with "=" stays a separate step', gn.length === 2, `got ${gn.map((g) => g.strokeIds.length).join(",")}`);
+
 if (failed) {
   console.log(`\n${failed} failed`);
   process.exit(1);

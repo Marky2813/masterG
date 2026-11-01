@@ -15,6 +15,11 @@ import { unionBBox } from "./strokes";
 //     and are within jumpGap of each other. This keeps a stacked fraction
 //     together without letting the next line merge in: starting a new line is a
 //     big jump back to the left.
+//   - fraction bar: a long flat stroke with NO numerator touching it (nothing within vGap above), a
+//     line just above it (within barGap) sitting over the bar, and a denominator just below it, joins
+//     that line. A kid who pauses before drawing the bar leaves a gap; without this the numerator was
+//     judged alone as a wrong step (log 2026-11-01T04-47-56-a3hy: "3*6 + 5*7" over "/42"). An underline
+//     (nothing below) or a bar that already has its numerator (fractions inside a line) is untouched.
 // Thresholds are in notebook units (the canvas is 1200 units wide).
 
 export interface ClusterInput {
@@ -30,9 +35,14 @@ export interface ClusterOpts {
   tGapMs: number;
   jumpGap: number;
   rowOverlap: number;
+  barGap: number;
 }
 
-export const DEFAULT_CLUSTER_OPTS: ClusterOpts = { hGap: 70, vGap: 12, tGapMs: 1200, jumpGap: 45, rowOverlap: 0.35 };
+export const DEFAULT_CLUSTER_OPTS: ClusterOpts = { hGap: 70, vGap: 12, tGapMs: 1200, jumpGap: 45, rowOverlap: 0.35, barGap: 40 };
+
+const isBar = (b: BBox) => b.h <= 14 && b.w >= 60 && b.w >= 5 * b.h;
+// Share of `a`'s width that lies over `b`.
+const overShare = (a: BBox, b: BBox) => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) / Math.max(1, a.w);
 
 // Vertical overlap as a fraction of the shorter box (thin strokes like "-" count fully if inside the row).
 function rowOverlap(a: BBox, b: BBox): number {
@@ -76,6 +86,18 @@ export function clusterStrokes(strokes: ClusterInput[], opts: ClusterOpts = DEFA
     if (b.t0 - a.t1 > opts.tGapMs) continue;
     const { gx, gy } = gap(a.bbox, b.bbox);
     if (Math.hypot(gx, gy) <= opts.jumpGap) union(byTime[k - 1], byTime[k]);
+  }
+
+  for (let b = 0; b < strokes.length; b++) {
+    const bar = strokes[b].bbox;
+    if (!isBar(bar)) continue;
+    const above = strokes
+      .map((s, i) => ({ i, gap: bar.y - (s.bbox.y + s.bbox.h), s }))
+      .filter(({ i, gap, s }) => i !== b && gap >= -2 && gap <= opts.barGap && overShare(s.bbox, bar) >= 0.6);
+    if (!above.length || above.some((a) => a.gap <= opts.vGap)) continue; // no line above, or it already has its numerator
+    const below = strokes.some((s, i) => i !== b && s.bbox.y - (bar.y + bar.h) >= -2 && s.bbox.y - (bar.y + bar.h) <= opts.barGap && overShare(s.bbox, bar) >= 0.6);
+    if (!below) continue; // an underline, not a fraction bar
+    for (const a of above) union(b, a.i);
   }
 
   const groups = new Map<number, number[]>();
