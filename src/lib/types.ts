@@ -46,7 +46,7 @@ export type HintRung = 0 | 1 | 2 | 3 | 4; // 0 = no hint; 1 point, 2 narrow, 3 l
 
 export interface ErrorCategory {
   id: string; // e.g. "add_across"
-  label: string; // Hinglish label, e.g. "numerator aur denominator dono add kar diye"
+  label: string; // plain-English label shown to the teacher, e.g. "added numerators and denominators straight across"
   seed: boolean; // false if created during the session
 }
 

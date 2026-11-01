@@ -85,7 +85,7 @@ export default function Dashboard() {
     }
   };
 
-  if (load.kind === "loading") return <Shell tagline="for the teacher" wide><p className="py-24 text-center font-hand text-2xl">Class khul rahi hai…</p></Shell>;
+  if (load.kind === "loading") return <Shell tagline="for the teacher" wide><p className="py-24 text-center font-hand text-2xl">Opening the class…</p></Shell>;
   if (load.kind === "nokey" || load.kind === "error")
     return (
       <Shell tagline="for the teacher">
@@ -165,7 +165,7 @@ export default function Dashboard() {
           {/* Needs attention */}
           {flagged.length > 0 && (
             <section className="mt-8">
-              <Title hand="dhyaan do">Needs your attention</Title>
+              <Title>Needs your attention</Title>
               <div className="flex flex-wrap gap-2">
                 {flagged.map((r) => (
                   <button
@@ -226,7 +226,7 @@ function MistakesChart({ o }: { o: ClassOverview }) {
   const names = new Map(o.rows.map((r) => [r.student.id, r.student.name]));
   return (
     <Card tone="white" className="p-5">
-      <Title hand="galtiyan">Mistakes the class shares</Title>
+      <Title>Mistakes the class shares</Title>
       {o.mistakes.length === 0 ? (
         <p className="flex items-center gap-3 text-[15px]">
           <StepMark status="c" className="size-8 shrink-0" />
@@ -278,7 +278,7 @@ function TopicGrid({ o, onOpen }: { o: ClassOverview; onOpen: (id: string) => vo
   if (!o.topics.length || !active.length) return null;
   return (
     <section className="mt-8">
-      <Title hand="topic by topic">Who is strong where</Title>
+      <Title>Who is strong where</Title>
       <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-muted">
         {(["first_try", "fixed", "helped", "unfinished"] as Outcome[]).map((k) => (
           <span key={k} className="flex items-center gap-1.5">
@@ -359,7 +359,7 @@ function Roster({ rows, onOpen, openId }: { rows: StudentRow[]; onOpen: (id: str
   const sorted = [...rows].sort((a, b) => (b.lastActive ?? 0) - (a.lastActive ?? 0) || a.student.name.localeCompare(b.student.name));
   return (
     <section className="mt-8">
-      <Title hand="poori class">Every student</Title>
+      <Title>Every student</Title>
       <div className="overflow-x-auto rounded-window border-[2.5px] border-kohl bg-white shadow-hard">
         <table className="w-full min-w-[720px] border-collapse text-[14px]">
           <thead>

@@ -487,8 +487,8 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
         <canvas ref={overlayRef} className="pointer-events-none absolute inset-0 h-full w-full" />
       </div>
 
-      {/* floating toolbar, top right */}
-      <div data-overlay="top" className="fixed right-4 top-4 flex items-center gap-1 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-sm backdrop-blur">
+      {/* floating toolbar, top right: pen, eraser, undo, clear */}
+      <div data-overlay="top" className="fixed right-4 top-4 flex items-center gap-1 transition-[right] [html[data-voice-live]_&]:right-[6.25rem] rounded-xl border border-slate-200 bg-white/95 p-1 shadow-sm backdrop-blur">
         <button className={btn(tool === "pen")} onClick={() => setTool("pen")} title="Pen">
           ✏️
         </button>
@@ -498,14 +498,26 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
         <button className={btn(false)} onClick={undo} title="Undo">
           ↶
         </button>
-        <button className={btn(false)} onClick={addSpace} title="Add a page of space below">
-          + Space
-        </button>
         <button className={btn(false)} onClick={clearAll} title="Clear page">
           Clear
         </button>
         {toolbarExtra}
         {debug && <span className="px-2 font-mono text-xs text-slate-400">{clusters.length} clusters</span>}
+      </div>
+
+      {/* Add space: bottom right, where the child's hand is when the page runs out. */}
+      <div data-overlay="bottom" className="fixed right-5 bottom-4 z-10 flex flex-col items-center gap-1">
+        <button
+          onClick={addSpace}
+          aria-label="Add space"
+          title="Add more space below"
+          className="flex size-12 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition hover:bg-slate-50 active:scale-95"
+        >
+          <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </button>
+        <span className="text-[11px] font-medium text-slate-500">Add space</span>
       </div>
     </div>
   );

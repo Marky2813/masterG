@@ -52,7 +52,7 @@ ok(CODE_RE.test(randomCode()) && normalizeCode(" abc-234 ") === "ABC234", "class
 ok(o.totals.students === 3 && o.totals.active === 2 && o.totals.sessions === 3, `totals: 3 joined, 2 practised, 3 sessions (got ${JSON.stringify(o.totals)})`);
 ok(row("Aarav").sessions === 2 && row("Aarav").attempted === 3 && row("Aarav").solved === 2, "Aarav: 2 sessions, 2 of 3 solved");
 ok(JSON.stringify(row("Aarav").trend) === JSON.stringify([0.5, 0]), `Aarav trend per session: [0.5, 0] (got ${JSON.stringify(row("Aarav").trend)})`);
-ok(row("Diya").attention === "numerator aur denominator dono add kar diye ×3" || /×3$/.test(row("Diya").attention ?? ""), `Diya flagged for a repeated mistake (${row("Diya").attention})`);
+ok(/×3$/.test(row("Diya").attention ?? ""), `Diya flagged for a repeated mistake (${row("Diya").attention})`);
 ok(row("Kabir").sessions === 0 && row("Kabir").lastActive === null && !row("Kabir").attention, "Kabir: joined, no practice, empty session ignored");
 ok(o.mistakes.length === 1 && o.mistakes[0].id === "add_across" && o.mistakes[0].kids.length === 2 && o.mistakes[0].count === 5, `class mistakes: add_across, 2 kids, 5 times (got ${JSON.stringify(o.mistakes.map((m) => [m.id, m.kids.length, m.count]))})`);
 ok(o.mistakes[0].example?.t === "4/10", "mistake carries a real example step");
