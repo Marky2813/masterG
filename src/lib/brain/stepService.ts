@@ -15,6 +15,7 @@ interface ClusterState {
   bbox: BBox;
   version: number;
   result?: JudgeResult;
+  lastText?: string; // this line's last reading, kept when the line grows (sent as "earlier")
 }
 
 export interface StepServiceDebug {
@@ -48,7 +49,7 @@ export function startStepService(debug: StepServiceDebug = {}): () => void {
       const res = await fetch("/api/step", {
         method: "POST",
         headers: { "content-type": "application/json", "x-session-id": getSessionId() },
-        body: JSON.stringify({ clusterId: id, imagePng, question, kind, previous: previousFor(c.bbox), categories }),
+        body: JSON.stringify({ clusterId: id, imagePng, question, kind, previous: previousFor(c.bbox), categories, earlier: c.lastText }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
@@ -154,6 +155,7 @@ export function startStepService(debug: StepServiceDebug = {}): () => void {
       const c = clusters.get(id) ?? { id, bbox, version: 0 };
       c.bbox = bbox;
       c.version++;
+      if (c.result?.text) c.lastText = c.result.text;
       c.result = undefined;
       clusters.set(id, c);
       void judge(id, imagePng);
