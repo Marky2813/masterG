@@ -26,6 +26,8 @@ export interface JudgeInput {
   previous?: string;
   kind?: QuestionKind;
   categories?: ErrorCategory[];
+  // This same line's previous reading, sent when the child has written more on it since.
+  earlier?: string;
 }
 
 export interface JudgeResult {
@@ -45,8 +47,9 @@ export interface JudgeResult {
   ms: number;
 }
 
-export async function judgeStep(input: JudgeInput): Promise<JudgeResult> {
-  const started = performance.now();
+const sameText = (a: string, b: string) => a.replace(/\s+/g, "") === b.replace(/\s+/g, "");
+
+async function readStep(input: JudgeInput, extra = ""): Promise<StepResponse> {
   const res = await ai().models.generateContent({
     model: FLASH_MODEL,
     contents: [
@@ -55,12 +58,13 @@ export async function judgeStep(input: JudgeInput): Promise<JudgeResult> {
         parts: [
           { inlineData: { mimeType: "image/png", data: input.imagePng.replace(/^data:image\/png;base64,/, "") } },
           {
-            text: buildStepPrompt({
-              task: "judge",
-              question: input.question,
-              previous: input.previous,
-              categories: input.categories,
-            }),
+            text:
+              buildStepPrompt({
+                task: "judge",
+                question: input.question,
+                previous: input.previous,
+                categories: input.categories,
+              }) + extra,
           },
         ],
       },
@@ -72,7 +76,24 @@ export async function judgeStep(input: JudgeInput): Promise<JudgeResult> {
       thinkingConfig: thinkingOff(FLASH_MODEL),
     },
   });
-  const r = JSON.parse(res.text ?? "{}") as StepResponse;
+  return JSON.parse(res.text ?? "{}") as StepResponse;
+}
+
+export async function judgeStep(input: JudgeInput): Promise<JudgeResult> {
+  const started = performance.now();
+  let r = await readStep(input);
+  // The child wrote more on this line, but the reading didn't change: Flash left the new part out
+  // (log 2026-11-01T02-56-05-oe7z: "= 64/7" added to the right of "(18+4)/24" was dropped, the checker
+  // passed the old text, and the wrong answer got a tick). Read once more, pointing at it.
+  let staleRead = false;
+  if (input.earlier && r.text && sameText(r.text, input.earlier)) {
+    r = await readStep(
+      input,
+      `\n\nIMPORTANT: this line was read before as "${input.earlier}", and the child has since written MORE on it. Transcribe EVERYTHING in the image, left to right, including anything written to the right of or below that part, even if there is no "=" sign before it. A result the child wrote to the right of an expression means "equals": write it as "<expression> = <result>".`,
+    );
+    staleRead = !!r.text && sameText(r.text, input.earlier);
+  }
+
   const ms = Math.round(performance.now() - started);
 
   const base = {
@@ -89,6 +110,8 @@ export async function judgeStep(input: JudgeInput): Promise<JudgeResult> {
     ms,
   };
   if (!base.legible || !base.text) return { ...base, status: "unsure", source: "model" };
+  // Still the old reading after being told the line grew: don't let the checker confirm the old part.
+  if (staleRead) return { ...base, status: "unsure", source: "model", checkerReason: "stale_read", category: undefined, newCategoryLabel: undefined, explanation: undefined };
 
   const known = knownMistake(input.question ?? "", base.text); // Flash's explanation belonged to its own label
   const d = decide({ text: base.text, alternatives: base.alternatives, modelVerdict: r.verdict, question: input.question, previous: input.previous, kind: input.kind });
