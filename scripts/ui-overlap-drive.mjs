@@ -49,10 +49,11 @@ try {
   });
   await page.goto(`${BASE}/learn`, { waitUntil: "networkidle2" });
   await page.addStyleTag({ content: "nextjs-portal{display:none!important}" });
+  await page.screenshot({ path: OUT.replace(".png", "-offline.png") });
   const [start] = await page.$$("xpath/.//button[contains(., 'Start Masterji')]");
   await start.click();
   await sleep(9000); // greeting
-  const input = await page.waitForSelector('input[placeholder^="Sawaal likho"]');
+  const input = await page.waitForSelector('input[aria-label="Question"]');
   await input.type("3/4 + 1/6");
   await page.keyboard.press("Enter");
   await sleep(9000);

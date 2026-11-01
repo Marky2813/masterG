@@ -56,7 +56,7 @@ function WritePad({ onDone, onCancel }: { onDone: (png: string) => void; onCance
   };
   return (
     <div className="absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 w-[min(40rem,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
-      <div className="mb-2 text-xs text-slate-500">Sawaal yahaan likho</div>
+      <div className="mb-2 text-xs text-slate-500">Write the question here</div>
       <canvas
         ref={ref}
         width={W}
@@ -106,8 +106,8 @@ function HomeworkPanel({ onImage, onText, onCancel }: { onImage: (f: File) => vo
   const ref = useRef<HTMLInputElement>(null);
   return (
     <div className="absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 w-[min(28rem,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
-      <div className="text-sm font-medium text-slate-800">Teacher ka homework</div>
-      <div className="mb-2 text-xs text-slate-500">Worksheet ki photo ya screenshot do (Ctrl+V bhi chalega), ya homework ka text paste karo. Masterji ek-ek karke saare sawaal karwayenge.</div>
+      <div className="text-sm font-medium text-slate-800">Homework from your teacher</div>
+      <div className="mb-2 text-xs text-slate-500">Add a photo or screenshot of the worksheet (Ctrl+V works too), or paste the homework text. Masterji will go through every question one by one.</div>
       <button type="button" className="mb-2 w-full rounded-lg border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2 text-sm text-amber-900 hover:bg-amber-50" onClick={() => ref.current?.click()}>
         📷 Worksheet ki photo / screenshot
       </button>
@@ -127,7 +127,7 @@ function HomeworkPanel({ onImage, onText, onCancel }: { onImage: (f: File) => vo
         className="h-24 w-full resize-none rounded-lg border border-slate-200 p-2 font-mono text-xs outline-none placeholder:text-slate-400 focus:border-slate-400"
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder={"Ya yahaan paste karo:\n1) 3/4 + 1/6\n2) 2x + 5 = 11"}
+        placeholder={"Or paste it here:\n1) 3/4 + 1/6\n2) 2x + 5 = 11"}
       />
       <div className="mt-2 flex justify-end gap-2 text-sm">
         <button type="button" className="rounded-md px-3 py-1 text-slate-500" onClick={onCancel}>
@@ -156,7 +156,7 @@ function HomeworkQueue({ homework, open, setOpen, pick }: { homework: Homework; 
           </span>
           <span className="text-amber-700/70">{open ? "▴" : "▾"}</span>
         </button>
-        <span className="ml-1 text-amber-700/70">{done.length === n ? "sab ho gaya ✓" : `${done.length} done`}</span>
+        <span className="ml-1 text-amber-700/70">{done.length === n ? "all done ✓" : `${done.length} done`}</span>
         <span className="flex-1" />
         <button type="button" className={nav} aria-label="Previous homework question" disabled={current === null || current === 0} onClick={() => pick((current ?? 1) - 1)}>
           ‹
@@ -239,7 +239,7 @@ export default function QuestionBox() {
       });
       const r = (await res.json()) as { questions?: HomeworkItem[]; title?: string; error?: string };
       if (!res.ok) throw new Error(r.error ?? `HTTP ${res.status}`);
-      if (!r.questions?.length) throw new Error("Is homework mein koi sawaal nahi mila. Saaf photo ya text try karo.");
+      if (!r.questions?.length) throw new Error("No questions found in this homework. Try a clearer photo or the text.");
       hwSource.current = source;
       loadHomework(r.questions, r.title);
       pickHomework(0);
@@ -262,7 +262,7 @@ export default function QuestionBox() {
       });
       const r = await res.json();
       if (!res.ok) throw new Error(r.error ?? `HTTP ${res.status}`);
-      if (!r.legible || !r.text) throw new Error("Sawaal padh nahi paya. Saaf photo ya likhai try karo.");
+      if (!r.legible || !r.text) throw new Error("Couldn't read the question. Try a clearer photo or neater writing.");
       confirm(r.text, r.kind, source);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -298,9 +298,9 @@ export default function QuestionBox() {
   return (
     <div className="relative flex flex-col items-center">
       <form onSubmit={submit} className="flex max-w-full items-center gap-2 rounded-2xl border border-amber-200 bg-white/95 py-1.5 pr-1.5 pl-4 shadow-[0_2px_10px_rgba(120,90,20,0.10)] backdrop-blur">
-        <span className="shrink-0 text-[10px] font-bold tracking-[0.14em] text-amber-700/80 uppercase">Sawaal</span>
+        <span className="shrink-0 text-[10px] font-bold tracking-[0.14em] text-amber-700/80 uppercase">Question</span>
         {reading ? (
-          <span className="px-1 text-base text-slate-500">Padh raha hoon…</span>
+          <span className="px-1 text-base text-slate-500">Reading…</span>
         ) : confirmed ? (
           <button
             type="button"
@@ -319,7 +319,8 @@ export default function QuestionBox() {
               className="w-56 min-w-0 bg-transparent px-1 font-mono text-lg outline-none placeholder:text-base placeholder:text-slate-400"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder="Sawaal likho: 3/4 + 1/6"
+              placeholder="e.g. 3/4 + 1/6"
+              aria-label="Question"
             />
             <button className="shrink-0 rounded-lg bg-slate-900 px-3 py-1 text-sm font-medium text-white">Set</button>
           </>

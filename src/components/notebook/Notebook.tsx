@@ -488,7 +488,7 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
       </div>
 
       {/* floating toolbar, top right: pen, eraser, undo, clear */}
-      <div data-overlay="top" className="fixed right-4 top-4 flex items-center gap-1 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-sm backdrop-blur">
+      <div data-overlay="top" className="fixed right-4 top-4 flex items-center gap-1 transition-[right] [html[data-voice-live]_&]:right-[6.25rem] rounded-xl border border-slate-200 bg-white/95 p-1 shadow-sm backdrop-blur">
         <button className={btn(tool === "pen")} onClick={() => setTool("pen")} title="Pen">
           ✏️
         </button>
@@ -505,16 +505,20 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
         {debug && <span className="px-2 font-mono text-xs text-slate-400">{clusters.length} clusters</span>}
       </div>
 
-      {/* More space: bottom right, where the child's hand is when the page runs out. */}
-      <button
-        data-overlay="bottom"
-        onClick={addSpace}
-        title="Add more space below"
-        className="fixed right-4 bottom-4 z-10 flex items-center gap-2 rounded-2xl border-2 border-dashed border-amber-300 bg-white/95 py-2 pr-4 pl-2.5 text-sm font-semibold text-amber-900 shadow-[0_4px_14px_rgba(120,90,20,0.12)] backdrop-blur transition hover:border-amber-400 hover:bg-amber-50 active:scale-95"
-      >
-        <span className="flex size-7 items-center justify-center rounded-lg bg-amber-100 text-lg leading-none text-amber-800">＋</span>
-        Aur jagah
-      </button>
+      {/* Add space: bottom right, where the child's hand is when the page runs out. */}
+      <div data-overlay="bottom" className="fixed right-5 bottom-4 z-10 flex flex-col items-center gap-1">
+        <button
+          onClick={addSpace}
+          aria-label="Add space"
+          title="Add more space below"
+          className="flex size-12 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition hover:bg-slate-50 active:scale-95"
+        >
+          <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </button>
+        <span className="text-[11px] font-medium text-slate-500">Add space</span>
+      </div>
     </div>
   );
 }

@@ -103,12 +103,12 @@ async function main() {
       if (kid === STUDENTS[0]) await shot(page, "join-phone.png", 390, 2);
       await page.setViewport({ width: 1280, height: 860 });
       await Promise.all([page.waitForNavigation({ waitUntil: "networkidle2" }), page.click('button[type="submit"]')]);
-      await page.waitForSelector('input[placeholder^="Sawaal likho"]');
+      await page.waitForSelector('input[aria-label="Question"]');
       for (const { q, lines } of kid.work) {
         console.log(`${kid.name}: ${q}`);
         const change = await page.$('button[title="Change the question"]');
         if (change) await change.click();
-        const input = await page.waitForSelector('input[placeholder^="Sawaal likho"]');
+        const input = await page.waitForSelector('input[aria-label="Question"]');
         await input.click({ clickCount: 3 });
         await page.keyboard.press("Backspace");
         await input.type(q);

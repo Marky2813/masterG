@@ -61,7 +61,7 @@ export default function QuestionCard({ q, index, outcome }: { q: ReportQuestion;
             Hint {rung}/4 · {RUNG[rung]}
           </Chip>
         )}
-        {(q.n ?? 0) > 0 && <Chip tone="pink">Said “nahi aata”{q.n! > 1 ? ` ×${q.n}` : ""}</Chip>}
+        {(q.n ?? 0) > 0 && <Chip tone="pink">Said “I don’t know”{q.n! > 1 ? ` ×${q.n}` : ""}</Chip>}
         {taughtMethod(q) && <Chip tone="yellow">Masterji taught the method{shown.length > 0 && ` (${shown.join(", ")})`}</Chip>}
         {(m.n ?? 0) > 0 && <Chip>{m.n} margin note{m.n! > 1 ? "s" : ""}</Chip>}
       </footer>

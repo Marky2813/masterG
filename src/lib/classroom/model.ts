@@ -139,7 +139,7 @@ export function classOverview(info: ClassInfo, sessions: SessionDoc[], now = Dat
     const top = sum?.mistakes[0];
     let attention: string | null = null;
     if (top && top.count >= 3) attention = `${top.label} ×${top.count}`;
-    else if (sum && sum.stuck >= 3) attention = `said “nahi aata” ${sum.stuck} times`;
+    else if (sum && sum.stuck >= 3) attention = `said “I don’t know” ${sum.stuck} times`;
     else if (sum && sum.attempted >= 3 && sum.solved === 0) attention = "no sum finished yet";
     else if (lastActive !== null && now - lastActive > 7 * DAY) attention = "no practice this week";
     return {

@@ -110,7 +110,7 @@ export default function ReportView() {
     };
   }, [report, loaded]);
 
-  if (loaded.kind === "loading") return <Shell><p className="py-24 text-center font-hand text-2xl">Report khul raha hai…</p></Shell>;
+  if (loaded.kind === "loading") return <Shell><p className="py-24 text-center font-hand text-2xl">Opening the report…</p></Shell>;
   if (loaded.kind === "error") return <Shell><Empty title="This report link is broken" body={`It could not be read: ${loaded.message}. Ask for the link again.`} /></Shell>;
   if (loaded.kind === "empty" || !report || !sum || report.qs.length === 0)
     return (
@@ -188,7 +188,7 @@ export default function ReportView() {
           <dl className="grid grid-cols-2 gap-2.5">
             <Stat label="First try" value={sum.firstTryRate === null ? "–" : `${Math.round(sum.firstTryRate * 100)}%`} sub={`${sum.firstTry} of ${sum.checkable} checked`} />
             <Stat label="Steps checked" value={String(sum.steps)} sub={`${sum.correctSteps} right · ${sum.wrongSteps} with a mistake`} />
-            <Stat label="Said “nahi aata”" value={String(sum.stuck)} sub={sum.stuck ? "asked for help" : "never stuck"} />
+            <Stat label="Said “I don’t know”" value={String(sum.stuck)} sub={sum.stuck ? "asked for help" : "never stuck"} />
             <Stat label="Method taught" value={String(sum.taught)} sub={sum.taught === 1 ? "question" : "questions"} />
           </dl>
         </div>
@@ -197,7 +197,7 @@ export default function ReportView() {
       {/* Mistakes and strengths */}
       <section className="mt-8 grid gap-5 md:grid-cols-[1.4fr_1fr]">
         <div className="break-inside-avoid rounded-window border-[2.5px] border-kohl bg-white p-5 shadow-hard print:shadow-none">
-          <SectionTitle hand="galtiyan">Mistakes to work on</SectionTitle>
+          <SectionTitle>Mistakes to work on</SectionTitle>
           {sum.mistakes.length === 0 ? (
             <p className="flex items-center gap-3 text-[15px]">
               <Tick className="size-8 shrink-0" />
@@ -226,7 +226,7 @@ export default function ReportView() {
           )}
         </div>
         <div className="break-inside-avoid rounded-window border-[2.5px] border-kohl bg-rabar-wash p-5 shadow-hard print:shadow-none">
-          <SectionTitle hand="shabaash">Strong at</SectionTitle>
+          <SectionTitle>Strong at</SectionTitle>
           {sum.strengths.length === 0 ? (
             <p className="text-[15px] text-muted">No topic solved cleanly yet in this session. A first-try sum with no hints shows up here.</p>
           ) : (
@@ -249,7 +249,7 @@ export default function ReportView() {
       </div>
 
       <section className="mt-10">
-        <SectionTitle hand="sawaal by sawaal">Every question</SectionTitle>
+        <SectionTitle>Every question</SectionTitle>
         <p className="-mt-2 mb-4 text-[13px] text-muted">Each line is what Masterji read on the notebook, with his mark: ✓ right, ✗ mistake, ? couldn&apos;t check.</p>
         <div className="grid gap-5">
           {report.qs.map((q, i) => (
