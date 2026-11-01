@@ -63,7 +63,7 @@ _(upload the deck file)_
 
 ## Project Demo Video (Max. 5 minutes) - Public Link
 
-https:// _(add the video link)_
+https://www.youtube.com/watch?v=r_-LqMQN29w
 
 ---
 
