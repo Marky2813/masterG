@@ -6,6 +6,8 @@ The tutor inside, Masterji, is a classic Indian tuition teacher: strict, a littl
 
 Built at hackCBS 9.0 (31 Oct – 1 Nov 2026) by Akash ([`adot-7`](https://github.com/adot-7)), Sarthak ([`Marky2813`](https://github.com/Marky2813)) and Harjeet ([`HARJEET-SINGH-dev`](https://github.com/HARJEET-SINGH-dev)).
 
+![Master G: Solve it. Master G checks every step. A maths cube you can roll picks today's question](docs/screenshots/landing/desktop-00.png)
+
 ## Watch
 <a href="https://www.youtube.com/watch?v=r_-LqMQN29w"><img src="https://img.youtube.com/vi/r_-LqMQN29w/hqdefault.jpg" width="420" alt="Master G demo video"></a>
 
