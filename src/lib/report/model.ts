@@ -120,7 +120,7 @@ export function topicOf(q: string, kind: QuestionKind): string {
 }
 
 export function categoryLabel(id: string, carried?: string): string {
-  return carried || SEED_CATEGORIES.find((c) => c.id === id)?.label || id.replace(/_/g, " ");
+  return SEED_CATEGORIES.find((c) => c.id === id)?.label || carried || id.replace(/_/g, " ");
 }
 
 export interface MistakeGroup {

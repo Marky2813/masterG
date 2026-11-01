@@ -102,7 +102,7 @@ ok(outcomeOf(r.qs[2]) === "unfinished", `Q3 unfinished (got ${outcomeOf(r.qs[2])
 const s = summarize(r);
 ok(s.attempted === 3 && s.solved === 2 && s.firstTry === 1, "summary counts");
 ok(s.mistakes.length === 1 && s.mistakes[0].id === "add_across" && s.mistakes[0].count === 3, "mistakes grouped: add_across ×3");
-ok(s.mistakes[0].label === "numerator aur denominator dono add kar diye", "category label resolved");
+ok(s.mistakes[0].label === "added numerators and denominators straight across", "a known mistake shows its English label, even if an old Hinglish one was carried");
 ok(s.strengths.some((x) => x.topic === "Linear equations") && !s.strengths.some((x) => x.topic.includes("fractions")), "strengths: equations, not fractions");
 
 // share link round trip

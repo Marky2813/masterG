@@ -44,7 +44,7 @@ function judgeRules(categories: ErrorCategory[]): string {
 - "correct": the step is true and follows from the previous step/question.
 - "wrong": the step contains a mathematical error.
 - "unsure": you cannot tell. Prefer "unsure" over guessing — wrongly calling a correct step wrong is the worst possible error.
-If wrong, set "category" to the id of the matching mistake category below. Reuse an existing category whenever it fits. Only if none fits, invent a short snake_case id and give a short Hinglish label in "newCategoryLabel".
+If wrong, set "category" to the id of the matching mistake category below. Reuse an existing category whenever it fits. Only if none fits, invent a short snake_case id and give a short plain-English label in "newCategoryLabel" (it is shown to the teacher).
 Mistake categories:
 ${list}
 Set "explanation" to one short sentence (English) saying exactly what went wrong.`;
