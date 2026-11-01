@@ -48,6 +48,34 @@ export function spokenClean(s: string): string {
     .trim();
 }
 
+// A second reply glued onto the first inside one turn. The transcript shows the seam: a sentence end with
+// no space before the next capital ("...Aata hai na?Arre beta, ye galat hai...", log 2026-11-01T03-48-58-r6vb)
+// or a blank line (after a tool response, log 2026-11-01T04-28-28-6j8t 4:34). A seam alone is not a repeat
+// (greeting, then the sum is fine); the part after it must restate the part before: 3+ and 40%+ of its words,
+// or, at a no-space seam, open with the same two words as the reply ("Haan beta, zaroor!...Haan beta, bilkul!").
+// Checked on 429 logged and probed replies, also as they grow word by word: 14 caught, no legit reply cut.
+// Returns where the restatement starts in `text`, or -1.
+const FILLER = new Set(
+  "hai hain ho ko ka ki ke se toh to na beta haan ab aur the is a an and of in mein me main hum tum ye yeh wo woh kya bhi par pe jo hi kar karo do de diya liye nahi ek".split(" "),
+);
+const tokens = (s: string) => s.toLowerCase().match(/[\p{L}\d]+/gu) ?? [];
+const words = (s: string) => new Set(tokens(s).filter((w) => !FILLER.has(w) && (w.length > 2 || /\d/.test(w))));
+export function restatedAt(text: string): number {
+  const opener = tokens(text).slice(0, 2).join(" ");
+  for (const m of text.matchAll(/\n\s*\n|[.!?](?=\p{Lu})/gu)) {
+    const at = m.index + m[0].length;
+    const before = words(text.slice(0, at));
+    const rest = text.slice(at);
+    const after = words(rest);
+    if (before.size < 3 || after.size < 3) continue;
+    let common = 0;
+    for (const w of after) if (before.has(w)) common++;
+    if (common >= 3 && common / Math.min(before.size, after.size) >= 0.4) return at;
+    if (!m[0].startsWith("\n") && opener.includes(" ") && tokens(rest).slice(0, 2).join(" ") === opener) return at;
+  }
+  return -1;
+}
+
 // His first note. A child we don't know yet: greet and ask name and class ONLY, then wait. Asking three
 // things and announcing the sum in the same breath didn't feel natural (Akash, log 2026-11-01T04-47-56-a3hy).
 // The question rides along as context for after they answer.
@@ -80,6 +108,7 @@ export class MasterjiVoice {
   private offs: (() => void)[] = [];
   private wrong = new Set<string>(); // clusters currently marked wrong, to detect FIXED
   private masterjiLine = "";
+  private lineMarks: { at: number; audio: number }[] = []; // per transcript chunk: where it starts in masterjiLine and in the audio queue
   private lastTurn: { text: string; at: number } | null = null; // his last finished reply, cleaned
   private pendingSince = 0; // when the oldest queued note was queued
   private kidLine = "";
@@ -543,6 +572,7 @@ export class MasterjiVoice {
       return;
     }
     const sc = m.serverContent;
+    const audioMark = this.player?.mark() ?? 0; // where this message's audio starts in the queue
     if (this.replyOwedAt && (sc?.modelTurn || m.toolCall)) this.replyOwedAt = performance.now(); // still coming
     if (sc?.interrupted) {
       this.discardStale = false;
@@ -564,7 +594,19 @@ export class MasterjiVoice {
       }
     }
     if (sc?.outputTranscription?.text && !this.discardStale) {
+      if (!this.masterjiLine) this.lineMarks = [];
+      this.lineMarks.push({ at: this.masterjiLine.length, audio: audioMark });
       this.masterjiLine += sc.outputTranscription.text;
+      // He started the same reply again inside this turn (the model does this by itself on a single input,
+      // 3 of 10 turns in logs/probes double-reply-relink-before): play and show only the first version.
+      const again = restatedAt(this.masterjiLine);
+      if (again >= 0) {
+        const from = this.lineMarks.findLast((c) => c.at <= again) ?? { audio: audioMark };
+        this.player?.cutFrom(from.audio);
+        this.discardStale = true;
+        clientLog("voice.restated_cut", { said: this.masterjiLine, kept: this.masterjiLine.slice(0, again).trim() });
+        this.masterjiLine = this.masterjiLine.slice(0, again);
+      }
       // The model sometimes echoes a hidden note ("[STEP c3 ...]"): never show it to the child.
       this.runSpokenTools(this.masterjiLine);
       const shown = spokenClean(this.masterjiLine);

@@ -5,7 +5,7 @@ import { bus } from "../src/lib/bus";
 import type { Verdict } from "../src/lib/types";
 import { kindOf } from "../src/lib/brain/kind";
 import "../src/lib/sessionState";
-import { MasterjiVoice, spokenClean } from "../src/lib/voice/voiceService";
+import { MasterjiVoice, restatedAt, spokenClean } from "../src/lib/voice/voiceService";
 
 // clientLog posts to /api/log: keep those events here instead.
 const logged: { type: string; data: Record<string, unknown> }[] = [];
@@ -214,6 +214,77 @@ async function main() {
   h.turn("Haan beta, likho.");
   ok(h.notes().length === m + 1 && /FINAL ANSWER CORRECT/.test(h.notes().at(-1) ?? ""), "a final-answer note he hasn't answered still goes out");
   h.done();
+}
+
+// ---- he says his reply twice inside one turn (restatedAt + the cut) ----
+// Replays logged transcripts as the server streams them: each chunk is one message with an audio part and
+// its transcript; a restart chunk comes with no leading space ("...Aata hai na?" + "Arre beta, ..."), a
+// tool call can sit in between. A fake player records which audio chunks were queued and where it was cut.
+{
+  ok(restatedAt("Arre beta, ye galat hai! Line 1 dobara dekho. Denominator alag hai na? Pehle common denominator nikalna padega. Uske liye LCM nikalte hain. Aata hai na?Arre beta, ye galat hai. Line 1 dobara dekho. Denominator alag hain na?") > 0, "restatedAt: same reply again after a no-space seam (log r6vb 03:49:38)");
+  ok(restatedAt("Haan beta, zaroor! Chalo, ye wala homework question karo ab. Question board par hai.Haan beta, bilkul! Ye dekho, agla sawaal board par hai, 2x + 5 = 11. Shuru ho jao!") > 0, "restatedAt: reworded restart that opens the same way (reconnect probe)");
+  for (const legit of [
+    "Namaste beta! Kaise ho? Kya naam hai tumhara, aur kaunsi class mein padhte ho?\n\nToh tumhare homework ka pehla sawaal shuru karein? 3/7 + 5/6, theek hai? Karo shuru!",
+    "Shabash Akaash! Pehle thodi galti hui, par tumne khud mehnat karke sahi kar diya. Very good!\n\nChalo, ab agla sawaal dekhte hain, ye tumhare teacher ka homework hai: 2x + 5 = 11. Board par dekho, aur shuru ho jaao.",
+    "Koi baat nahi, saath mein karte hain. LCM nikaalo pehle 5 aur 3 ka, dekho kitna aata hai. Maine board par likh diya hai LCM.\n\nAb dono fractions ko change karo taaki denominator 15 ho jaaye.",
+    "Shabash Akash, saatvi class ke student ho tum! Chalo, abhi NCERT ka ek sum karte hain. Board par dekho, main sawaal likh raha hoon.\n\nIt's on the board now; chalo, shuru ho jaao!",
+    "Arre Akash! Ye kya kar diya? Line 1 dobara dekho. Denominators alag hain na? Seedhe-seedhe toh nahi jod sakte.board dekho. LCM nikalna padega.",
+  ])
+    ok(restatedAt(legit) < 0, `restatedAt: a two-part reply is not a repeat (${JSON.stringify(legit.slice(0, 40))}...)`);
+
+  type Item = string | { tool: string; args: Record<string, unknown> };
+  const play = (items: Item[], before?: (h: ReturnType<typeof harness>) => void) => {
+    const h = harness();
+    const queued: number[] = [];
+    const cuts: number[] = [];
+    let n = 0;
+    const priv = h.v as unknown as { player: unknown; onMessage(m: LiveServerMessage): void };
+    priv.player = { mark: () => n, cutFrom: (k: number) => cuts.push(k, n), enqueue: () => queued.push(n++), isAudible: () => false, speaking: false, flush: () => 0, endTurn: () => {}, takeUnderruns: () => 0, close: () => {} };
+    before?.(h);
+    const from = logged.length;
+    let id = 0;
+    for (const it of items)
+      if (typeof it === "string") priv.onMessage({ serverContent: { modelTurn: { parts: [{ inlineData: { data: "AAAA", mimeType: "audio/pcm;rate=24000" } }] }, outputTranscription: { text: it } } } as LiveServerMessage);
+      else priv.onMessage({ toolCall: { functionCalls: [{ id: `r${++id}`, name: it.tool, args: it.args }] } } as LiveServerMessage);
+    priv.onMessage({ serverContent: { turnComplete: true } } as LiveServerMessage);
+    const turn = logged.slice(from).filter((l) => l.type === "voice.turn").at(-1)?.data ?? {};
+    const cutLog = logged.slice(from).find((l) => l.type === "voice.restated_cut");
+    h.done();
+    return { said: String(turn.masterji ?? ""), queued, cuts, cutLog, h };
+  };
+  // the server's chunks: words with their leading space; a restart starts a chunk with no space
+  const chunks = (s: string) => s.split(/(?=\s)|(?<=[.!?])(?=\p{Lu})/u);
+
+  // log 2026-11-01T03-48-58-r6vb 03:49:38: one STEP WRONG note in, no tool call, the reply twice
+  const first = "Arre beta, ye galat hai! Line 1 dobara dekho. Denominator alag hai na? Pehle common denominator nikalna padega. Uske liye LCM nikalte hain. Aata hai na?";
+  const r = play([...chunks(first), ...chunks("Arre beta, ye galat hai. Line 1 dobara dekho. Denominator alag hain na?")]);
+  const firstN = chunks(first).length;
+  ok(r.said === first, `r6vb: only the first version is kept for the caption and history (${JSON.stringify(r.said.slice(-30))})`);
+  ok(r.cuts.length === 2 && r.cuts[0] === firstN, `r6vb: audio cut exactly where the second version starts (chunk ${r.cuts[0]} of ${firstN} first-version chunks)`);
+  ok(r.cuts[1] === r.queued.length && r.queued.length - firstN <= 8, `r6vb: caught ${r.queued.length - firstN} chunks into the second version (those are cut), and nothing is queued after the cut`);
+  ok(!!r.cutLog && String(r.cutLog.data.said).includes("Aata hai na?Arre beta"), "r6vb: the cut is logged with the full text (voice.restated_cut)");
+
+  // log 2026-11-01T04-28-28-6j8t 04:34:03: he spoke, write_working came back ok:false (duplicate + answer withheld), he said it again
+  const said1 = "Haan beta, 2x = 6 tak toh pahunch gaye. Ab x ki value nikaalne ke liye, dono side ko 2 se divide kar do. Board par working dekho.";
+  const w = play(
+    [...chunks(said1), "\n\n", { tool: "write_working", args: { title: "Aage ki value", lines: ["2x = 6", "x = 6 / 2", "x = 3"] } }, ...chunks("Arre, abhi dekho! x nikaalne ke liye, 6 ko 2 se divide karna hai na? Board par likha hai, dekho. Ab batao x kitna aaya?")],
+    (h) => {
+      h.question("2x + 5 = 11");
+      h.tool("write_working", { title: "Aage ki value", lines: ["2x = 6"] }); // already on the board
+    },
+  );
+  ok(w.said === said1, `6j8t 4:34: the restatement after the refused write is dropped (${JSON.stringify(w.said.slice(-30))})`);
+  ok(w.h.lastTool().ok === false, "6j8t 4:34: the refused write still gets its ok:false response");
+  ok(w.cuts.length === 2 && w.cuts[0] === chunks(said1).length + 1, "6j8t 4:34: audio cut at the first chunk after the tool call");
+
+  // log 6j8t 04:32:59: praise, set_question, then the next homework sum: two parts, nothing cut
+  const ok2 = play([...chunks("Shabash Akaash! Pehle thodi galti hui, par tumne khud mehnat karke sahi kar diya. Very good!"), "\n\n", { tool: "set_question", args: { question: "2x + 5 = 11" } }, ...chunks("Chalo, ab agla sawaal dekhte hain, ye tumhare teacher ka homework hai: 2x + 5 = 11. Board par dekho, aur shuru ho jaao.")]);
+  ok(ok2.cuts.length === 0 && /shuru ho jaao\.$/.test(ok2.said), "6j8t 4:32: praise + next sum after a tool call is kept whole");
+
+  // relink probe: three versions in one turn -> one kept
+  const v1 = "Haan, main yahin hoon. Chalo, ye homework ka agla sum karo: 2x + 5 = 11. Theek hai? Shuru karo.";
+  const tri = play([...chunks(v1), ...chunks("Haan, main yahin hoon. Chalo, ye agla savaal karo. 2x + 5 = 11. Shuru ho jaao."), ...chunks("Arre! Haan, main yahin hoon. Chalo, ye wala question karte hain.")]);
+  ok(tri.said === v1 && tri.cuts.length === 2, "relink: three versions in one turn, only the first is kept");
 }
 
 ok(logged.some((l) => l.type === "voice.answer_withheld"), "withheld writes are logged (voice.answer_withheld)");
