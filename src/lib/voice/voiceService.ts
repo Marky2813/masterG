@@ -16,7 +16,25 @@ import { getHomework, homeworkRef, nextHomework } from "../sessionState"; // tea
 import { kindOf } from "../brain/kind";
 import { clientLog, getSessionId } from "../log/client";
 import { Mic, Player } from "./audio";
-import { liveConfig } from "./liveConfig";
+import { liveConfig, safeKidName } from "./liveConfig";
+import { getMembership } from "../classroom/client";
+
+// What a fresh session after a dropped line is told: the lesson so far, as context he must not reply to.
+export function reconnectContext(history: string[], question: string | undefined, questionNote: (q: string) => string, solved = false): string {
+  const recent = history.join(" | ");
+  return [
+    `[RECONNECTED: the line dropped and came back; the child heard nothing and did nothing. Context only: do NOT reply to this note, do not greet, do not repeat anything you already said. Stay silent until the child speaks or the next note arrives, then continue the same lesson.${recent ? ` Recent conversation: ${recent}` : ""}]`,
+    question && solved
+      ? `[LAST QUESTION: ${question}, already solved by the child. Don't offer it again; if they want more, set a new sum.]`
+      : question
+        ? questionNote(question).replace("[QUESTION SET: ", "[CURRENT QUESTION (already set; do not call set_question for it): ")
+        : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+const kidNameFromClass = () => (typeof window === "undefined" ? undefined : safeKidName(getMembership()?.name));
 import { planGraph } from "../redpen/graph";
 import { validCounting } from "../redpen/counting";
 
@@ -65,6 +83,8 @@ export class MasterjiVoice {
   private recentPraise: string[] = []; // his last short praises, so the next one uses new words
   private praiseTurn = false;
   language: Language;
+  // The name the child typed when joining their class (/join), so he greets them instead of asking.
+  private kidName = kidNameFromClass();
 
   constructor(
     language: Language,
@@ -95,7 +115,8 @@ export class MasterjiVoice {
     this.subscribe();
     // One message: a second note right after would cut off his greeting.
     const q = sessionState.question; // set before Masterji started?
-    this.note(`[SESSION START] Greet the child and ask their name.${q ? `\n${this.questionNote(q.text)}` : ""}`);
+    const greet = this.kidName ? `Greet ${this.kidName} by name (you already know it; don't ask).` : "Greet the child and ask their name.";
+    this.note(`[SESSION START] ${greet}${q ? `\n${this.questionNote(q.text)}` : ""}`);
   }
 
   // A fresh Live session (token + connect). Used at start and on every reconnect.
@@ -103,7 +124,7 @@ export class MasterjiVoice {
     const res = await fetch("/api/live-token", {
       method: "POST",
       headers: { "content-type": "application/json", "x-session-id": getSessionId() },
-      body: JSON.stringify({ language: this.language }),
+      body: JSON.stringify({ language: this.language, kidName: this.kidName }),
     });
     const json = await res.json();
     if (!res.ok) {
@@ -114,7 +135,7 @@ export class MasterjiVoice {
     const generation = ++this.generation;
     this.session = await ai.live.connect({
       model: json.model,
-      config: liveConfig(this.language),
+      config: liveConfig(this.language, undefined, json.kidName),
       callbacks: {
         onopen: () => this.status("live"),
         onmessage: (m: LiveServerMessage) => {
@@ -146,12 +167,11 @@ export class MasterjiVoice {
     }
     try {
       await this.openSession();
-      const q = sessionState.question;
-      const recent = this.history.slice(-8).join(" | ");
-      this.sendNote(
-        `[RECONNECTED: the line dropped for a moment. Continue the SAME lesson; do NOT greet or ask the name again; say at most "Haan, main yahin hoon".${recent ? ` Recent conversation: ${recent}` : ""}]${q ? `\n${this.questionNote(q.text)}` : ""}`,
-      );
-      clientLog("voice.reconnected", {});
+      // Context only (turnComplete false), like the CUT OFF note: a reconnect is not something the child
+      // did, so he must not answer it. As a normal note he spoke into the silence after a drop and
+      // repeated his last lines (log 2026-11-01T02-14-07-do7a, 6:12 after 2.5 min idle).
+      this.session?.sendClientContent({ turns: [{ role: "user", parts: [{ text: reconnectContext(this.history.slice(-8), sessionState.question?.text, this.questionNote.bind(this), this.solved) }] }], turnComplete: false });
+      clientLog("voice.reconnected", { quiet: true });
     } catch (e) {
       clientLog("voice.reconnect_failed", { error: (e as Error).message });
     } finally {

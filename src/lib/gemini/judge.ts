@@ -3,6 +3,7 @@
 // PLAN.md §7). Never import this from client code: it uses GEMINI_API_KEY.
 import { GoogleGenAI, ThinkingLevel, type ThinkingConfig } from "@google/genai";
 import { decide } from "../brain/decide";
+import { knownMistake } from "../brain/mistakes";
 import type { ErrorCategory, QuestionKind, VerdictStatus } from "../types";
 import { buildStepPrompt, stepResponseSchema, type StepResponse } from "./stepPrompt";
 
@@ -89,13 +90,15 @@ export async function judgeStep(input: JudgeInput): Promise<JudgeResult> {
   };
   if (!base.legible || !base.text) return { ...base, status: "unsure", source: "model" };
 
+  const known = knownMistake(input.question ?? "", base.text); // Flash's explanation belonged to its own label
   const d = decide({ text: base.text, alternatives: base.alternatives, modelVerdict: r.verdict, question: input.question, previous: input.previous, kind: input.kind });
   return {
     ...base,
     status: d.status,
     source: d.source,
     checkerReason: d.reason,
-    // A category only makes sense on a wrong step.
+    // A category only makes sense on a wrong step. A mistake code can name (added across) beats Flash's label.
     ...(d.status === "correct" ? { category: undefined, newCategoryLabel: undefined, explanation: undefined } : {}),
+    ...(d.status === "wrong" && known && known !== base.category ? { category: known, newCategoryLabel: undefined, explanation: undefined } : {}),
   };
 }

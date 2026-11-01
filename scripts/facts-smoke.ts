@@ -70,3 +70,19 @@ for (const q of ["3/4 + 1/6", "5/6 - 1/4", "2/3 + 1/5", "3x + 5 = 20", "x + 5 = 
     .map((f) => f.replace(/^[a-zA-Z ]+:\s*/, ""));
   for (const l of lines) r(q, l, false);
 }
+
+// Mistakes code names for sure (label only, on a step already judged wrong).
+import { knownMistake } from "../src/lib/brain/mistakes";
+const km = (q: string, line: string, want: string | undefined) => {
+  const got = knownMistake(q, line);
+  console.log(`${got === want ? "PASS" : "FAIL"}  mistake ${q} | ${line} -> ${got}`);
+  if (got !== want) process.exitCode = 1;
+};
+km("2/5 + 1/3", "3/8", "add_across");
+km("1/2 + 1/3", "2/5", "add_across");
+km("3/4 + 1/6", "3/4 + 1/6 = 4/10", "add_across");
+km("3/4 + 1/6", "2/5", "add_across"); // 4/10 simplified
+km("5/6 - 1/4", "4/2", "add_across");
+km("3/4 + 1/6", "11/12", undefined); // right
+km("3/4 + 1/6", "10/12", undefined); // a different mistake
+km("3x + 5 = 20", "x = 3", undefined);

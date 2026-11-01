@@ -1,0 +1,137 @@
+{
+  "ranAt": "2026-11-01T00:23:21.652Z",
+  "base": "http://localhost:3001",
+  "steps": [
+    {
+      "kid": "Test Aarav",
+      "status": "wrong",
+      "text": "3/4 + 1/6 = 4/10",
+      "category": "add_across",
+      "source": "checker",
+      "ms": 2136
+    },
+    {
+      "kid": "Test Aarav",
+      "status": "correct",
+      "text": "9/12 + 2/12",
+      "source": "checker",
+      "ms": 2138
+    },
+    {
+      "kid": "Test Aarav",
+      "status": "correct",
+      "text": "= 11/12",
+      "source": "checker",
+      "ms": 1707
+    },
+    {
+      "kid": "Test Aarav",
+      "status": "correct",
+      "text": "3x = 15",
+      "source": "checker",
+      "ms": 1947
+    },
+    {
+      "kid": "Test Aarav",
+      "status": "correct",
+      "text": "x = 5",
+      "source": "checker",
+      "ms": 1644
+    },
+    {
+      "kid": "Test Diya",
+      "status": "wrong",
+      "text": "3/8",
+      "category": "add_across",
+      "source": "checker",
+      "ms": 1736
+    },
+    {
+      "kid": "Test Diya",
+      "status": "wrong",
+      "text": "2/5",
+      "category": "add_across",
+      "source": "checker",
+      "ms": 1871
+    },
+    {
+      "kid": "Test Kabir",
+      "status": "correct",
+      "text": "12",
+      "source": "checker",
+      "ms": 1622
+    },
+    {
+      "kid": "Test Kabir",
+      "status": "correct",
+      "text": "2/4 + 1/4 = 3/4",
+      "source": "checker",
+      "ms": 1791
+    }
+  ],
+  "saves": [
+    {
+      "kid": "Test Aarav",
+      "status": 200
+    },
+    {
+      "kid": "Test Aarav",
+      "status": 200
+    },
+    {
+      "kid": "Test Aarav",
+      "status": 200
+    },
+    {
+      "kid": "Test Aarav",
+      "status": 200
+    },
+    {
+      "kid": "Test Aarav",
+      "status": 200
+    },
+    {
+      "kid": "Test Aarav",
+      "status": 200
+    },
+    {
+      "kid": "Test Aarav",
+      "status": 200
+    },
+    {
+      "kid": "Test Diya",
+      "status": 200
+    },
+    {
+      "kid": "Test Diya",
+      "status": 200
+    },
+    {
+      "kid": "Test Diya",
+      "status": 200
+    },
+    {
+      "kid": "Test Diya",
+      "status": 200
+    },
+    {
+      "kid": "Test Kabir",
+      "status": 200
+    },
+    {
+      "kid": "Test Kabir",
+      "status": 200
+    },
+    {
+      "kid": "Test Kabir",
+      "status": 200
+    },
+    {
+      "kid": "Test Kabir",
+      "status": 200
+    }
+  ],
+  "code": "P82XEF",
+  "reportFromDashboard": "Master G\nyour maths teacher's assistant at home\n\nHOME PRACTICE REPORT\n\nTest Kabir's report card\n\nSun, 1 Nov, 2026 · 5:54 am–5:55 am · 18 s\n\nName\nClass\n\n2/2\n\nSUMS SOLVED\n\nFIRST TRY\n100%\n2 of 2 checked\nSTEPS CHECKED\n2\n2 right · 0 with a mistake\nSAID “NAHI AATA”\n0\nnever stuck\nMETHOD TAUGHT\n0\nquestions\nMistakes to work on\ngaltiyan\n\nNo mistakes this session.\n\nStrong at\nshabaash\nAddition\n· 1 first try\nA",
+  "dashboardText": "Master G\nfor the teacher\n\nCLASS 6\n\n6B Maths\n\nUpdated just now · refreshes every 10 s\n\nCLASS CODE FOR STUDENTS\n\nP82XEF\n\nCopy join link\nWhatsApp\nSTUDENTS JOINED\n3\n3 practised\nSESSIONS\n3\nat home with Masterji\nSUMS SOLVED\n4/6\nwhole class\nFIRST TRY\n50%\nof sums the checker can verify\nMistakes the class shares\ngaltiyan\n\nnumerator aur denominator dono add kar diye\n\n3×\n\n2 of 3 kids\n\ne.g. wrote 3/4 + 1/6 = 4/10 for 3/4 + 1/6 · Test Aarav, Test Diya\n\nWhat to reteach\nAI SUMMARY\n\nWritten by Gemini Flash from the class counts on this page only (no names are sent). Answers to the practice questions are worked out by Master G's maths checker, not the AI.\n\nWhere the class is lacking\n\nAll 3 students practiced, but 2 children made the same mistake while adding or subtracting fractions by adding both the numerators and the denominators together.\n\nReteach first\n\nReteach how to add and subtract fractions with different denominators properly, focusing on finding a common denominator instead of adding numerators and denominators together.\n\nFor the class worksheet\n1.\n\n2/3 + 1/4\n\nadding numerators and denominators\n\nAnswer\n11/12\n2.\n\n5/6 - 1/2\n\nsubtracting numerators and denominators\n\nAnswer\n1/3\n3.\n\n1/2 + 3/8\n\nfraction addition misconception\n\nAnswer\n7/8\n\nModel: gemini-3.5-flash-lite\n\nWho is strong where\ntopic by topic\n✓\nSolved first try\n✓✗\nSolved after fixing a mistake\n✋\nSolved with Masterji's help\n…\nNot finished\n· latest sum on each topic\nStudent\tAdding / subtracting fractions\tLinear equations\tAddition\nTest Aarav\t✓✗\t✓\t–\nTest Diya\t…\n2\n\t–\t–\nTest Kabir\t✓\t–\t✓\nEvery student\npoori class\nSTUDENT\tLAST PRACTICE\tSOLVED\tFIRST TRY\tTREND\tTOP MISTAKE\t\nTest Kabirroll 3\tjust now\n1 session · 0 min\n\t2/2\t100%\t\n\tnone\tOpen\nTest Diyaroll 2\t1 min ago\n1 session · 0 min\n\t0/2\t0%\t\n\tnumerator aur denominator dono add kar diye ×2\tOpen\nTest Aaravroll 1\t1 min ago\n1 session · 1 min\n\t2/2\t50%\t\n\tnumerator aur denominator dono add kar diye ×1\tOpen\n\nSTUDENT · ROLL 3\n\nTest Kabir\n\nJoined 1 Nov · 1 session · 0 min practice\n\nClose\nMistakes\n\nNo mistakes so far.\n\nStrong at\n\nAddition · Adding / subtracting fractions\n\nSessions\n\nSun, 1 Nov · 5:54 am\n\n2/2 solved · 0 mistakes · 18 s\n\nReport →\n7 + 5\nFIRST TRY\n1/2 + 1/4\nFIRST TRY\n\nEvery number here comes from the children's own sessions: each step Masterji read and checked. Nothing is sample data."
+}

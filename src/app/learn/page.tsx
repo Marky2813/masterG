@@ -9,6 +9,7 @@ import VoiceBar from "@/components/voice/VoiceBar";
 import { startStepService } from "@/lib/brain/stepService";
 import { startReportRecorder } from "@/lib/report/recorder";
 import ReportButton from "@/components/report/ReportButton";
+import ClassChip from "@/components/classroom/ClassChip";
 import "@/lib/sessionState";
 
 // Full-screen whiteboard with Masterji floating on top.
@@ -23,7 +24,7 @@ export default function Home() {
 
   return (
     <main className="text-slate-900">
-      <Notebook debug={debug} toolbarExtra={<ReportButton />} />
+      <Notebook debug={debug} toolbarExtra={<><ClassChip /><ReportButton /></>} />
       <RoughPad />
       <VoiceBar>
         <QuestionBox />

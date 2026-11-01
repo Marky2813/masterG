@@ -61,10 +61,17 @@ DATA:
 
 export async function writeSummary(r: Report): Promise<{ summary: AiSummary; facts: ReturnType<typeof reportFacts>; ms: number }> {
   const facts = reportFacts(r);
+  const { summary, ms } = await noteFromFacts(PROMPT, facts);
+  return { summary, facts, ms };
+}
+
+// One Flash call: a prompt that ends in "DATA:" plus the computed facts -> { lacking, next, questions }.
+// Shared by the per-session note and the class note (src/lib/classroom/summary.ts).
+export async function noteFromFacts(prompt: string, facts: unknown): Promise<{ summary: AiSummary; ms: number }> {
   const started = performance.now();
   const res = await ai().models.generateContent({
     model: FLASH_MODEL,
-    contents: [{ role: "user", parts: [{ text: PROMPT + JSON.stringify(facts) }] }],
+    contents: [{ role: "user", parts: [{ text: prompt + JSON.stringify(facts) }] }],
     config: {
       temperature: 0.2,
       responseMimeType: "application/json",
@@ -99,7 +106,6 @@ export async function writeSummary(r: Report): Promise<{ summary: AiSummary; fac
     });
   return {
     summary: { lacking: (out.lacking ?? "").trim(), next: (out.next ?? "").trim(), qs, model: FLASH_MODEL },
-    facts,
     ms: Math.round(performance.now() - started),
   };
 }

@@ -83,13 +83,17 @@ export const SHOW_COUNTING = {
   },
 };
 
+// Only letters, spaces and . ' - (a typed name goes into the system prompt), at most 40 characters.
+export const safeKidName = (s: unknown) =>
+  typeof s === "string" ? s.replace(/[^\p{L}\p{M} .'-]/gu, "").replace(/\s+/g, " ").trim().slice(0, 40) || undefined : undefined;
+
 // The one Live config. The token route locks it server-side (so voice + persona are
 // guaranteed applied) and the client connects with the same object.
-export function liveConfig(language: Language, voice = MASTERJI_VOICE): LiveConnectConfig {
+export function liveConfig(language: Language, voice = MASTERJI_VOICE, kidName?: string): LiveConnectConfig {
   return {
     responseModalities: [Modality.AUDIO],
     speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
-    systemInstruction: masterjiPrompt(language),
+    systemInstruction: masterjiPrompt(language, kidName),
     inputAudioTranscription: {},
     outputAudioTranscription: {},
     // Push-to-talk: the kid holds a key/button to speak (activityStart/End). No voice-activity

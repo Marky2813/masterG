@@ -52,3 +52,6 @@ reference/
 
 # session logs (kid voice transcripts, crops)
 logs/
+
+# classroom store (kids names and their work)
+data/
