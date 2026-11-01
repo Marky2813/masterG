@@ -24,11 +24,17 @@ export default function Home() {
 
   return (
     <main className="text-slate-900">
-      <Notebook debug={debug} toolbarExtra={<><ClassChip /><ReportButton /></>} />
+      <Notebook debug={debug} />
       <RoughPad />
-      <VoiceBar>
+      {/* top left: the class and the report (for grown-ups); top centre: the question */}
+      <div data-overlay="top" className="fixed top-4 left-4 z-10 flex items-center gap-1 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-sm backdrop-blur">
+        <ClassChip />
+        <ReportButton />
+      </div>
+      <div data-overlay="top" className="fixed top-4 left-1/2 z-20 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 max-lg:top-16">
         <QuestionBox />
-      </VoiceBar>
+      </div>
+      <VoiceBar />
       {debug && (
         <div className="fixed bottom-20 right-4 z-10 w-80">
           <EventLog />

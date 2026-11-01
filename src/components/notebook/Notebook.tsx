@@ -487,7 +487,7 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
         <canvas ref={overlayRef} className="pointer-events-none absolute inset-0 h-full w-full" />
       </div>
 
-      {/* floating toolbar, top right */}
+      {/* floating toolbar, top right: pen, eraser, undo, clear */}
       <div data-overlay="top" className="fixed right-4 top-4 flex items-center gap-1 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-sm backdrop-blur">
         <button className={btn(tool === "pen")} onClick={() => setTool("pen")} title="Pen">
           ✏️
@@ -498,15 +498,23 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
         <button className={btn(false)} onClick={undo} title="Undo">
           ↶
         </button>
-        <button className={btn(false)} onClick={addSpace} title="Add a page of space below">
-          + Space
-        </button>
         <button className={btn(false)} onClick={clearAll} title="Clear page">
           Clear
         </button>
         {toolbarExtra}
         {debug && <span className="px-2 font-mono text-xs text-slate-400">{clusters.length} clusters</span>}
       </div>
+
+      {/* More space: bottom right, where the child's hand is when the page runs out. */}
+      <button
+        data-overlay="bottom"
+        onClick={addSpace}
+        title="Add more space below"
+        className="fixed right-4 bottom-4 z-10 flex items-center gap-2 rounded-2xl border-2 border-dashed border-amber-300 bg-white/95 py-2 pr-4 pl-2.5 text-sm font-semibold text-amber-900 shadow-[0_4px_14px_rgba(120,90,20,0.12)] backdrop-blur transition hover:border-amber-400 hover:bg-amber-50 active:scale-95"
+      >
+        <span className="flex size-7 items-center justify-center rounded-lg bg-amber-100 text-lg leading-none text-amber-800">＋</span>
+        Aur jagah
+      </button>
     </div>
   );
 }

@@ -5,8 +5,9 @@ import { MasterjiVoice, type VoiceStatus } from "@/lib/voice/voiceService";
 import { bus } from "@/lib/bus";
 import type { Language } from "@/lib/types";
 
-// Floating Masterji card (top left): status pill, live captions, the question chip below,
-// and the push-to-talk pill (bottom centre). Hold SPACE to talk. PLAN.md §6.
+// Masterji at the bottom centre, where the child already looks and reaches: his latest words as a
+// subtitle bubble, and under it the push-to-talk pill. Hold SPACE to talk. PLAN.md §6.
+// (children: rendered above the bubble; /learn passes none now that the question sits top centre.)
 export default function VoiceBar({ children }: { children?: ReactNode }) {
   const voiceRef = useRef<MasterjiVoice | null>(null);
   const [status, setStatus] = useState<VoiceStatus>("idle");
@@ -81,41 +82,45 @@ export default function VoiceBar({ children }: { children?: ReactNode }) {
   });
 
   const live = status === "live" || status === "connecting";
-  const pill = !live
-    ? { text: status === "error" ? "Error" : "Offline", cls: "bg-slate-200 text-slate-600" }
+  const state = !live
+    ? { text: status === "error" ? "Error" : "Offline", dot: "bg-slate-300" }
     : status === "connecting"
-      ? { text: "Connecting", cls: "bg-slate-200 text-slate-600" }
+      ? { text: "aa rahe hain…", dot: "bg-slate-300 animate-pulse" }
       : talking
-        ? { text: "Listening", cls: "bg-sky-600 text-white" }
+        ? { text: "sun rahe hain", dot: "bg-sky-500 animate-pulse" }
         : speaking
-          ? { text: "Speaking", cls: "bg-amber-700 text-white" }
-          : { text: "Watching", cls: "bg-emerald-600 text-white" };
+          ? { text: "bol rahe hain", dot: "bg-amber-500 animate-pulse" }
+          : { text: "dekh rahe hain", dot: "bg-emerald-500" };
+  // the latest ~2-3 lines only, so the bubble stays small and off the board
+  const shown = masterji.length > 170 ? "…" + masterji.slice(-170).replace(/^\S*\s/, "") : masterji;
 
   return (
-    <>
-      <div data-overlay="top" className="fixed left-4 top-4 z-10 flex w-[min(28rem,calc(100vw-2rem))] flex-col gap-2">
-        <div className="rounded-xl border border-amber-200/70 bg-white/95 p-2.5 shadow-sm backdrop-blur">
-          <div className="flex items-start gap-2">
-            <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold ${pill.cls}`}>{pill.text}</span>
-            <div className="min-w-0 flex-1 text-[13px] leading-snug">
-              {masterji ? (
-                <div className="text-slate-800">
-                  <span className="font-semibold text-amber-700">Masterji · </span>
-                  {/* the latest ~3 lines only, so the card stays small and off the board */}
-                  {masterji.length > 190 ? "…" + masterji.slice(-190).replace(/^\S*\s/, "") : masterji}
-                </div>
-              ) : (
-                <div className="text-slate-400">{live ? "…" : "Masterji is offline"}</div>
-              )}
-              {status === "error" && <div className="mt-0.5 text-rose-600">{detail}</div>}
+    <div data-overlay="bottom" className="pointer-events-none fixed bottom-4 left-1/2 z-10 flex w-[min(40rem,calc(100vw-2rem))] -translate-x-1/2 flex-col items-center gap-2.5">
+      {children}
+      {(live || status === "error") && (
+        <div className="pointer-events-auto flex w-full items-start gap-3 rounded-2xl border border-amber-200/80 bg-white/95 px-3.5 py-2.5 shadow-[0_4px_18px_rgba(120,90,20,0.12)] backdrop-blur">
+          <div className="relative mt-0.5 shrink-0">
+            <svg viewBox="0 0 40 40" className="size-9" aria-hidden="true">
+              <rect x="3" y="3" width="34" height="34" rx="11" fill="#FFE36E" stroke="#161513" strokeWidth="2.2" />
+              <circle cx="14" cy="17" r="4" fill="none" stroke="#161513" strokeWidth="2.2" />
+              <circle cx="26" cy="17" r="4" fill="none" stroke="#161513" strokeWidth="2.2" />
+              <path d="M14 26c2.5 2.4 9.5 2.4 12 0" fill="none" stroke="#161513" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
+            <span className={`absolute -right-0.5 -bottom-0.5 size-3 rounded-full ring-2 ring-white ${state.dot}`} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] font-semibold tracking-wide text-amber-800/80">
+              Masterji <span className="font-normal text-slate-400">· {state.text}</span>
             </div>
+            <div className="text-[15px] leading-snug text-slate-800" aria-live="polite">
+              {shown || <span className="text-slate-400">…</span>}
+            </div>
+            {status === "error" && <div className="mt-0.5 text-[13px] text-rose-600">{detail}</div>}
           </div>
         </div>
-        {children}
-      </div>
+      )}
 
-      {/* bottom centre: start / push-to-talk */}
-      <div data-overlay="bottom" className="fixed bottom-5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2">
+      <div className="pointer-events-auto flex items-center gap-2">
         {live ? (
           <>
             <button
@@ -139,6 +144,6 @@ export default function VoiceBar({ children }: { children?: ReactNode }) {
           </button>
         )}
       </div>
-    </>
+    </div>
   );
 }
