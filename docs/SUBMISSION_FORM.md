@@ -53,8 +53,6 @@ Families who can afford it pay for private tuition to fill this gap. Most childr
 
 https://github.com/Marky2813/masterG
 
-> ⚠️ The repo is **private** right now. Sarthak (owner) must make it public before submitting.
-
 ---
 
 ## Presentation Deck
