@@ -374,11 +374,16 @@ export class LandingMotion {
     tg.nav = cl(y / Math.max(1, de.scrollHeight - vh));
     let enter = 0;
     let sp = 0;
+    let gone = false;
     if (ui.story) {
       const r = ui.story.getBoundingClientRect();
       enter = cl((vh - r.top) / (vh - NAV));
       sp = cl((NAV - r.top) / Math.max(1, r.height - (vh - NAV)));
+      // The lesson has started scrolling away: the cube leaves with it instead of floating over the
+      // tapes and the next section (it hung there, and Firefox drew it stretched, Akash 1 Nov).
+      gone = r.bottom < vh - 24;
     }
+    if (ui.rig) ui.rig.classList.toggle("gone", gone);
     // the cube glides from the hero to the corner of the lesson
     const kr = cl((enter - 0.15) / 0.75);
     const k = kr * kr * (3 - 2 * kr);

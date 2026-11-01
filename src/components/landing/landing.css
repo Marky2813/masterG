@@ -214,7 +214,13 @@
   width: 470px;
   height: 470px;
   transform-origin: 50% 50%;
-  will-change: transform;
+  transition: opacity 0.3s ease, visibility 0s;
+}
+/* after the lesson: gone (fades out, then stops being drawn at all) */
+.mg .rig.gone {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0s linear 0.3s;
 }
 .mg .rig-fade {
   transition: opacity 0.35s;
