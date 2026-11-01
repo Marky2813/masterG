@@ -505,19 +505,20 @@ export default function Notebook({ debug = false, toolbarExtra }: { debug?: bool
         {debug && <span className="px-2 font-mono text-xs text-slate-400">{clusters.length} clusters</span>}
       </div>
 
-      {/* Add space: bottom right, where the child's hand is when the page runs out. */}
-      <div data-overlay="bottom" className="fixed right-5 bottom-4 z-10 flex flex-col items-center gap-1">
+      {/* Add space: the bottom-right corner, where the child's hand is when the page runs out.
+          Hold to talk (VoiceBar) sits right above it, same size. */}
+      <div data-overlay="bottom" className="fixed right-4 bottom-4 z-10 flex w-20 flex-col items-center gap-1">
         <button
           onClick={addSpace}
           aria-label="Add space"
           title="Add more space below"
-          className="flex size-12 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition hover:bg-slate-50 active:scale-95"
+          className="flex size-14 items-center justify-center rounded-full bg-slate-900 text-white shadow-lg transition hover:bg-slate-700 active:scale-95"
         >
-          <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+          <svg viewBox="0 0 24 24" className="size-7" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
             <path d="M12 5v14M5 12h14" />
           </svg>
         </button>
-        <span className="text-[11px] font-medium text-slate-500">Add space</span>
+        <span className="text-[11px] font-semibold text-slate-600">Add space</span>
       </div>
     </div>
   );
