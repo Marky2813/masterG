@@ -93,7 +93,7 @@ function WritePad({ onDone, onCancel }: { onDone: (png: string) => void; onCance
           Clear
         </button>
         <button type="button" className="rounded-md bg-slate-900 px-3 py-1 text-white" onClick={() => strokes.current.length && onDone(ref.current!.toDataURL("image/png"))}>
-          Ho gaya
+          Done
         </button>
       </div>
     </div>
@@ -134,7 +134,7 @@ function HomeworkPanel({ onImage, onText, onCancel }: { onImage: (f: File) => vo
           Cancel
         </button>
         <button type="button" className="rounded-md bg-slate-900 px-3 py-1 text-white disabled:opacity-40" disabled={!text.trim()} onClick={() => onText(text.trim())}>
-          Padho
+          Read homework
         </button>
       </div>
     </div>
