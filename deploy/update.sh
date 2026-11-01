@@ -21,10 +21,12 @@ if [ ! -f "$REL/.built" ]; then
   rm -rf "$REL"
   git worktree prune
   git worktree add --quiet --detach "$REL" "$TARGET"
-  ln -sfn "$ROOT/shared/data" "$REL/data"
-  ln -sfn "$ROOT/shared/logs" "$REL/logs"
   ln -sfn "$ROOT/shared/.env.local" "$REL/.env.local"
   (cd "$REL" && npm ci --no-audit --no-fund --loglevel=error && NODE_OPTIONS=--max-old-space-size=1536 npx next build) > "$ROOT/shared/build-${TARGET:0:7}.log" 2>&1 || { echo "$(date -Is) build of ${TARGET:0:7} FAILED (see shared/build-${TARGET:0:7}.log); still serving ${CURRENT:0:7}"; exit 1; }
+  # Link the shared data and logs only AFTER the build: the build traces the app's logs/ folder and fails on
+  # links that point outside the release (deploy of e0223c1, 1 Nov).
+  ln -sfn "$ROOT/shared/data" "$REL/data"
+  ln -sfn "$ROOT/shared/logs" "$REL/logs"
   touch "$REL/.built"
 fi
 PREV=$(readlink -f "$ROOT/current" 2>/dev/null || true)
