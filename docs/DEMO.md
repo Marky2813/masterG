@@ -39,7 +39,7 @@ Both run on the overnight build (`overnight/preview`, PR #64). Rehearse once wit
 
 ## Segment: teacher dashboard (rehearse once)
 
-Before judging: make the demo class at `/teacher` on the demo laptop and keep the dashboard tab open. Each teammate joins it from their own phone or laptop (`/join?c=CODE`) and does two or three sums, so the dashboard holds real sessions. Don't seed or fake any.
+Before judging: make the demo class at `/teacher` on the demo laptop and keep the dashboard tab open. Each teammate joins it from their own phone or laptop (`/join?c=CODE`) and does two or three sums, so the dashboard holds real sessions. Don't seed or fake any. From another device use the laptop's Wi-Fi address (`npm run dev` prints it as Network, e.g. `http://192.168.1.183:3000/join?c=CODE`). On that plain-http address the browser blocks the mic, so Masterji can't hear them there; writing and step checking still work.
 
 | Beat | Do | Fallback |
 |---|---|---|
