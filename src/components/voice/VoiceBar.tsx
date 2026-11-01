@@ -146,9 +146,9 @@ export default function VoiceBar({ children }: { children?: ReactNode }) {
         )}
       </div>
 
-      {/* Hold to talk: bottom right, next to "Add space", where a child's hand rests on a tablet. */}
+      {/* Hold to talk: bottom right, stacked right above "Add space" (Notebook), same size. */}
       {live && (
-        <div data-overlay="bottom" className="fixed right-[5.25rem] bottom-4 z-10 flex flex-col items-center gap-1">
+        <div data-overlay="bottom" className="fixed right-4 bottom-[6.5rem] z-10 flex w-20 flex-col items-center gap-1">
           <button
             aria-label="Hold to talk"
             title="Hold to talk (or hold Space)"
@@ -164,7 +164,7 @@ export default function VoiceBar({ children }: { children?: ReactNode }) {
               <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
             </svg>
           </button>
-          <span className="text-[11px] font-medium text-slate-500">{talking ? "Listening…" : "Hold to talk"}</span>
+          <span className="text-[11px] font-semibold text-slate-600">{talking ? "Listening…" : "Hold to talk"}</span>
         </div>
       )}
     </>

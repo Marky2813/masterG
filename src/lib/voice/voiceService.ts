@@ -48,6 +48,16 @@ export function spokenClean(s: string): string {
     .trim();
 }
 
+// His first note. A child we don't know yet: greet and ask name and class ONLY, then wait. Asking three
+// things and announcing the sum in the same breath didn't feel natural (Akash, log 2026-11-01T04-47-56-a3hy).
+// The question rides along as context for after they answer.
+export function sessionStartNote(kidName: string | undefined, questionNote: string | undefined): string {
+  const greet = kidName
+    ? `Greet ${kidName} by name (you already know it; don't ask).`
+    : `Greet the child warmly in one short sentence and ask ONLY their name and class, then stop and wait for the answer. Do NOT mention the sum yet${questionNote ? ": after the child tells you their name, tell them the question below and ask them to start" : ""}.`;
+  return `[SESSION START] ${greet}${questionNote ? `\n${questionNote}` : ""}`;
+}
+
 const kidNameFromClass = () => (typeof window === "undefined" ? undefined : safeKidName(getMembership()?.name));
 import { planGraph } from "../redpen/graph";
 import { validCounting } from "../redpen/counting";
@@ -131,8 +141,7 @@ export class MasterjiVoice {
     this.subscribe();
     // One message: a second note right after would cut off his greeting.
     const q = sessionState.question; // set before Masterji started?
-    const greet = this.kidName ? `Greet ${this.kidName} by name (you already know it; don't ask).` : "Greet the child and ask their name.";
-    this.note(`[SESSION START] ${greet}${q ? `\n${this.questionNote(q.text)}` : ""}`);
+    this.note(sessionStartNote(this.kidName, q ? this.questionNote(q.text) : undefined));
   }
 
   // A fresh Live session (token + connect). Used at start and on every reconnect.
@@ -408,7 +417,10 @@ export class MasterjiVoice {
   }
 
   private noteQuestion(text: string): void {
-    this.note(this.questionNote(text));
+    // The sum was set before the child said anything: he once filled the gap with a made-up name
+    // ("Ayaan, Class 6", headless run 1 Nov). Say plainly that he doesn't know it.
+    const unknown = !this.kidName && !this.history.some((h) => h.startsWith("child: "));
+    this.note(this.questionNote(text) + (unknown ? "\n[The child has NOT told you their name or class yet: don't guess or use any name; you can ask again later.]" : ""));
   }
 
   // ---- Teacher's homework (sessionState homework queue, loaded from a worksheet in QuestionBox) ----
