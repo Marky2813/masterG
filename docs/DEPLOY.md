@@ -19,6 +19,15 @@ submission, gated by one invite code, auto-updated from `main`.
 3. Copy the secrets file to `/srv/masterg/shared/.env.local` (scp, never paste), `chmod 600`, owner `masterg`.
 4. `sudo -u masterg /srv/masterg/update.sh --force`, then `sudo systemctl start masterg-update.timer`.
 
+## Live (1 Nov 2026)
+- https://masterg.akashparashar.dev — instance `i-01dfe4839d6998909` (ap-south-1, t3.small), Elastic IP 13.127.213.191, Cloudflare A record (DNS only).
+- SSH: `ssh -i ~/.ssh/masterg-aws.pem ubuntu@13.127.213.191` (Akash's laptop). The security group allows SSH only from listed addresses; the venue network uses more than one public IP, so add yours if it times out.
+- The repo is **private**, so the server can't pull it without a credential. Until the owner adds the server's read-only deploy key (public key in `/srv/masterg/.ssh/id_ed25519.pub`; GitHub → repo Settings → Deploy keys → Add, read-only), the server's `origin` is a git bundle copied over SSH and auto-deploy has nothing new to fetch. To push an update by hand: `git bundle create main.bundle main`, scp it to `/srv/masterg/main.bundle`, then `sudo -u masterg /srv/masterg/update.sh --force`.
+- After the key is added: `sudo -u masterg git -C /srv/masterg/repo remote set-url origin git@github.com:Marky2813/masterG.git` and the timer deploys every merge to main.
+
+- **Venue network:** the hackCBS Wi-Fi (Fortinet web filter) blocks all of akashparashar.dev, and sslip.io and nip.io too ("Web Filter Block Override"). Off-site visitors are fine; on site, use mobile data. Checked 1 Nov from the laptop.
+- **First click:** pages are pre-rendered, so a button pressed in the first second after load, before the JavaScript attaches, does nothing. Press it again.
+
 ## Operate
 - Deploy log: `journalctl -u masterg-update -n 50`; app log: `journalctl -u masterg -n 100`; build logs: `/srv/masterg/shared/build-*.log`.
 - Force a deploy now: `sudo -u masterg /srv/masterg/update.sh --force` (ignores the live-session wait).
