@@ -1,127 +1,87 @@
 # Master G
 
-**Masterji is your maths teacher's teaching assistant at home.** A child writes sums on a stylus notebook. Masterji reads every step, stays quiet while it is right, and steps in by voice and red pen when it is wrong. He gives hints, not answers. He never calls a correct step wrong (see [Limits](#limits-and-honesty) for what that claim does and does not cover).
+**Your maths teacher's teaching assistant at home.** A child solves a sum in a digital notebook; Master G checks every line as it is written, stays quiet while it is right, and steps in with a red pen and a voice the moment it goes wrong.
 
-Built at hackCBS 9.0 by Akash (`adot-7`), Sarthak (`Marky2813`) and Harjeet (`HARJEET-SINGH-dev`). Tracks: EdTech, MLH Best Use of Gemini API, Yugabyte (MEKO; blocked, see Limits).
+The tutor inside, Masterji, is a classic Indian tuition teacher: strict, a little dramatic, funny, and he speaks Hinglish. He never hands over the answer. He climbs a hint ladder (point, narrow, lead, show) and teaches the method on the board when the child is stuck. Every session becomes a report the child's teacher can act on. Built for NCERT Classes 1–8.
 
-**Try it:** https://masterg.akashparashar.dev (invite-only for now; the code is in our submission). Best on a laptop or tablet with a stylus; voice needs a mic.
+Built at hackCBS 9.0 (31 Oct – 1 Nov 2026) by Akash ([`adot-7`](https://github.com/adot-7)), Sarthak ([`Marky2813`](https://github.com/Marky2813)) and Harjeet ([`HARJEET-SINGH-dev`](https://github.com/HARJEET-SINGH-dev)).
 
-Developers: read [PLAN.md](PLAN.md) (product source of truth) and [AGENTS.md](AGENTS.md) (working rules) first.
+## Watch
+<a href="https://www.youtube.com/watch?v=r_-LqMQN29w"><img src="https://img.youtube.com/vi/r_-LqMQN29w/hqdefault.jpg" width="420" alt="Master G demo video"></a>
 
-## The problem
+- **Demo video:** [youtube.com/watch?v=r_-LqMQN29w](https://www.youtube.com/watch?v=r_-LqMQN29w)
+- **Live:** [masterg.akashparashar.dev](https://masterg.akashparashar.dev) (invite-only; the code is in our submission)
 
-- A child practising alone at home has no one to catch a wrong step until the teacher marks it days later.
-- A child who pastes a sum into a chatbot gets the answer, copies it, and learns nothing.
-- A teacher sees the final answer in a notebook, not where each child got stuck.
+| | |
+|---|---|
+| ![The notebook: a wrong step circled in red, the LCM method written on the board, Masterji's words at the bottom](docs/screenshots/learn/learn-100pct-live.png) | ![The report card for one session](docs/screenshots/report/report-desktop.png) |
+| **Every line checked.** `3/4 + 1/6 = 4/10` gets a red circle; Masterji asks where it went wrong, then writes the LCM method on the board when the child is stuck. | **A report for the teacher.** Every step with its mark, the mistake types, the hints needed, and a note on where the child is lacking. Share it as a link or on WhatsApp, or print it. |
+| ![The class dashboard: shared mistakes, a topic-by-student grid and the roster](docs/screenshots/classroom/dashboard-desktop.png) | ![The teacher's worksheet loaded as a homework queue](docs/screenshots/homework/2-homework-loaded.png) |
+| **The whole class at a glance.** A class code, children join once, and the teacher sees the mistakes the class shares ("2 of 3 kids added across") and what to reteach. Test students, real verdicts. | **Homework from the teacher.** A photo or the text of a worksheet becomes a queue, and Masterji works through it in order. |
 
-## What it does
-
-- **Watches each step.** The notebook groups pen strokes into lines. When the pen pauses, a crop of the line goes to Gemini Flash, which reads it. A maths checker (mathjs) verifies what it can compute. Where the checker can compute, the checker wins.
-- **Stays quiet when right.** A correct step gets a red tick. A step with a plausible correct reading is treated as correct.
-- **Steps in when wrong.** Red circle on the wrong part, then Masterji speaks in Hinglish (or English). He follows a hint ladder: point, narrow, lead, show. He does not hand over the answer first.
-- **Teaches on the board in red pen.** Notes, working lines, multi-line method working (for example LCM by listing multiples), graphs of equations with the crossing circled, and counting sticks for small sums (Classes 1-3).
-- **Takes the question any way.** Handwritten, typed, photo, or pasted screenshot. Masterji reads it back to confirm.
-- **Push-to-talk.** The child holds a button to speak, so Masterji does not hear himself on the speakers.
-- **Classes 1-8, NCERT.** Masterji asks the class and pitches the sum to it.
-
-### Golden path (about 2 minutes, see [docs/DEMO.md](docs/DEMO.md))
-
-1. Write `3/4 + 1/6`. The child adds across and writes `4/10`.
-2. Masterji circles it in red and says it is wrong. Hint ladder, child fixes it, ticks, "Shabash!"
-3. Ask "kaise?" and Masterji writes the method on the board.
-4. A linear equation: Masterji draws the graph.
-
-### For the teacher (tested offline; not yet run with the stylus and voice)
-
-- **Homework from the teacher:** photograph, screenshot or paste a worksheet. Flash splits it into a queue of questions, and Masterji works through that homework instead of inventing sums. On 4 rendered test worksheets, 28/28 questions were read correctly after prompt tuning (`benchmark/worksheets/`).
-- **Teacher / parent report** (`📋 Report`, at `/report`): for each question it shows every step read with its mark, the mistake types, the hints needed and the handwriting remarks. It adds an AI note for the teacher, grounded only in those facts, with suggested next-worksheet questions whose answers come from the checker. Share it as a link (the report is compressed into the URL; no database), on WhatsApp, or print it to PDF.
-- **Teacher dashboard** (`/teacher`): the teacher makes a class and shares a 6-letter code. Each child joins once at `/join` with their name and roll number, and the device keeps a student ID. From then on, every practice session goes to the teacher as the child works. The dashboard shows the whole class: who practised, sums solved and first-try rate per child with a trend, the mistakes the class shares ("2 of 3 kids added across"), a topic-by-student grid, and each child's sessions, which open the full report. A Flash note says what to reteach, from class counts only (no names sent). No accounts: the private dashboard link is the teacher's key. Storage is JSON files on the server (`data/`, gitignored). This works on one machine, not on Vercel.
+## For judges
+- **Open [masterg.akashparashar.dev](https://masterg.akashparashar.dev)** in Chrome or Edge on a laptop or tablet, enter the invite code from our submission, and allow the microphone.
+- **Try the golden path:** type `3/4 + 1/6` as the question, press **Start Masterji**, tell him your name and class (hold the mic button or the Space bar to talk), then write `3/4 + 1/6 = 4/10`. Watch the circle, the hint, and what happens when you say "nahi aata". Write the right steps and he ticks them.
+- **Ask for more:** on a linear equation say "graph dikha do"; on a small sum for Class 1 he counts with sticks. Interrupt him any time by pressing the mic.
+- **The teacher's side:** **📋 Report** opens the session's report card. **I'm a teacher** on the home page makes a class; open its join link in another browser profile to be a student.
+- **What to expect:** a step is checked about 2 seconds after the pen rests. Masterji speaks Hinglish. A mouse works; a stylus is better.
+- **On the hackCBS Wi-Fi** the domain is blocked by the venue's web filter; use mobile data.
 
 ## How it works
+![How Master G works: the child's notebook sends each written line and their voice to the Master G web app; on Amazon EC2 in Mumbai the step checker, reports and class dashboard, and short-lived voice tokens; Gemini Flash reads and judges each handwritten step; the Gemini Live API is Masterji's voice; red-pen ticks, circles, hints and his voice come back to the child; the teacher and parent get the report card and class dashboard](docs/design/architecture.jpg)
 
-```mermaid
-flowchart LR
-  N[Notebook canvas<br/>stylus strokes] --> C[Stroke clustering<br/>one cluster per line]
-  C --> P[Crop of the line<br/>PNG]
-  P --> F[Gemini Flash<br/>read + judge, JSON]
-  F --> D[decide.ts<br/>checker wins when it can compute]
-  K[mathjs checker] --> D
-  D --> B((Verdict bus))
-  B --> R[Red-pen engine<br/>tick, circle, notes, graphs, counting]
-  B --> V[Gemini Live voice<br/>Masterji, Hinglish]
-  V -->|tools: write_note, write_line,<br/>write_working, set_question,<br/>draw_graph, show_counting| R
-  R --> N
-```
+- **The notebook** (`src/components/notebook/`, `src/lib/notebook/`): a canvas that groups pen strokes into lines. When the pen rests, a crop of the line goes to the server. Stacked fractions, wide gaps between terms and lines the child extends are all kept as one step.
+- **Read and judge** (`src/lib/gemini/`, `src/lib/brain/`, `src/lib/checker.ts`): Gemini Flash (`gemini-3.5-flash-lite`) reads the handwriting into a maths expression and gives a verdict, a mistake type and a handwriting rating as JSON. A mathjs checker then recomputes every step it can, and **when the checker can compute a step, the checker wins**, so a correct step is not called wrong because the model misread it. If any plausible reading makes a step correct, it is correct.
+- **The voice** (`src/lib/voice/`, `src/app/api/live-token/`): Masterji runs on the Gemini Live API (`gemini-3.1-flash-live-preview`), push-to-talk. The browser gets a short-lived token from our server, so the API key never leaves it. Verdicts reach him as hidden notes; he never judges the maths himself. He acts through tools: write a note, write a working, draw a graph, show counting sticks, set the next question. Code-side guards stop him writing the final answer early, speaking internal notes, or saying a reply twice.
+- **The red pen** (`src/lib/redpen/`): ticks, circles, notes and workings drawn as animated handwriting, placed clear of the floating panels. Graph crossings and counting are computed in code, never by the model.
+- **For the teacher** (`src/lib/report/`, `src/lib/classroom/`, `/report`, `/teacher`, `/join`): the report is built from the session's own events and travels inside its share link. Classes and synced sessions live on the server. The AI notes are written from computed facts only, and the practice questions they suggest get their answers from our checker.
+- **Hosting** (`deploy/`, `src/proxy.ts`, [`docs/DEPLOY.md`](docs/DEPLOY.md)): one EC2 instance in Mumbai behind Caddy (HTTPS), an invite-code gate on the app and every API, and every merge to `main` deployed automatically, with a health check and rollback.
 
-- Clustering is client-side. Every AI mark is placed on a cluster bounding box; the model never invents coordinates.
-- `src/lib/brain/decide.ts` is the shared rule: the checker overrides the model where it can compute; alternative readings count only through confusable characters; steps the checker cannot compute become "unsure" (quiet), not wrong.
-- Parts talk only through typed events on `src/lib/bus.ts` (types in `src/lib/types.ts`).
-- The browser never sees `GEMINI_API_KEY`. `/api/live-token` mints a single-use, 2-minute-to-start Live token with voice, persona and tools locked in.
+API keys live only on the server. Every session is logged (events, step crops, transcripts) so any run can be replayed.
 
-### Models and APIs in the live path (nothing else)
+## Measured
+48 labelled steps written on a Wacom board (28 correct, 20 wrong), in `benchmark/samples/`. Shipped config: Flash judges, then the checker rule.
 
-| Job | Model | API | Where |
+| When (IST) | Verdict accuracy | False alarms (correct step called wrong) | p95 latency |
 |---|---|---|---|
-| Read and judge a handwritten step | `gemini-3.5-flash-lite` (override: `GEMINI_FLASH_MODEL`) | Gemini API `generateContent`, JSON schema output, thinking level MINIMAL, temperature 0 | `src/lib/gemini/judge.ts` |
-| Read the question (handwritten / photo / paste) | same Flash model | same | `src/lib/gemini/question.ts` |
-| Masterji's voice | `gemini-3.1-flash-live-preview` (override: `GEMINI_LIVE_MODEL`), prebuilt voice `Charon` | Gemini Live API, audio out, ephemeral tokens via `authTokens.create` (v1alpha) | `src/lib/voice/config.ts`, `liveConfig.ts`, `src/app/api/live-token/route.ts` |
+| 1 Nov 01:25, 2 runs | 96 % and 98 % | 0 and 0 | 1.81 s and 1.69 s |
+| 1 Nov 09:40, after English mistake labels | 98 % | 0 | 2.61 s |
 
-The benchmark also probed `gemini-pro-latest`; it is not in the live path.
-
-## Benchmark
-
-48 labelled steps written on a Wacom board (28 correct, 20 wrong), `benchmark/samples/`. Config in the app: "A+guard" (Flash judges, then the shared rule), Flash = `gemini-3.5-flash-lite`.
-
-| Date (IST) | Run | Verdict accuracy | False alarms (correct step called wrong) | p95 latency | File |
-|---|---|---|---|---|---|
-| 31 Oct 18:30 | Run 3, 96 judgements, rule at run time | 98 % | 1 | 2.51 s | `benchmark/results/2026-10-31T13-00-01-249Z.md` |
-| 31 Oct 18:30 | Same readings, re-decided offline with the current rule | 97.9 % | 0 | 2.51 s | `docs/SPIKES.md` (`scripts/redecide.ts`) |
-| 1 Nov 01:25 | After adding the handwriting rating, A+guard, 2 runs of 48 | 96 % and 98 % | 0 and 0 | 1.81 s and 1.69 s | `benchmark/results/2026-10-31T19-55-28-900Z.md`, `…19-56-40-262Z.md` |
-
-The team's own target was p95 at or under 2 s. Run 3 missed it (2.51 s); the later runs met it on 48 samples each. This is one writer, one board, 48 steps. It is not a general accuracy figure. Full detail: [docs/SPIKES.md](docs/SPIKES.md).
+One writer, one board, 48 steps: not a general accuracy figure. Every run is in [`docs/SPIKES.md`](docs/SPIKES.md) and `benchmark/results/`.
 
 ## Run it locally
-
+You need Node 20 and a Gemini API key.
 ```bash
 npm ci
-cp .env.example .env.local     # set GEMINI_API_KEY; never commit this file
-npm run dev
+cp .env.example .env.local      # set GEMINI_API_KEY; never commit it
+npm run dev                     # http://localhost:3000, the notebook at /learn
 ```
+- `/learn?debug=1` shows the live event log; session logs land in `logs/` (gitignored).
+- `npm run check`: typecheck, lint, and the offline suites (checker, clustering, verdict rule, board facts, graphs, report, classroom, voice rules).
+- `npm run bench`: the 48-step benchmark against the real model.
+- `scripts/*-probe.ts` and `scripts/*-drive.mjs`: live-model probes and headless-Chrome runs used as evidence in the PRs.
+- Without `INVITE_CODE` set, the invite gate is off.
 
-1. Open <http://localhost:3000/> (landing page), then <http://localhost:3000/learn> (the notebook).
-2. Use Chrome or Edge on a laptop with speakers and a microphone. A Wacom board mapped to the browser window is best; a mouse works.
-3. Give the question (type, photo, paste or handwrite), confirm it, press Start, then hold the button (or the Space bar) to talk.
-4. `/learn?debug=1` shows the event log. Session logs land in `logs/` (gitignored).
-
-Checks: `npm run check` (typecheck, lint, checker, clustering, decide, facts and graph smoke tests).
-
-## Limits and honesty
-
-Status words follow [AGENTS.md](AGENTS.md): edited < tested offline < verified in browser < accepted. Every public claim, with its evidence and status, is in [docs/CLAIMS.md](docs/CLAIMS.md).
-
-- **"Never calls a correct step wrong"** means: on our 48 samples the shipped rule had 0 false alarms in three runs, and the checker re-verifies steps it can compute. It is not a guarantee. A misread digit can still cause a wrong call.
-- **MEKO / YugabyteDB memory is not built.** It is blocked on access (account, key, endpoint). Masterji does not remember a child across sessions today.
-- **No deploy yet.** It runs locally. Vercel is planned, see [docs/LAUNCH.md](docs/LAUNCH.md).
-- **Voice sessions end after about 10 minutes.** The app reconnects; the reconnect has not been waited out live.
-- Several features are tested offline only (graph tool in the live app after #59, messy-handwriting flag, 120 % zoom with the stylus). See CLAIMS.
-- The Live model is a preview model. Behaviour can change.
-- Out of scope: constructions, angles, symmetry, written "explain why" answers.
-- Session logs hold the child's step images and voice transcripts. They stay on the local disk and are gitignored. No audio is stored.
-
-## Team
-
-Akash (`adot-7`), Sarthak (`Marky2813`), Harjeet (`HARJEET-SINGH-dev`). No fixed owners; we worked as a relay (see AGENTS.md).
-
-## Where things live
-
+## Repository
 | Path | What |
 |---|---|
-| `src/app/` | Pages: `/` landing, `/learn` notebook, `/capture` benchmark capture, API routes |
-| `src/components/notebook/` | Canvas, rough-work sheet |
-| `src/lib/notebook/` | Stroke clustering |
-| `src/lib/checker.ts`, `src/lib/brain/` | mathjs checker, `decide.ts`, step service |
-| `src/lib/gemini/` | Flash prompts and calls |
-| `src/lib/voice/` | Live config, persona, tools, audio |
-| `src/lib/redpen/` | Red-pen engine: marks, text font, graphs, counting sticks |
-| `benchmark/` | Samples, runner, results |
-| `docs/` | DECISIONS, SPIKES, CLAIMS, DEMO, PITCH, LAUNCH, SUBMISSION |
+| `src/app/` | Pages (`/`, `/learn`, `/report`, `/teacher`, `/join`, `/invite`) and API routes (`step`, `question`, `worksheet`, `live-token`, `report-summary`, `class/*`, `log`) |
+| `src/components/` | `notebook/`, `voice/`, `question/`, `report/`, `classroom/`, `landing/` |
+| `src/lib/` | `notebook/` clustering · `gemini/` Flash · `brain/` verdict rule, facts, mistakes · `checker.ts` mathjs · `voice/` Live API, persona, tools · `redpen/` handwriting · `report/` · `classroom/` · `invite/` |
+| `benchmark/` | Labelled samples, the benchmark runner and its results |
+| `scripts/` | Smoke tests, live probes, headless drives |
+| `deploy/` | Server setup and the auto-deploy script |
+| `docs/` | Decisions, claims, spikes, demo script, deploy notes |
+
+## Docs
+- [`PLAN.md`](PLAN.md): the product source of truth. [`AGENTS.md`](AGENTS.md): how we work.
+- [`docs/CLAIMS.md`](docs/CLAIMS.md): every public claim with its evidence, and what not to claim.
+- [`docs/DECISIONS.md`](docs/DECISIONS.md): every scope or product decision, who made it and why.
+- [`docs/SPIKES.md`](docs/SPIKES.md): experiments, benchmark runs and the API-usage ledger.
+- [`docs/DEMO.md`](docs/DEMO.md): the demo script and fallbacks. [`docs/DEPLOY.md`](docs/DEPLOY.md): the server.
+
+## Limits
+- Accuracy is measured on one writer's handwriting (48 steps); there is no study of learning outcomes.
+- Masterji does not remember a child across sessions yet.
+- Tested mostly on a laptop with a Wacom board; phones and tablets have had little real use.
+- Tracks: EdTech and Best Use of Gemini API. The YugabyteDB memory we planned was not built.
